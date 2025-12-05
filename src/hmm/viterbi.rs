@@ -63,6 +63,7 @@ impl<E: EmissionModel> HMM<E> {
 mod tests {
     use super::*;
     use crate::hmm::emission::GaussianEmission;
+    use crate::hmm::config::HMMConfig;
 
     #[test]
     fn test_viterbi() {
