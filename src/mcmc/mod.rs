@@ -17,15 +17,19 @@
 //! // Create config and sample
 //! ```
 
-mod proposal;
 mod config;
 mod likelihood;
-mod sampler;
+mod proposal;
+#[cfg(feature = "python-bindings")]
 mod python_bindings;
+mod sampler;
 
 // Re-export public API
-pub use proposal::{ProposalStrategy, GaussianProposal, AdaptiveProposal};
 pub use config::{MCMCConfig, MCMCConfigBuilder};
-pub use likelihood::{LogLikelihood, PyLogLikelihood};
+pub use likelihood::LogLikelihood;
+#[cfg(feature = "python-bindings")]
+pub use likelihood::PyLogLikelihood;
+pub use proposal::{AdaptiveProposal, GaussianProposal, ProposalStrategy};
+#[cfg(feature = "python-bindings")]
+pub use python_bindings::{adaptive_mcmc_sample, mcmc_sample};
 pub use sampler::MetropolisHastings;
-pub use python_bindings::{mcmc_sample, adaptive_mcmc_sample};

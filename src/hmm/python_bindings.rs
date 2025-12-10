@@ -36,7 +36,7 @@ impl HMMParams {
             initial_probs: vec![uniform_prob; n_states],
         }
     }
-    
+
     fn __repr__(&self) -> String {
         format!(
             "HMMParams(n_states={}, transition_shape={}x{})",
@@ -55,7 +55,7 @@ pub fn fit_hmm(
     tolerance: f64,
 ) -> PyResult<HMMParams> {
     let emission = GaussianEmission::new(n_states);
-    
+
     let config = HMMConfig {
         n_states,
         n_iterations,
@@ -63,11 +63,11 @@ pub fn fit_hmm(
         emission_model: emission.clone(),
         use_parallel: false,
     };
-    
+
     let mut hmm = HMM::new(config);
     hmm.fit(&observations)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
-    
+
     Ok(HMMParams {
         n_states,
         transition_matrix: hmm.transition_matrix,
@@ -84,7 +84,7 @@ pub fn viterbi_decode(observations: Vec<f64>, params: HMMParams) -> PyResult<Vec
         means: params.emission_means,
         stds: params.emission_stds,
     };
-    
+
     let config = HMMConfig {
         n_states: params.n_states,
         n_iterations: 0,
@@ -92,11 +92,11 @@ pub fn viterbi_decode(observations: Vec<f64>, params: HMMParams) -> PyResult<Vec
         emission_model: emission,
         use_parallel: false,
     };
-    
+
     let mut hmm = HMM::new(config);
     hmm.transition_matrix = params.transition_matrix;
     hmm.initial_probs = params.initial_probs;
-    
+
     hmm.viterbi(&observations)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
 }

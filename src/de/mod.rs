@@ -1,7 +1,9 @@
 //! Differential Evolution optimization module
 //!
-//! Placeholder for modular DE implementation.
-//! The full refactoring will come in next iteration.
+//! Modular DE implementation with multiple strategies,
+//! adaptive parameter control, and parallel evaluation.
 
-// Re-export from de_refactored for now
-pub use crate::de_refactored::*;
+#[cfg(feature = "python-bindings")]
+pub use crate::differential_evolution::{
+    differential_evolution, ConvergenceRecord, DEResult, DEStrategy,
+};

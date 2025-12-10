@@ -19,7 +19,6 @@
 ///!
 ///! Cover, T. M., & Thomas, J. A. (2006). Elements of information theory.
 ///! Wiley-Interscience.
-
 use pyo3::prelude::*;
 use std::f64;
 
@@ -61,35 +60,35 @@ use std::f64;
 #[pyo3(signature = (x, n_bins=10))]
 pub fn shannon_entropy(x: Vec<f64>, n_bins: usize) -> PyResult<f64> {
     let n = x.len();
-    
+
     if n == 0 {
         return Ok(0.0);
     }
-    
+
     if n_bins == 0 {
         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-            "n_bins must be positive"
+            "n_bins must be positive",
         ));
     }
-    
+
     // Find min and max
     let x_min = x.iter().cloned().fold(f64::INFINITY, f64::min);
     let x_max = x.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    
+
     // Handle constant values
     if (x_max - x_min).abs() < 1e-10 {
         return Ok(0.0);
     }
-    
+
     // Bin the data
     let mut bin_counts = vec![0usize; n_bins];
-    
+
     for &val in &x {
         let bin = ((val - x_min) / (x_max - x_min) * (n_bins as f64 - 1e-10)) as usize;
         let bin = bin.min(n_bins - 1);
         bin_counts[bin] += 1;
     }
-    
+
     // Compute entropy: H(X) = -Σ p(x) log(p(x))
     let entropy: f64 = bin_counts
         .iter()
@@ -102,7 +101,7 @@ pub fn shannon_entropy(x: Vec<f64>, n_bins: usize) -> PyResult<f64> {
             }
         })
         .sum();
-    
+
     Ok(entropy)
 }
 
@@ -149,34 +148,34 @@ pub fn shannon_entropy(x: Vec<f64>, n_bins: usize) -> PyResult<f64> {
 #[pyo3(signature = (x, y, n_bins=10))]
 pub fn mutual_information(x: Vec<f64>, y: Vec<f64>, n_bins: usize) -> PyResult<f64> {
     let n = x.len();
-    
+
     if n != y.len() {
         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-            "x and y must have same length"
+            "x and y must have same length",
         ));
     }
-    
+
     if n == 0 {
         return Ok(0.0);
     }
-    
+
     if n_bins == 0 {
         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-            "n_bins must be positive"
+            "n_bins must be positive",
         ));
     }
-    
+
     // Find min/max for binning
     let x_min = x.iter().cloned().fold(f64::INFINITY, f64::min);
     let x_max = x.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
     let y_min = y.iter().cloned().fold(f64::INFINITY, f64::min);
     let y_max = y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    
+
     // Handle constant values
     if (x_max - x_min).abs() < 1e-10 || (y_max - y_min).abs() < 1e-10 {
         return Ok(0.0);
     }
-    
+
     // Discretize into bins
     let x_binned: Vec<usize> = x
         .iter()
@@ -185,7 +184,7 @@ pub fn mutual_information(x: Vec<f64>, y: Vec<f64>, n_bins: usize) -> PyResult<f
             bin.min(n_bins - 1)
         })
         .collect();
-    
+
     let y_binned: Vec<usize> = y
         .iter()
         .map(|&v| {
@@ -193,38 +192,38 @@ pub fn mutual_information(x: Vec<f64>, y: Vec<f64>, n_bins: usize) -> PyResult<f
             bin.min(n_bins - 1)
         })
         .collect();
-    
+
     // Compute joint and marginal counts
     let mut joint_counts = vec![vec![0usize; n_bins]; n_bins];
     let mut x_counts = vec![0usize; n_bins];
     let mut y_counts = vec![0usize; n_bins];
-    
+
     for i in 0..n {
         joint_counts[x_binned[i]][y_binned[i]] += 1;
         x_counts[x_binned[i]] += 1;
         y_counts[y_binned[i]] += 1;
     }
-    
+
     // Compute MI: I(X;Y) = Σᵢⱼ p(x,y) log(p(x,y) / (p(x)p(y)))
     let mut mi = 0.0;
-    
+
     for i in 0..n_bins {
         let px = x_counts[i] as f64 / n as f64;
-        
+
         if px == 0.0 {
             continue;
         }
-        
+
         for j in 0..n_bins {
             let py = y_counts[j] as f64 / n as f64;
             let pxy = joint_counts[i][j] as f64 / n as f64;
-            
+
             if pxy > 0.0 && py > 0.0 {
                 mi += pxy * (pxy / (px * py)).ln();
             }
         }
     }
-    
+
     // MI is always non-negative (enforce numerically)
     Ok(mi.max(0.0))
 }

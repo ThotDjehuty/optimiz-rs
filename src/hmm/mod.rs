@@ -26,14 +26,16 @@
 //! let states = hmm.viterbi(&observations).unwrap();
 //! ```
 
-mod emission;
 mod config;
+mod emission;
 mod model;
-mod viterbi;
+#[cfg(feature = "python-bindings")]
 mod python_bindings;
+mod viterbi;
 
 // Re-export public API
-pub use emission::{EmissionModel, GaussianEmission};
 pub use config::{HMMConfig, HMMConfigBuilder};
+pub use emission::{EmissionModel, GaussianEmission};
 pub use model::HMM;
-pub use python_bindings::{HMMParams, fit_hmm, viterbi_decode};
+#[cfg(feature = "python-bindings")]
+pub use python_bindings::{fit_hmm, viterbi_decode, HMMParams};

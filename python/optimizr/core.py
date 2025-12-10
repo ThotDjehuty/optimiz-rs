@@ -88,10 +88,14 @@ def mcmc_sample(
     >>> print(f"Posterior mean: {np.mean(samples[:, 0]):.2f}")
     """
     if RUST_AVAILABLE:
+        # Convert to lists if numpy arrays
+        data_list = data.tolist() if hasattr(data, 'tolist') else list(data)
+        params_list = initial_params.tolist() if hasattr(initial_params, 'tolist') else list(initial_params)
+        
         samples = _rust_mcmc_sample(
             log_likelihood_fn=log_likelihood_fn,
-            data=data.tolist(),
-            initial_params=initial_params.tolist(),
+            data=data_list,
+            initial_params=params_list,
             param_bounds=param_bounds,
             n_samples=n_samples,
             burn_in=burn_in,
@@ -111,8 +115,16 @@ def differential_evolution(
     bounds: List[Tuple[float, float]],
     popsize: int = 15,
     maxiter: int = 1000,
-    f: float = 0.8,
-    cr: float = 0.7,
+    f: Optional[float] = None,
+    cr: Optional[float] = None,
+    strategy: str = "rand1",
+    seed: Optional[int] = None,
+    tol: float = 1e-6,
+    atol: float = 1e-8,
+    track_history: bool = False,
+    parallel: bool = False,
+    adaptive: bool = False,
+    constraint_penalty: float = 1000.0,
 ) -> Tuple[np.ndarray, float]:
     """
     Differential Evolution global optimizer.
@@ -130,10 +142,26 @@ def differential_evolution(
         Population size multiplier (total size = popsize × n_params)
     maxiter : int, default=1000
         Maximum number of generations
-    f : float, default=0.8
-        Mutation factor (typically 0.5-2.0)
-    cr : float, default=0.7
-        Crossover probability (typically 0.1-0.9)
+    f : float, optional
+        Mutation factor (typically 0.5-2.0). If None, uses 0.8
+    cr : float, optional
+        Crossover probability (typically 0.1-0.9). If None, uses 0.7
+    strategy : str, default="rand1"
+        Mutation strategy: "rand1", "best1", "currenttobest1", "rand2", "best2"
+    seed : int, optional
+        Random seed for reproducibility
+    tol : float, default=1e-6
+        Convergence tolerance for function value changes
+    atol : float, default=1e-8
+        Absolute convergence tolerance
+    track_history : bool, default=False
+        Whether to track convergence history
+    parallel : bool, default=False
+        Whether to use parallel evaluation (not supported for Python callbacks)
+    adaptive : bool, default=False
+        Whether to use adaptive jDE parameter control
+    constraint_penalty : float, default=1000.0
+        Penalty for constraint violations
         
     Returns
     -------
@@ -150,7 +178,8 @@ def differential_evolution(
     >>> result = differential_evolution(
     ...     objective_fn=rosenbrock,
     ...     bounds=[(-5, 5)] * 10,
-    ...     popsize=15,
+    ...     strategy="best1",
+    ...     adaptive=True,
     ...     maxiter=1000
     ... )
     >>> print(f"Minimum: {result[1]:.6f} at {result[0]}")
@@ -163,14 +192,33 @@ def differential_evolution(
             maxiter=maxiter,
             f=f,
             cr=cr,
+            strategy=strategy,
+            seed=seed,
+            tol=tol,
+            atol=atol,
+            track_history=track_history,
+            parallel=parallel,
+            adaptive=adaptive,
+            constraint_penalty=constraint_penalty,
         )
         return np.array(result.x), result.fun
     else:
         # Pure Python fallback (scipy)
         try:
             from scipy.optimize import differential_evolution as scipy_de
-            result = scipy_de(objective_fn, bounds=bounds, maxiter=maxiter,
-                             popsize=popsize, mutation=f, recombination=cr)
+            mutation = f if f is not None else 0.8
+            recombination = cr if cr is not None else 0.7
+            result = scipy_de(
+                objective_fn, 
+                bounds=bounds, 
+                maxiter=maxiter,
+                popsize=popsize, 
+                mutation=mutation, 
+                recombination=recombination,
+                seed=seed,
+                tol=tol,
+                atol=atol
+            )
             return result.x, result.fun
         except ImportError:
             raise ImportError(

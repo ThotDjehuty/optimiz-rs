@@ -1,6 +1,6 @@
 [package]
 name = "optimizr"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Your Name <your.email@example.com>"]
 description = "High-performance optimization algorithms in Rust with Python bindings"
@@ -15,8 +15,8 @@ name = "optimizr"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.21", features = ["extension-module", "abi3-py38"] }
-numpy = "0.21"
+pyo3 = { version = "0.21", features = ["extension-module", "abi3-py38"], optional = true }
+numpy = { version = "0.21", optional = true }
 rand = "0.8"
 rand_distr = "0.4"
 ndarray = "0.15"
@@ -28,7 +28,8 @@ ordered-float = "4.2"
 statrs = "0.17"
 
 [features]
-default = []
+default = ["python-bindings"]
+python-bindings = ["pyo3", "numpy"]
 parallel = []
 
 [dev-dependencies]

@@ -12,7 +12,6 @@
 ///! 3. Return parameters with best score
 ///!
 ///! Complexity: O(n_points^n_params × cost_per_eval)
-
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::Bound;
@@ -24,11 +23,11 @@ pub struct GridSearchResult {
     /// Best parameters found
     #[pyo3(get)]
     pub x: Vec<f64>,
-    
+
     /// Best objective value
     #[pyo3(get)]
     pub fun: f64,
-    
+
     /// Number of function evaluations
     #[pyo3(get)]
     pub nfev: usize,
@@ -92,19 +91,19 @@ pub fn grid_search(
     n_points: usize,
 ) -> PyResult<GridSearchResult> {
     let n_params = bounds.len();
-    
+
     if n_params == 0 {
         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-            "bounds cannot be empty"
+            "bounds cannot be empty",
         ));
     }
-    
+
     if n_points < 2 {
         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-            "n_points must be at least 2"
+            "n_points must be at least 2",
         ));
     }
-    
+
     // Generate grid points for each dimension
     let grids: Vec<Vec<f64>> = bounds
         .iter()
@@ -114,11 +113,11 @@ pub fn grid_search(
                 .collect()
         })
         .collect();
-    
+
     let mut best_params = vec![0.0; n_params];
     let mut best_score = f64::NEG_INFINITY;
     let mut nfev = 0;
-    
+
     // Recursive grid traversal
     evaluate_grid_recursive(
         objective_fn,
@@ -129,7 +128,7 @@ pub fn grid_search(
         &mut best_score,
         &mut nfev,
     )?;
-    
+
     Ok(GridSearchResult {
         x: best_params,
         fun: best_score,
@@ -149,20 +148,18 @@ fn evaluate_grid_recursive(
 ) -> PyResult<()> {
     if depth == grids.len() {
         // Reached a complete point, evaluate it
-        let score = objective_fn
-            .call1((current.clone(),))?
-            .extract::<f64>()?;
-        
+        let score = objective_fn.call1((current.clone(),))?.extract::<f64>()?;
+
         *nfev += 1;
-        
+
         if score > *best_score {
             *best_score = score;
             *best_params = current.clone();
         }
-        
+
         return Ok(());
     }
-    
+
     // Iterate through values for current dimension
     for &value in &grids[depth] {
         current.push(value);
@@ -177,7 +174,7 @@ fn evaluate_grid_recursive(
         )?;
         current.pop();
     }
-    
+
     Ok(())
 }
 
@@ -192,7 +189,7 @@ mod tests {
             fun: 10.5,
             nfev: 100,
         };
-        
+
         assert_eq!(result.x.len(), 2);
         assert_eq!(result.nfev, 100);
     }

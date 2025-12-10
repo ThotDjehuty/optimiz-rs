@@ -10,22 +10,22 @@ use thiserror::Error;
 pub enum OptimizrError {
     #[error("Invalid parameter: {0}")]
     InvalidParameter(String),
-    
+
     #[error("Invalid input: {0}")]
     InvalidInput(String),
-    
+
     #[error("Dimension mismatch: expected {expected}, got {actual}")]
     DimensionMismatch { expected: usize, actual: usize },
-    
+
     #[error("Empty data provided")]
     EmptyData,
-    
+
     #[error("Convergence failed after {0} iterations")]
     ConvergenceFailed(usize),
-    
+
     #[error("Numerical error: {0}")]
     NumericalError(String),
-    
+
     #[error("Computation error: {0}")]
     ComputationError(String),
 }
@@ -40,10 +40,10 @@ pub type OptimizrResult<T> = Result<T>;
 pub trait Optimizer {
     type Config;
     type Output;
-    
+
     /// Optimize to find best solution
     fn optimize(&mut self) -> Result<Self::Output>;
-    
+
     /// Get current best solution
     fn best(&self) -> Result<Vec<f64>>;
 }
@@ -52,10 +52,10 @@ pub trait Optimizer {
 pub trait Sampler {
     type Config;
     type Output;
-    
+
     /// Draw samples from the target distribution
     fn sample(&mut self) -> Result<Self::Output>;
-    
+
     /// Get diagnostics about sampling performance
     fn diagnostics(&self, samples: &Self::Output) -> Result<SamplerDiagnostics>;
 }
@@ -72,7 +72,7 @@ pub struct SamplerDiagnostics {
 /// Trait for configuration builders
 pub trait ConfigBuilder {
     type Config;
-    
+
     fn build(self) -> Result<Self::Config>;
 }
 
@@ -80,7 +80,7 @@ pub trait ConfigBuilder {
 pub trait InformationMeasure {
     /// Compute the measure for given data
     fn compute(&self, data: &[f64]) -> Result<f64>;
-    
+
     /// Compute pairwise measure (for MI)
     fn compute_pairwise(&self, _x: &[f64], _y: &[f64]) -> Result<f64> {
         Err(OptimizrError::ComputationError(
@@ -103,7 +103,7 @@ impl Bounds {
                 "Bounds cannot be empty".to_string(),
             ));
         }
-        
+
         for (lower, upper) in &bounds {
             if lower >= upper {
                 return Err(OptimizrError::InvalidParameter(format!(
@@ -112,29 +112,29 @@ impl Bounds {
                 )));
             }
         }
-        
+
         let (lower, upper): (Vec<_>, Vec<_>) = bounds.into_iter().unzip();
         Ok(Self { lower, upper })
     }
-    
+
     pub fn dim(&self) -> usize {
         self.lower.len()
     }
-    
+
     pub fn clip(&self, x: &[f64]) -> Vec<f64> {
         x.iter()
             .enumerate()
             .map(|(i, &val)| val.max(self.lower[i]).min(self.upper[i]))
             .collect()
     }
-    
+
     pub fn is_valid(&self, x: &[f64]) -> bool {
         x.len() == self.dim()
             && x.iter()
                 .enumerate()
                 .all(|(i, &val)| val >= self.lower[i] && val <= self.upper[i])
     }
-    
+
     pub fn sample(&self, rng: &mut impl rand::Rng) -> Vec<f64> {
         (0..self.dim())
             .map(|i| rng.gen_range(self.lower[i]..self.upper[i]))

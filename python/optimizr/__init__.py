@@ -25,7 +25,14 @@ from optimizr.core import (
     bootstrap_returns_py,
 )
 
-__version__ = "0.1.0"
+# Try to import maths_toolkit from Rust backend
+try:
+    from optimizr import _core
+    maths_toolkit = _core
+except (ImportError, AttributeError):
+    maths_toolkit = None
+
+__version__ = "0.2.0"
 __all__ = [
     "HMM",
     "mcmc_sample",
@@ -40,4 +47,5 @@ __all__ = [
     "compute_risk_metrics_py",
     "estimate_half_life_py",
     "bootstrap_returns_py",
+    "maths_toolkit",
 ]

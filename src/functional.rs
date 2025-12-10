@@ -31,7 +31,7 @@ pub trait ResultExt<T> {
     fn and_then_log<F, U>(self, f: F, msg: &str) -> Result<U>
     where
         F: FnOnce(T) -> Result<U>;
-    
+
     /// Map with context
     fn map_context<F, U>(self, f: F, ctx: &str) -> Result<U>
     where
@@ -51,14 +51,13 @@ impl<T> ResultExt<T> for Result<T> {
             }
         }
     }
-    
+
     fn map_context<F, U>(self, f: F, ctx: &str) -> Result<U>
     where
         F: FnOnce(T) -> U,
     {
-        self.map(f).map_err(|e| {
-            OptimizrError::ComputationError(format!("{}: {}", ctx, e))
-        })
+        self.map(f)
+            .map_err(|e| OptimizrError::ComputationError(format!("{}: {}", ctx, e)))
     }
 }
 
@@ -68,14 +67,14 @@ where
     F: FnMut() -> Result<T>,
 {
     let mut last_error = None;
-    
+
     for _ in 0..max_attempts {
         match f() {
             Ok(val) => return Ok(val),
             Err(e) => last_error = Some(e),
         }
     }
-    
+
     Err(last_error.unwrap_or_else(|| {
         OptimizrError::ComputationError("All retry attempts failed".to_string())
     }))
@@ -101,16 +100,16 @@ where
             cache: std::sync::Mutex::new(std::collections::HashMap::new()),
         }
     }
-    
+
     pub fn call(&self, x: &[f64]) -> T {
         let key: Vec<_> = x.iter().map(|&v| ordered_float::OrderedFloat(v)).collect();
-        
+
         let mut cache = self.cache.lock().unwrap();
-        
+
         if let Some(cached) = cache.get(&key) {
             return cached.clone();
         }
-        
+
         let result = (self.f)(x);
         cache.insert(key, result.clone());
         result
@@ -136,7 +135,7 @@ where
             value: None,
         }
     }
-    
+
     pub fn force(&mut self) -> &T {
         if self.value.is_none() {
             let f = self.f.take().unwrap();
@@ -190,7 +189,7 @@ mod tests {
         let result = vec![1, 2, 3]
             .pipe(|v| v.into_iter().map(|x| x * 2).collect::<Vec<_>>())
             .pipe(|v: Vec<_>| v.into_iter().sum::<i32>());
-        
+
         assert_eq!(result, 12);
     }
 
@@ -198,7 +197,7 @@ mod tests {
     fn test_partial() {
         let add = |a: i32, b: i32| a + b;
         let add5 = partial(add, 5);
-        
+
         assert_eq!(add5(3), 8);
     }
 }

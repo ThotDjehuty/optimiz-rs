@@ -42,31 +42,31 @@ impl<E: EmissionModel> HMMConfigBuilder<E> {
             use_parallel: cfg!(feature = "parallel"),
         }
     }
-    
+
     /// Set the number of EM iterations
     pub fn iterations(mut self, n: usize) -> Self {
         self.n_iterations = n;
         self
     }
-    
+
     /// Set convergence tolerance
     pub fn tolerance(mut self, tol: f64) -> Self {
         self.tolerance = tol;
         self
     }
-    
+
     /// Set custom emission model
     pub fn emission_model(mut self, model: E) -> Self {
         self.emission_model = Some(model);
         self
     }
-    
+
     /// Enable/disable parallel computation
     pub fn parallel(mut self, enabled: bool) -> Self {
         self.use_parallel = enabled && cfg!(feature = "parallel");
         self
     }
-    
+
     /// Build the configuration
     pub fn build(self) -> Result<HMMConfig<E>>
     where
@@ -77,7 +77,7 @@ impl<E: EmissionModel> HMMConfigBuilder<E> {
                 "n_states must be at least 2".to_string(),
             ));
         }
-        
+
         Ok(HMMConfig {
             n_states: self.n_states,
             n_iterations: self.n_iterations,
@@ -100,7 +100,7 @@ mod tests {
             .tolerance(1e-5)
             .build()
             .unwrap();
-        
+
         assert_eq!(config.n_states, 3);
         assert_eq!(config.n_iterations, 50);
         assert_eq!(config.tolerance, 1e-5);

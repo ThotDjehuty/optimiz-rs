@@ -37,27 +37,27 @@ impl<P: ProposalStrategy> MCMCConfigBuilder<P> {
             adaptation_interval: 100,
         }
     }
-    
+
     pub fn burn_in(mut self, burn_in: usize) -> Self {
         self.burn_in = burn_in;
         self
     }
-    
+
     pub fn thin(mut self, thin: usize) -> Self {
         self.thin = thin.max(1);
         self
     }
-    
+
     pub fn proposal(mut self, proposal: P) -> Self {
         self.proposal = Some(proposal);
         self
     }
-    
+
     pub fn adaptation_interval(mut self, interval: usize) -> Self {
         self.adaptation_interval = interval;
         self
     }
-    
+
     pub fn build(self) -> Result<MCMCConfig<P>>
     where
         P: Default,
@@ -67,13 +67,13 @@ impl<P: ProposalStrategy> MCMCConfigBuilder<P> {
                 "n_samples must be positive".to_string(),
             ));
         }
-        
+
         if self.initial_state.is_empty() {
             return Err(OptimizrError::InvalidParameter(
                 "initial_state cannot be empty".to_string(),
             ));
         }
-        
+
         Ok(MCMCConfig {
             n_samples: self.n_samples,
             burn_in: self.burn_in,
@@ -97,7 +97,7 @@ mod tests {
             .thin(2)
             .build()
             .unwrap();
-        
+
         assert_eq!(config.n_samples, 1000);
         assert_eq!(config.burn_in, 100);
         assert_eq!(config.thin, 2);

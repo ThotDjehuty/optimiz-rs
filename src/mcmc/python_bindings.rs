@@ -17,7 +17,7 @@ pub fn mcmc_sample(
     burn_in: Option<usize>,
 ) -> PyResult<Vec<Vec<f64>>> {
     let burn_in = burn_in.unwrap_or(n_samples / 10);
-    
+
     let proposal = GaussianProposal::new(step_size);
     let config = MCMCConfig {
         n_samples,
@@ -27,10 +27,10 @@ pub fn mcmc_sample(
         proposal,
         adaptation_interval: 100,
     };
-    
+
     let log_likelihood = PyLogLikelihood::new(log_likelihood_fn);
     let mut sampler = MetropolisHastings::new(config, log_likelihood);
-    
+
     sampler
         .sample_chain()
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
@@ -47,7 +47,7 @@ pub fn adaptive_mcmc_sample(
     burn_in: Option<usize>,
 ) -> PyResult<Vec<Vec<f64>>> {
     let burn_in = burn_in.unwrap_or(n_samples / 10);
-    
+
     let proposal = AdaptiveProposal::new(initial_step);
     let config = MCMCConfig {
         n_samples,
@@ -57,10 +57,10 @@ pub fn adaptive_mcmc_sample(
         proposal,
         adaptation_interval: 100,
     };
-    
+
     let log_likelihood = PyLogLikelihood::new(log_likelihood_fn);
     let mut sampler = MetropolisHastings::new(config, log_likelihood);
-    
+
     sampler
         .sample_chain()
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))

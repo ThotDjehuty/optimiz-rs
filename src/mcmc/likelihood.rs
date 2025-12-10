@@ -2,24 +2,28 @@
 //!
 //! Defines the LogLikelihood trait for target distributions.
 
-use pyo3::prelude::*;
-
 /// Generic log-likelihood function trait
 pub trait LogLikelihood: Send + Sync {
     fn evaluate(&self, state: &[f64]) -> f64;
 }
 
+#[cfg(feature = "python-bindings")]
+use pyo3::prelude::*;
+
 /// Wrapper for Python callable log-likelihood
+#[cfg(feature = "python-bindings")]
 pub struct PyLogLikelihood {
     func: Py<PyAny>,
 }
 
+#[cfg(feature = "python-bindings")]
 impl PyLogLikelihood {
     pub fn new(func: Py<PyAny>) -> Self {
         Self { func }
     }
 }
 
+#[cfg(feature = "python-bindings")]
 impl LogLikelihood for PyLogLikelihood {
     fn evaluate(&self, state: &[f64]) -> f64 {
         Python::with_gil(|py| {
@@ -37,7 +41,7 @@ mod tests {
     use super::*;
 
     struct TestLogLikelihood;
-    
+
     impl LogLikelihood for TestLogLikelihood {
         fn evaluate(&self, state: &[f64]) -> f64 {
             // Standard normal log-likelihood

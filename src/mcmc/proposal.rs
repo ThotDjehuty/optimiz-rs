@@ -2,18 +2,18 @@
 //!
 //! Defines the ProposalStrategy trait and common implementations.
 
-use rand::Rng;
 use rand::distributions::Distribution;
+use rand::Rng;
 use rand_distr::Normal;
 
 /// Trait for MCMC proposal strategies
 pub trait ProposalStrategy: Send + Sync + Clone {
     /// Generate proposed next state from current state
     fn propose(&self, current: &[f64], rng: &mut impl Rng) -> Vec<f64>;
-    
+
     /// Adapt proposal based on acceptance rate (optional)
     fn adapt(&mut self, _acceptance_rate: f64) {}
-    
+
     /// Name of the strategy
     fn name(&self) -> &'static str;
 }
@@ -33,12 +33,9 @@ impl GaussianProposal {
 impl ProposalStrategy for GaussianProposal {
     fn propose(&self, current: &[f64], rng: &mut impl Rng) -> Vec<f64> {
         let normal = Normal::new(0.0, self.step_size).unwrap();
-        current
-            .iter()
-            .map(|&x| x + normal.sample(rng))
-            .collect()
+        current.iter().map(|&x| x + normal.sample(rng)).collect()
     }
-    
+
     fn name(&self) -> &'static str {
         "GaussianRandomWalk"
     }
@@ -66,7 +63,7 @@ impl AdaptiveProposal {
             adaptation_rate: 0.01,
         }
     }
-    
+
     pub fn with_target_acceptance(mut self, target: f64) -> Self {
         self.target_acceptance = target;
         self
@@ -76,17 +73,14 @@ impl AdaptiveProposal {
 impl ProposalStrategy for AdaptiveProposal {
     fn propose(&self, current: &[f64], rng: &mut impl Rng) -> Vec<f64> {
         let normal = Normal::new(0.0, self.step_size).unwrap();
-        current
-            .iter()
-            .map(|&x| x + normal.sample(rng))
-            .collect()
+        current.iter().map(|&x| x + normal.sample(rng)).collect()
     }
-    
+
     fn adapt(&mut self, acceptance_rate: f64) {
         let delta = (acceptance_rate - self.target_acceptance) * self.adaptation_rate;
         self.step_size *= (1.0 + delta).max(0.5).min(2.0);
     }
-    
+
     fn name(&self) -> &'static str {
         "AdaptiveGaussian"
     }
@@ -108,7 +102,7 @@ mod tests {
         let proposal = GaussianProposal::new(0.5);
         let current = vec![0.0, 1.0];
         let mut rng = thread_rng();
-        
+
         let proposed = proposal.propose(&current, &mut rng);
         assert_eq!(proposed.len(), 2);
     }
@@ -117,11 +111,11 @@ mod tests {
     fn test_adaptive_proposal() {
         let mut proposal = AdaptiveProposal::new(0.1);
         let initial_step = proposal.step_size;
-        
+
         // High acceptance should increase step size
         proposal.adapt(0.5);
         assert!(proposal.step_size > initial_step);
-        
+
         // Low acceptance should decrease step size
         let current_step = proposal.step_size;
         proposal.adapt(0.1);
