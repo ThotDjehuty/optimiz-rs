@@ -35,6 +35,7 @@ pub mod functional;
 pub mod maths_toolkit; // Mathematical utilities
 pub mod timeseries_utils; // Time-series integration helpers
 pub mod rust_objectives; // Rust-native objectives for parallel evaluation
+pub mod shade; // SHADE adaptive DE algorithm
 
 // Modular structure (trait-based, generic)
 pub mod de;
