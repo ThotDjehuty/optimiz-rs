@@ -21,6 +21,13 @@ try:
         compute_risk_metrics_py,
         estimate_half_life_py,
         bootstrap_returns_py,
+        # Time-series utilities
+        prepare_for_hmm_py,
+        rolling_hurst_exponent_py,
+        rolling_half_life_py,
+        return_statistics_py,
+        create_lagged_features_py,
+        rolling_correlation_py,
     )
     RUST_AVAILABLE = True
 except ImportError:

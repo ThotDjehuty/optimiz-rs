@@ -26,6 +26,11 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     git \
+    pkg-config \
+    libssl-dev \
+    libopenblas-dev \
+    gfortran \
+    patchelf \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust (needed for maturin)

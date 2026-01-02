@@ -33,6 +33,7 @@ use pyo3::types::PyModule;
 pub mod core;
 pub mod functional;
 pub mod maths_toolkit; // Mathematical utilities
+pub mod timeseries_utils; // Time-series integration helpers
 
 // Modular structure (trait-based, generic)
 pub mod de;
@@ -97,6 +98,9 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(risk_metrics::compute_risk_metrics_py, m)?)?;
     m.add_function(wrap_pyfunction!(risk_metrics::estimate_half_life_py, m)?)?;
     m.add_function(wrap_pyfunction!(risk_metrics::bootstrap_returns_py, m)?)?;
+
+    // Time-series utility functions
+    timeseries_utils::python_bindings::register_python_functions(m)?;
 
     Ok(())
 }
