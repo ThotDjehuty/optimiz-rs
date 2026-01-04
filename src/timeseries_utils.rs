@@ -403,7 +403,7 @@ mod tests {
     #[test]
     fn test_return_statistics() {
         let returns = vec![0.01, -0.02, 0.015, 0.005, -0.01];
-        let (mean, std, skew, kurt, sharpe) = return_statistics(&returns);
+        let (mean, std, _skew, _kurt, _sharpe) = return_statistics(&returns);
 
         assert!((mean).abs() < 0.1); // Small mean
         assert!(std > 0.0); // Non-zero volatility

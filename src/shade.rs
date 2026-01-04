@@ -31,7 +31,7 @@
 ///! - Multimodal functions
 ///! - Convergence speed (fewer evaluations to target)
 
-use rand::distributions::{Distribution, Uniform};
+use rand::distributions::Distribution;
 use rand::prelude::*;
 use rand_distr::{Cauchy, Normal};
 
