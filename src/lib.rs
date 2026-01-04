@@ -44,6 +44,7 @@ pub mod mcmc;
 pub mod optimal_control;
 pub mod risk_metrics;
 pub mod sparse_optimization;
+pub mod mean_field; // Mean Field Games and Mean Field Type Control
 
 // Python bindings for legacy compatibility
 #[cfg(feature = "python-bindings")]
