@@ -6,7 +6,7 @@ Thank you for your interest in contributing to OptimizR! This document provides 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/optimiz-r.git
+   git clone https://github.com/ThotDjehuty/optimiz-r.git
    cd optimiz-r
    ```
 

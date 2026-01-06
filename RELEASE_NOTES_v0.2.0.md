@@ -497,7 +497,7 @@ pip install optimizr==0.2.0
 
 ### Source
 ```bash
-git clone https://github.com/yourusername/optimiz-r.git
+git clone https://github.com/ThotDjehuty/optimiz-r.git
 cd optimiz-r
 git checkout v0.2.0
 maturin develop --release
@@ -505,16 +505,16 @@ maturin develop --release
 
 ### Docker
 ```bash
-docker pull yourusername/optimizr:0.2.0
-docker run -p 8888:8888 yourusername/optimizr:0.2.0
+docker pull thotdjehuty/optimizr:0.2.0
+docker run -p 8888:8888 thotdjehuty/optimizr:0.2.0
 ```
 
 ---
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/optimiz-r/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/optimiz-r/discussions)
+- **Issues**: [GitHub Issues](https://github.com/ThotDjehuty/optimiz-r/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ThotDjehuty/optimiz-r/discussions)
 - **Documentation**: [docs/](https://optimizr.readthedocs.io)
 
 ---

@@ -12,7 +12,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/optimiz-r.git
+git clone https://github.com/ThotDjehuty/optimiz-r.git
 cd optimiz-r
 
 # Install development dependencies

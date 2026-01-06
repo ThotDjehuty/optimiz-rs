@@ -65,7 +65,7 @@ pip install optimizr
 
 For development:
 ```bash
-git clone https://github.com/yourusername/optimiz-r.git
+git clone https://github.com/ThotDjehuty/optimiz-r.git
 cd optimiz-r
 pip install -e ".[dev]"
 maturin develop --release
@@ -166,7 +166,7 @@ x_opt, f_min = differential_evolution(
    git init
    git add .
    git commit -m "Initial commit: OptimizR v0.1.0"
-   git remote add origin https://github.com/yourusername/optimiz-r.git
+   git remote add origin https://github.com/ThotDjehuty/optimiz-r.git
    git push -u origin main
    ```
 
