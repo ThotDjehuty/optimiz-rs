@@ -1,7 +1,7 @@
 //! Nash Equilibrium Computation via Primal-Dual Methods
 use ndarray::{Array1, Array2};
 use crate::core::Result;
-use super::{MFGConfig, Grid, pde_solvers};
+use super::MFGConfig;
 
 pub fn primal_dual_mfg<H, F, G>(
     config: &MFGConfig,

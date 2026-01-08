@@ -62,7 +62,7 @@ pub use nash_equilibrium::*;
 pub use optimal_transport::*;
 
 use ndarray::{Array1, Array2};
-use crate::core::{OptimizrError, Result};
+use crate::core::Result;
 
 /// Configuration for Mean Field Games solver
 #[derive(Clone, Debug)]

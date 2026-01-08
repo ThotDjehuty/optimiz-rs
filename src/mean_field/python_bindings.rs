@@ -3,9 +3,7 @@
 #[cfg(feature = "python-bindings")]
 use pyo3::prelude::*;
 #[cfg(feature = "python-bindings")]
-use numpy::{PyArray2, PyReadonlyArray2, ToPyArray, PyArrayMethods};
-use ndarray::{Array1, Array2};
-use crate::core::Result;
+use numpy::{PyArray2, PyReadonlyArray2, ToPyArray};
 use super::{MFGConfig, forward_backward_fixed_point, Grid};
 
 /// Python-facing configuration for MFG solver
@@ -16,6 +14,7 @@ pub struct MFGConfigPy {
     pub nt: usize,
     pub x_min: f64,
     pub x_max: f64,
+    #[allow(non_snake_case)]
     pub T: f64,
     pub nu: f64,
     pub max_iter: usize,
@@ -27,6 +26,7 @@ pub struct MFGConfigPy {
 #[pymethods]
 impl MFGConfigPy {
     #[new]
+    #[allow(non_snake_case)]
     #[pyo3(signature = (nx=100, nt=100, x_min=0.0, x_max=1.0, T=1.0, nu=0.01, max_iter=50, tol=1e-5, alpha=0.5))]
     fn new(
         nx: usize,

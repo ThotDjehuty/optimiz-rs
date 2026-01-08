@@ -249,7 +249,7 @@ mod tests {
         mem.update(&successful_f, &successful_cr, &improvements);
 
         // Check that memory was updated
-        let (hist_f, hist_cr, idx) = mem.get_state();
+        let (hist_f, _hist_cr, idx) = mem.get_state();
 
         // Index should have advanced
         assert_eq!(idx, 1);

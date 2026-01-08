@@ -9,7 +9,7 @@
 
 use ndarray::{Array1, Array2, s};
 use rayon::prelude::*;
-use crate::core::{OptimizrError, Result};
+use crate::core::Result;
 use super::{Grid, MFGConfig};
 
 /// Solve the HJB equation backward in time
@@ -214,7 +214,6 @@ pub fn relative_l2_error(computed: &Array2<f64>, reference: &Array2<f64>) -> f64
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::Array;
 
     #[test]
     fn test_grid_creation() {

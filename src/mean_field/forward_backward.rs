@@ -26,7 +26,7 @@ where
     
     // Initialize with uniform distribution
     let mut m_old = Array2::from_elem((config.nx, config.nt), 1.0 / config.nx as f64);
-    let mut m_new = m_old.clone();
+    let mut m_new;
     
     for iter in 0..config.max_iterations {
         // Step 1: Solve HJB backward with current distribution
@@ -37,7 +37,7 @@ where
         let u = pde_solvers::solve_hjb(config, &grid, &hamiltonian, &running_cost, &terminal_cond, &m_old)?;
         
         // Step 2: Solve FP forward with current value function
-        let hp = |x: f64, p: f64| p; // H_p for quadratic Hamiltonian
+        let hp = |_x: f64, p: f64| p; // H_p for quadratic Hamiltonian
         m_new = pde_solvers::solve_fokker_planck(config, &grid, hp, initial_dist, &u)?;
         
         // Step 3: Check convergence
