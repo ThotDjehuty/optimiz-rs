@@ -196,7 +196,7 @@ mod tests {
         let true_kappa = 0.5;
         let true_theta = 0.0;
         let true_sigma = 0.2;
-        let dt = 1.0 / 252.0;
+        let dt: f64 = 1.0 / 252.0;
         let n = 500;
         
         let mut rng = thread_rng();
