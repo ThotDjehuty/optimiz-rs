@@ -2,6 +2,11 @@
 
 High-level bindings exposed by the `optimizr` Python package. All functions require the Rust extension (`optimizr._core`).
 
+**When to use this module**
+- Threshold trading / switching problems solved via HJB (with and without frictions)
+- State estimation and smoothing (Kalman, EKF, UKF)
+- Parameter inference for mean-reverting spreads (OU) feeding into control logic
+
 ## Hamilton–Jacobi–Bellman (HJB) solvers
 
 ```python
@@ -29,6 +34,10 @@ $$
 $$
 `solve_hjb_py` returns optimal buy/sell thresholds; `solve_hjb_full_py` also returns $V$, $V_x$, and $V_{xx}$ for diagnostics.
 
+**Diagnostic tips:**
+- Plot $V_x$ to verify smoothness near the boundaries; kinks often signal insufficient grid resolution.
+- Track `residual` and `iterations` to spot non-convergence; loosen `tolerance` or increase `max_iter` if needed.
+
 ## OU parameter estimation
 
 ```python
@@ -45,6 +54,8 @@ X_{t+1} = X_t e^{-\kappa \Delta t} + \theta(1-e^{-\kappa \Delta t}) + \eta_t, \q
 $$
 Returns $(\kappa, \theta, \sigma, \text{half\_life})$.
 
+**Practical guidance:** Use at least a few thousand samples for stable estimates; heavy-tailed series benefit from pre-whitening or winsorizing before fitting.
+
 ## Backtesting optimal switching
 
 ```python
@@ -60,6 +71,10 @@ metrics = backtest_optimal_switching_py(
 ```
 
 Applies HJB thresholds to historical spreads and reports return, Sharpe ratio, drawdown, trade count, win rate, and PnL path.
+
+**What to inspect:**
+- `win_rate` alongside `max_drawdown` to balance aggressiveness
+- PnL path for regime shifts; combine with HMM states if you need regime-aware controls
 
 ## Kalman filtering (linear, EKF, UKF)
 
@@ -96,5 +111,7 @@ log_likelihoods = result.get_log_likelihoods()
 - `KalmanState` exposes `get_state()`, `get_covariance()`, and `get_log_likelihood()`.
 - Extended/Unscented Kalman filters share the same interface (see `UnscentedKalmanFilter` in the Rust module) and are exported through the same bindings.
 - For smoothing, use the Rauch–Tung–Striebel smoother (`RTSSmoother`) available in the bindings.
+
+**Conceptual picture:** Kalman filtering = prediction (dynamics prior) + correction (measurement residual). EKF linearizes $f, h$; UKF propagates sigma points for better nonlinear fidelity. RTS smoothing runs backward in time to refine all past states.
 
 See `examples/notebooks/03_optimal_control_tutorial.ipynb` for end-to-end usage combining HJB thresholds, OU estimation, and filtering.

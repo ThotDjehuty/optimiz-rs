@@ -1,6 +1,6 @@
 # Mathematical Foundations
 
-This page collects the core equations driving OptimizR’s Rust kernels. Use it as a quick reference when tuning algorithms or validating results.
+This page collects the core equations driving OptimizR’s Rust kernels, plus short intuition blurbs and micro-checks you can run in a notebook. For visuals and full walkthroughs, see the example notebooks in `examples/notebooks/`.
 
 ## Differential Evolution (DE)
 
@@ -10,6 +10,8 @@ We minimize $f: \mathbb{R}^d \to \mathbb{R}$ with a population $\{\mathbf{x}_{i,
 $$
 \mathbf{v}_{i,g} = \mathbf{x}_{r_1,g} + F \cdot (\mathbf{x}_{r_2,g} - \mathbf{x}_{r_3,g}),\quad r_1 \neq r_2 \neq r_3 \neq i.
 $$
+
+**Intuition:** The differential term is a directional finite-difference estimate of the gradient; scaling $F$ sets the step length. Population diversity controls exploration.
 
 **Crossover (binomial):**
 $$
@@ -41,6 +43,8 @@ CR_i^{g} & \text{otherwise.}
 $$
 Typical $\tau_1, \tau_2 = 0.1$. This adaptation reduces manual tuning and improves robustness on multimodal landscapes.
 
+**Notebook check:** In `05_performance_benchmarks.ipynb`, plot $F_i$ and $CR_i$ histograms every 50 generations to verify adaptation is active (expect spread around 0.5–0.9 for $CR$ and 0.5–0.9 for $F$ on hard landscapes).
+
 ## Optimal Control (HJB)
 
 For dynamics $dX_t = b(X_t, u_t)\,dt + \sigma(X_t,u_t)\,dW_t$ with running cost $\ell$ and terminal cost $g$, the value function satisfies the Hamilton–Jacobi–Bellman PDE:
@@ -54,6 +58,8 @@ V^{n} = \min_{u}\Big\{ \ell(x_j,u)\,\Delta t + V^{n+1} + \nabla_x V^{n+1}\cdot b
 $$
 The control that attains the minimum yields the feedback policy $u^{\star}(x_j, t_n)$ exported by `compute_policy`.
 
+**Interpretation:** HJB is dynamic programming in continuous time; $V$ encodes the optimal cost-to-go. The quadratic example in `03_optimal_control_tutorial.ipynb` shows $V$ becoming steeper where volatility is high or costs penalize deviation.
+
 ## Mean Field Games (1D solver)
 
 OptimizR’s MFG module solves the coupled system for value $u$ and density $m$:
@@ -65,6 +71,8 @@ u(T,x) &= g(x), \qquad m(0,x) = m_0(x).
 \end{aligned}
 $$
 We use fixed-point iterations on the transport term with implicit diffusion (stable for $\nu > 0$) and normalize $m$ after each step to preserve mass.
+
+**Practical tip:** Monitor $\|m^{k+1}-m^{k}\|_1$ and $\|u^{k+1}-u^{k}\|_\infty$; both appear in the notebook to diagnose non-convergence.
 
 ## Kalman Filtering
 
@@ -94,6 +102,8 @@ $$
 $$
 OptimizR uses symmetric Gaussian proposals (so $q$ cancels) by default, with optional bounds projection and burn-in.
 
+**Heuristic:** Tune proposal std so acceptance is ~0.25–0.35 for moderate dimensions; see `examples/notebooks/02_mcmc.ipynb` for trace plots.
+
 ## Hidden Markov Models (HMM)
 
 We maximize the likelihood of observations $\mathbf{y}$ under latent states $\mathbf{z}$ using Baum–Welch (EM):
@@ -101,3 +111,5 @@ $$
 \mathcal{L}(\theta) = \sum_{t} \log \Big( \sum_{z_t} p(y_t \mid z_t, \theta) p(z_t \mid z_{t-1}, \theta) \Big).
 $$
 Forward–backward computes posteriors, then M-step re-estimates transition and emission parameters; Viterbi gives the MAP state path.
+
+**Quality check:** Plot log-likelihood per iteration; it should be non-decreasing. The HMM tutorial notebook includes a simple convergence plot and a confusion matrix for decoded states.

@@ -54,6 +54,7 @@ OptimizR provides blazingly fast, production-ready implementations of advanced o
    :caption: Advanced
    
    theory/mathematical_foundations
+   mfg_tutorial
    benchmarks
    contributing
    changelog
