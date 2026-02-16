@@ -4,10 +4,10 @@ build-backend = "maturin"
 
 [project]
 name = "optimizr"
-version = "0.3.0"
+version = "1.0.0"
 description = "High-performance optimization algorithms in Rust with Python bindings"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "HFThot Research Lab", email = "contact@hfthot-lab.eu"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
@@ -48,10 +48,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/optimiz-r"
-Documentation = "https://github.com/yourusername/optimiz-r/blob/main/README.md"
-Repository = "https://github.com/yourusername/optimiz-r"
-Issues = "https://github.com/yourusername/optimiz-r/issues"
+Homepage = "https://hfthot-lab.eu"
+Documentation = "https://optimiz-r.readthedocs.io"
+Repository = "https://github.com/ThotDjehuty/optimiz-r"
+Issues = "https://github.com/ThotDjehuty/optimiz-r/issues"
 
 [tool.maturin]
 python-source = "python"

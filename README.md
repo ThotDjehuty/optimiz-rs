@@ -6,22 +6,20 @@
 
 **High-performance optimization algorithms in Rust with Python bindings**
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/ThotDjehuty/optimiz-r/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ThotDjehuty/optimiz-r/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 
 OptimizR provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers 50-100× speedup over pure Python implementations.
 
-## ✨ What's New in v0.3.0
+## ✨ What's New in v1.0.0
 
-🎮 **Mean Field Games (MFG)** - Complete 1D solver for large population dynamics with HJB-Fokker-Planck coupling  
-📚 **Validated Tutorial Notebooks** - All 7 example notebooks tested and production-ready  
-🏗️ **Maturin Build System** - Reliable cross-platform builds (fixes macOS issues)  
-🐍 **Enhanced Python Wrappers** - Smart OOP interfaces with automatic Rust acceleration  
-📖 **Comprehensive Documentation** - New MFG tutorial with 3D visualizations and complete audit report
-
-[**→ See Full Release Notes**](RELEASE_NOTES_v0.3.0.md)
+🎉 **Production Ready** - First stable release with comprehensive documentation  
+📚 **ReadTheDocs** - Full documentation at https://optimiz-r.readthedocs.io  
+🏗️ **Published to crates.io** - Install with `cargo add optimizr`  
+🐍 **Published to PyPI** - Install with `pip install optimizr`  
+🔒 **Stable API** - Semantic versioning from v1.0.0 forward
 
 ## Features
 
@@ -567,9 +565,9 @@ If you use OptimizR in your research, please cite:
 ```bibtex
 @software{optimizr2024,
   title = {OptimizR: High-Performance Optimization Algorithms in Rust},
-  author = {Your Name},
+  author = {HFThot Research Lab},
   year = {2024},
-  version = {0.2.0},
+  version = {1.0.0},
   url = {https://github.com/ThotDjehuty/optimiz-r}
 }
 ```
@@ -592,7 +590,8 @@ Inspired by:
 
 - Issues: [GitHub Issues](https://github.com/ThotDjehuty/optimiz-r/issues)
 - Discussions: [GitHub Discussions](https://github.com/ThotDjehuty/optimiz-r/discussions)
-- Email: your.email@example.com
+- Website: [HFThot Research Lab](https://hfthot-lab.eu)
+- Email: contact@hfthot-lab.eu
 
 ---
 
