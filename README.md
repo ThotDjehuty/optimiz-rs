@@ -485,6 +485,23 @@ Detailed mathematical descriptions and references:
 - [Differential Evolution Theory](docs/theory/differential_evolution.md) - Updated for v0.2.0
 - [Information Theory](docs/theory/information_theory.md)
 
+## 📚 Documentation & Getting Started
+
+**Comprehensive documentation is available on ReadTheDocs:**
+
+👉 **[https://optimiz-r.readthedocs.io/en/latest/](https://optimiz-r.readthedocs.io/en/latest/)**
+
+The documentation includes:
+- 🚀 **Quick Start Guide** - Get up and running in minutes
+- 📖 **Installation** - Detailed setup instructions for all platforms
+- 🎓 **Tutorials** - Step-by-step guides for each algorithm
+- 📚 **API Reference** - Complete function and class documentation
+- 🔬 **Theory & Math** - Mathematical foundations and references
+- 💡 **Examples** - Real-world use cases and code samples
+- ⚡ **Performance** - Benchmarks and optimization tips
+
+**New to OptimizR?** Start with the [Quick Start Guide](https://optimiz-r.readthedocs.io/en/latest/quickstart.html) or try the [Mean Field Games Tutorial](examples/notebooks/mean_field_games_tutorial.ipynb).
+
 ## Development
 
 ### Building from Source
