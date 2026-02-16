@@ -5,7 +5,7 @@ OptimizR Documentation
 
 **High-performance optimization algorithms in Rust with Python bindings**
 
-.. image:: https://img.shields.io/badge/version-0.3.0-blue.svg
+.. image:: https://img.shields.io/badge/version-1.0.0-blue.svg
    :target: https://github.com/ThotDjehuty/optimiz-r/releases
    :alt: Version
    
