@@ -21,7 +21,7 @@ cargo add optimizr
 ```bash
 pip install optimiz-rs
 ```
-🔗 https://pypi.org/project/optimiz-rs/ (publishing in progress)
+🔗 https://pypi.org/project/optimiz-rs/
 
 ## 🆕 What's New in v1.0.0
 

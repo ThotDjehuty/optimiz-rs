@@ -18,7 +18,7 @@ OptimizR provides blazingly fast, production-ready implementations of advanced o
 🎉 **Production Ready** - First stable release with comprehensive documentation  
 📚 **ReadTheDocs** - Full documentation at https://optimiz-r.readthedocs.io  
 🏗️ **Published to crates.io** - Install with `cargo add optimizr`  
-🐍 **Published to PyPI** - Install with `pip install optimizr`  
+🐍 **Published to PyPI** - Install with `pip install optimiz-rs`  
 🔒 **Stable API** - Semantic versioning from v1.0.0 forward
 
 ## Features
