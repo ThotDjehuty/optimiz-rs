@@ -1,6 +1,6 @@
 [package]
 name = "optimiz-rs"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["HFThot Research Lab <contact@hfthot-lab.eu>"]
 description = "High-performance optimization algorithms in Rust with Python bindings"

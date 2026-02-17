@@ -1,7 +1,7 @@
-# OptimizR 🚀
+# Optimiz-rs 🚀
 
 <p align="center">
-    <img src="docs/source/logo_optimizrs.png" alt="OptimizR Logo" width="220" />
+    <img src="https://raw.githubusercontent.com/ThotDjehuty/optimiz-r/main/docs/source/logo_optimizrs.png" alt="Optimiz-rs Logo" width="220" />
 </p>
 
 **High-performance optimization algorithms in Rust with Python bindings**
@@ -11,7 +11,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 
-OptimizR provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers 50-100× speedup over pure Python implementations.
+Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers 50-100× speedup over pure Python implementations.
 
 ## ✨ What's New in v1.0.0
 
@@ -433,8 +433,8 @@ Hamilton-Jacobi-Bellman equation solvers for stochastic control:
 
 Comparison against pure Python/NumPy/SciPy implementations (v0.2.0):
 
-| Algorithm | Problem Size | OptimizR (Rust) | NumPy/SciPy | Speedup |
-|-----------|--------------|-----------------|-------------|---------|
+| Algorithm | Problem Size | Optimiz-rs (Rust) | NumPy/SciPy | Speedup |
+|-----------|--------------|-------------------|-------------|---------|
 | **DE - rand/1** | 50D Rosenbrock | 285ms | 21.2s | **74×** |
 | **DE - best/1** | 50D Rosenbrock | 270ms | 23.8s | **88×** |
 | **DE - adaptive jDE** | 50D Rosenbrock | 310ms | 24.5s | **79×** |
@@ -504,7 +504,7 @@ The documentation includes:
 - 💡 **Examples** - Real-world use cases and code samples
 - ⚡ **Performance** - Benchmarks and optimization tips
 
-**New to OptimizR?** Start with the [Quick Start Guide](https://optimiz-r.readthedocs.io/en/latest/quickstart.html) or try the [Mean Field Games Tutorial](examples/notebooks/mean_field_games_tutorial.ipynb).
+**New to Optimiz-rs?** Start with the [Quick Start Guide](https://optimiz-r.readthedocs.io/en/latest/quickstart.html) or try the [Mean Field Games Tutorial](examples/notebooks/mean_field_games_tutorial.ipynb).
 
 ## Development
 
@@ -566,11 +566,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Citation
 
-If you use OptimizR in your research, please cite:
+If you use Optimiz-rs in your research, please cite:
 
 ```bibtex
 @software{optimizr2024,
-  title = {OptimizR: High-Performance Optimization Algorithms in Rust},
+  title = {Optimiz-rs: High-Performance Optimization Algorithms in Rust},
   author = {HFThot Research Lab},
   year = {2024},
   version = {1.0.0},
@@ -601,4 +601,4 @@ Inspired by:
 
 ---
 
-**OptimizR** - Fast optimization for data science and machine learning 🚀
+**Optimiz-rs** - Fast optimization for data science and machine learning 🚀
