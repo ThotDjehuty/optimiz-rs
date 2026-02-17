@@ -15,8 +15,8 @@
 ### 2. crates.io - PUBLISHED! 🦀
 - ✅ Email verified
 - ✅ Package uploaded successfully
-- ✅ Live at: **https://crates.io/crates/optimizr**
-- ✅ Install: `cargo add optimizr`
+- ✅ Live at: **https://crates.io/crates/optimiz-rs**
+- ✅ Install: `cargo add optimiz-rs`
 
 ### 3. Documentation Updated
 - ✅ [RELEASE_NOTES_v1.0.0.md](RELEASE_NOTES_v1.0.0.md) - crates.io link added
@@ -65,7 +65,7 @@ Both crates.io and PyPI are now live and fully functional!
 | **Tests** | ✅ 100% | 47/52 passing (5 flaky) |
 | **Documentation** | ✅ Complete | https://optimiz-r.readthedocs.io |
 | **GitHub** | ✅ Pushed | https://github.com/ThotDjehuty/optimiz-r |
-| **crates.io** | ✅ **PUBLISHED** | https://crates.io/crates/optimizr |
+| **crates.io** | ✅ **PUBLISHED** | https://crates.io/crates/optimiz-rs |
 | **PyPI** | ✅ **PUBLISHED** | https://pypi.org/project/optimiz-rs/ |
 | **LinkedIn Post** | ✅ Ready | [LINKEDIN_POST.md](LINKEDIN_POST.md) |
 
@@ -127,7 +127,7 @@ Both package registries are now serving OptimizR v1.0.0:
 pip install optimiz-rs
 
 # Install from crates.io (Rust)
-cargo add optimizr
+cargo add optimiz-rs
 ```
 
 Test it yourself: https://pypi.org/project/optimiz-rs/1.0.0/
@@ -135,7 +135,7 @@ Test it yourself: https://pypi.org/project/optimiz-rs/1.0.0/
 ---
 
 **OptimizR v1.0.0 is 100% released!** 🎊  
-✅ Rust community: https://crates.io/crates/optimizr  
+✅ Rust community: https://crates.io/crates/optimiz-rs  
 ✅ Python community: https://pypi.org/project/optimiz-rs/  
 
 **Now it's time to announce to the world!** 🚀

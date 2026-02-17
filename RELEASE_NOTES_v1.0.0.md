@@ -13,9 +13,9 @@ OptimizR v1.0.0 marks the first production-ready stable release with a commitmen
 
 ### crates.io (Rust)
 ```bash
-cargo add optimizr
+cargo add optimiz-rs
 ```
-🔗 https://crates.io/crates/optimizr
+🔗 https://crates.io/crates/optimiz-rs
 
 ### PyPI (Python)
 ```bash

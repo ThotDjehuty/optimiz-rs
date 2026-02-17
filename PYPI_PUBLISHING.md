@@ -84,5 +84,5 @@ twine upload target/wheels/optimiz_rs-1.0.0-*.whl
 ---
 
 **Current Publication Status:**
-- ✅ crates.io: Published at https://crates.io/crates/optimizr
+- ✅ crates.io: Published at https://crates.io/crates/optimiz-rs
 - ⏳ PyPI: Ready to publish (just need API token)

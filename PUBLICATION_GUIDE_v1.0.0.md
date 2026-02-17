@@ -85,7 +85,7 @@ cargo publish
 ```
 
 **Verification:**
-- Visit: https://crates.io/crates/optimizr
+- Visit: https://crates.io/crates/optimiz-rs
 - Should show v1.0.0 within a few minutes
 
 ---
@@ -226,13 +226,13 @@ jobs:
 
 ### Immediate (After Publishing)
 
-- [ ] **Verify crates.io**: https://crates.io/crates/optimizr/1.0.0
+- [ ] **Verify crates.io**: https://crates.io/crates/optimiz-rs/1.0.0
 - [ ] **Verify PyPI**: https://pypi.org/project/optimizr/1.0.0
 - [ ] **Test Rust installation**:
   ```bash
-  cargo new test-optimizr
-  cd test-optimizr
-  cargo add optimizr
+  cargo new test-optimiz-rs
+  cd test-optimiz-rs
+  cargo add optimiz-rs
   cargo build
   ```
 - [ ] **Test Python installation**:
@@ -251,7 +251,7 @@ jobs:
   - **Current Status:** ✅ v1.0.0 published (crates.io + PyPI)
   - **Repository:** https://github.com/ThotDjehuty/optimiz-r
   - **Documentation:** https://optimiz-r.readthedocs.io
-  - **Installation:** `cargo add optimizr` or `pip install optimizr`
+  - **Installation:** `cargo add optimiz-rs` or `pip install optimiz-rs`
   ```
 
 - [ ] **Create GitHub Release**:
@@ -297,7 +297,7 @@ jobs:
 ### Community Building
 
 - [ ] **Update README badges**:
-  - Add crates.io badge: `[![Crates.io](https://img.shields.io/crates/v/optimizr.svg)](https://crates.io/crates/optimizr)`
+  - Add crates.io badge: `[![Crates.io](https://img.shields.io/crates/v/optimiz-rs.svg)](https://crates.io/crates/optimiz-rs)`
   - Add PyPI badge: `[![PyPI](https://img.shields.io/pypi/v/optimizr.svg)](https://pypi.org/project/optimizr/)`
   - Add downloads badge
 

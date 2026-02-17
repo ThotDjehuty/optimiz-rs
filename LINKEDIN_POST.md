@@ -36,7 +36,7 @@ pip install optimiz-rs
 
 Rust:
 ```bash
-cargo add optimizr
+cargo add optimiz-rs
 ```
 
 🌟 Why OptimizR?
@@ -65,4 +65,4 @@ I'd love your feedback, contributions, and star on GitHub! ⭐
 🔗 GitHub: https://github.com/ThotDjehuty/optimiz-r
 📚 Docs: https://optimiz-r.readthedocs.io
 📦 PyPI: https://pypi.org/project/optimiz-rs/
-📦 crates.io: https://crates.io/crates/optimizr
+📦 crates.io: https://crates.io/crates/optimiz-rs
