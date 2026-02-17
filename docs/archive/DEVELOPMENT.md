@@ -1,4 +1,4 @@
-# OptimizR Development Guide
+# Optimiz-rs Development Guide
 
 ## Quick Start
 

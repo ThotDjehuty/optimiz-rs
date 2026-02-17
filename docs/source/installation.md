@@ -8,7 +8,7 @@
 
 ## Install from PyPI
 
-**Coming soon**: OptimizR will be available on PyPI.
+**Coming soon**: Optimiz-rs will be available on PyPI.
 
 ```bash
 pip install optimizr

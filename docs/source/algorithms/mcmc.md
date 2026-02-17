@@ -161,7 +161,7 @@ $$
 
 This is symmetric, so Metropolis acceptance applies.
 
-**This is what OptimizR implements.**
+**This is what Optimiz-rs implements.**
 
 ---
 

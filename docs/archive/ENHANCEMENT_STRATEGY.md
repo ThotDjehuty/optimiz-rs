@@ -1,4 +1,4 @@
-# OptimizR Enhancement Strategy
+# Optimiz-rs Enhancement Strategy
 
 **Date**: January 2, 2025  
 **Context**: Post-Polarway Phase 4, exploring integration and improvements  
@@ -58,7 +58,7 @@
    - Simulated Annealing
    - Ant Colony Optimization
 
-## Synergy Opportunities: Polarway + OptimizR
+## Synergy Opportunities: Polarway + Optimiz-rs
 
 ### 1. Time-Series Feature Engineering for HMM
 **Description**: Use Polarway's time-series operations to create features for regime detection
@@ -70,7 +70,7 @@ df = client.lag(['price'], periods=1)  # Lagged prices
 df = client.pct_change(['price'], periods=1)  # Returns
 df = client.diff(['price'], periods=1)  # Price changes
 
-# OptimizR: Regime detection on features
+# Optimiz-rs: Regime detection on features
 returns = df['price_pct_change'].to_numpy()
 hmm = HMM(n_states=3)  # Bull, Bear, Sideways
 hmm.fit(returns, n_iterations=100)
@@ -79,7 +79,7 @@ states = hmm.predict(returns)
 
 **Value**:
 - Polarway provides fast feature engineering (50-200× faster for large datasets)
-- OptimizR provides statistical inference (HMM regime detection)
+- Optimiz-rs provides statistical inference (HMM regime detection)
 - Combined: Real-time regime switching for trading strategies
 
 ### 2. Risk Metrics on Time-Series Data
@@ -91,14 +91,14 @@ states = hmm.predict(returns)
 df = client.pct_change(['price'], periods=1)
 returns = df['price_pct_change'].to_numpy()
 
-# OptimizR: Risk analysis
+# Optimiz-rs: Risk analysis
 hurst = compute_hurst_exponent(returns)  # Mean-reversion detection
 half_life = estimate_half_life(returns)  # Reversion time
 risk_metrics = compute_risk_metrics(returns)  # Comprehensive suite
 ```
 
 **Value**:
-- Fast preprocessing (Polarway) + sophisticated analysis (OptimizR)
+- Fast preprocessing (Polarway) + sophisticated analysis (Optimiz-rs)
 - Useful for pairs trading, mean-reversion strategies
 - Real-time risk monitoring
 
@@ -111,7 +111,7 @@ risk_metrics = compute_risk_metrics(returns)  # Comprehensive suite
 df = client.lag(['spy_price', 'vix'], periods=[1, 5, 20])
 df = client.pct_change(['spy_price'], periods=1)
 
-# OptimizR: Solve optimal control problem
+# Optimiz-rs: Solve optimal control problem
 # State: [price, volatility regime]
 # Control: portfolio weights
 value_fn = solve_hjb_regime_switching(...)
@@ -133,7 +133,7 @@ def backtest_strategy(params):
     # ... strategy logic ...
     return -sharpe_ratio  # Minimize negative Sharpe
 
-# OptimizR: Find optimal parameters
+# Optimiz-rs: Find optimal parameters
 result = differential_evolution(
     objective_fn=backtest_strategy,
     bounds=[(1, 50), (0.01, 0.5)],  # [lag_period, threshold]
@@ -144,7 +144,7 @@ result = differential_evolution(
 
 **Value**:
 - Polarway handles heavy data processing
-- OptimizR finds optimal parameters
+- Optimiz-rs finds optimal parameters
 - 74-88× faster than SciPy DE
 
 ## High-Priority Enhancements
@@ -258,12 +258,12 @@ impl SHADEMemory {
 
 ### Priority 3: Time-Series Integration Helpers
 
-**Problem**: Using Polarway + OptimizR requires manual glue code
+**Problem**: Using Polarway + Optimiz-rs requires manual glue code
 
 **Solution**: Create helper functions for common time-series + optimization patterns
 
 **Implementation Strategy**:
-1. Add `timeseries_utils` module to OptimizR
+1. Add `timeseries_utils` module to Optimiz-rs
 2. Functions for common workflows
 3. Optional Polarway integration (via feature flag)
 
@@ -350,7 +350,7 @@ result = tsu.optimize_strategy_params(
 
 1. **Session 1 (Current)**: Time-Series Integration Helpers (1-2 hours)
    - Low effort, immediate value
-   - Makes Polarway + OptimizR integration obvious
+   - Makes Polarway + Optimiz-rs integration obvious
    - Creates examples for documentation
 
 2. **Session 2**: Enable Rust-Native Parallelization (1-2 hours)
@@ -372,7 +372,7 @@ result = tsu.optimize_strategy_params(
 For each enhancement:
 1. **Unit tests**: Algorithm correctness (sphere function, Rosenbrock)
 2. **Benchmarks**: Performance comparison (before/after)
-3. **Integration tests**: Polarway + OptimizR workflows
+3. **Integration tests**: Polarway + Optimiz-rs workflows
 4. **Documentation**: Usage examples, API docs
 
 ## Git Commit Strategy (per MANDATORY rules)
@@ -404,4 +404,4 @@ Each enhancement gets:
 
 ---
 
-**Next Action**: Implement Priority 3 (Time-Series Integration Helpers) as it's lowest effort with immediate value for demonstrating Polarway + OptimizR synergy.
+**Next Action**: Implement Priority 3 (Time-Series Integration Helpers) as it's lowest effort with immediate value for demonstrating Polarway + Optimiz-rs synergy.

@@ -1,4 +1,4 @@
-# OptimizR Enhancement Suite - Implementation Complete
+# Optimiz-rs Enhancement Suite - Implementation Complete
 
 **Date**: January 2, 2026  
 **Session Duration**: ~3 hours  
@@ -8,13 +8,13 @@
 
 ## Overview
 
-Completed comprehensive enhancement suite for OptimizR v0.2.0, implementing all 3 priorities from the Enhancement Strategy:
+Completed comprehensive enhancement suite for Optimiz-rs v0.2.0, implementing all 3 priorities from the Enhancement Strategy:
 
 1. ✅ **Time-Series Integration Helpers** (Priority 3)
 2. ✅ **Rust Parallelization** (Priority 2)
 3. ✅ **SHADE Algorithm** (Priority 1)
 
-Additionally created integration examples combining Polarway + OptimizR workflows.
+Additionally created integration examples combining Polarway + Optimiz-rs workflows.
 
 ---
 
@@ -22,7 +22,7 @@ Additionally created integration examples combining Polarway + OptimizR workflow
 
 ### 1. Time-Series Integration Helpers (Commit: 9a8032e, 7f77f29)
 
-**Purpose**: Bridge OptimizR's optimization with time-series analysis for financial workflows.
+**Purpose**: Bridge Optimiz-rs's optimization with time-series analysis for financial workflows.
 
 **Implementation**:
 - Created `src/timeseries_utils.rs` (400+ lines)
@@ -41,7 +41,7 @@ Additionally created integration examples combining Polarway + OptimizR workflow
 - All functions tested and working
 
 **Impact**:
-- Enables Polarway → OptimizR workflows
+- Enables Polarway → Optimiz-rs workflows
 - Simplifies regime detection with HMM
 - Streamlines pairs trading analysis
 
@@ -130,7 +130,7 @@ Additionally created integration examples combining Polarway + OptimizR workflow
 
 ### 4. Integration Examples (Included with parallelization)
 
-**Purpose**: Demonstrate Polarway + OptimizR workflows.
+**Purpose**: Demonstrate Polarway + Optimiz-rs workflows.
 
 **Implementation**:
 - `examples/polarway_optimizr_integration.py` (500+ lines)
@@ -148,7 +148,7 @@ Additionally created integration examples combining Polarway + OptimizR workflow
 
 **Impact**:
 - End-to-end examples for financial analysis
-- Demonstrates Polarway + OptimizR synergy
+- Demonstrates Polarway + Optimiz-rs synergy
 - Ready for production adaptation
 
 **Files**:
@@ -221,7 +221,7 @@ All commits pushed to origin/main ✅
 
 ## 🎯 Alignment with Roadmap
 
-All enhancements align with OptimizR v0.3.0 roadmap:
+All enhancements align with Optimiz-rs v0.3.0 roadmap:
 
 - ✅ **Time-series integration**: Enable Polarway workflows
 - ✅ **Parallelization**: Unlock Rayon infrastructure
@@ -325,4 +325,4 @@ Future (v0.3.0+):
 
 **Status**: ✅ **ALL OBJECTIVES COMPLETE**  
 **Next**: Integrate SHADE into DE, performance testing  
-**Version**: OptimizR v0.2.0 → v0.3.0 prep
+**Version**: Optimiz-rs v0.2.0 → v0.3.0 prep

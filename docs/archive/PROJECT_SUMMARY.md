@@ -1,8 +1,8 @@
-# OptimizR Project Summary
+# Optimiz-rs Project Summary
 
-## What is OptimizR?
+## What is Optimiz-rs?
 
-OptimizR is a **general-purpose optimization library** that provides high-performance implementations of advanced algorithms in Rust with easy-to-use Python bindings. It's designed to be fast, reliable, and production-ready for open-source distribution.
+Optimiz-rs is a **general-purpose optimization library** that provides high-performance implementations of advanced algorithms in Rust with easy-to-use Python bindings. It's designed to be fast, reliable, and production-ready for open-source distribution.
 
 ## Key Features
 
@@ -140,7 +140,7 @@ x_opt, f_min = differential_evolution(
 
 ## Differences from rust-hft-arbitrage-lab
 
-| Aspect | rust-hft-arbitrage-lab | OptimizR |
+| Aspect | rust-hft-arbitrage-lab | Optimiz-rs |
 |--------|----------------------|----------|
 | **Purpose** | HFT trading strategies | General optimization library |
 | **Scope** | Trading-specific | Domain-agnostic |
@@ -165,7 +165,7 @@ x_opt, f_min = differential_evolution(
    ```bash
    git init
    git add .
-   git commit -m "Initial commit: OptimizR v0.1.0"
+   git commit -m "Initial commit: Optimiz-rs v0.1.0"
    git remote add origin https://github.com/ThotDjehuty/optimiz-r.git
    git push -u origin main
    ```
@@ -217,7 +217,7 @@ Based on benchmarks from rust-hft-arbitrage-lab:
 ## Marketing/Outreach
 
 1. **Reddit**: r/rust, r/python, r/MachineLearning
-2. **Hacker News**: "Show HN: OptimizR - Fast optimization algorithms in Rust"
+2. **Hacker News**: "Show HN: Optimiz-rs - Fast optimization algorithms in Rust"
 3. **Twitter/X**: Tweet with #rustlang #python
 4. **PyPI**: Ensure good package description
 5. **GitHub Topics**: optimization, rust, python, scientific-computing

@@ -9,7 +9,7 @@ Example notebooks in `examples/notebooks/` **ARE WORKING CORRECTLY**! They use P
 - Automatic Rust backend when available
 - Graceful fallback to pure Python
 
-## Actual OptimizR Python API (from lib.rs)
+## Actual Optimiz-rs Python API (from lib.rs)
 
 ### ✅ Available Functions/Classes:
 
@@ -155,7 +155,7 @@ from optimizr import (
 ```
 
 **Features Demonstrated:**
-- Direct comparison: OptimizR (Rust) vs Python libraries
+- Direct comparison: Optimiz-rs (Rust) vs Python libraries
 - Benchmarks against: hmmlearn, scipy, sklearn
 - Performance metrics and speedup calculations
 
@@ -178,7 +178,7 @@ from optimizr import (
 
 ### Python Wrapper Design (Brilliant!)
 
-OptimizR uses a **two-layer architecture**:
+Optimiz-rs uses a **two-layer architecture**:
 
 1. **Rust Core** (`src/` with PyO3):
    - `HMMParams` class
@@ -237,7 +237,7 @@ This design is **excellent** because:
 
 ## Testing Summary
 
-| Notebook | Status | OptimizR Features | Test Result |
+| Notebook | Status | Optimiz-rs Features | Test Result |
 |----------|--------|-------------------|-------------|
 | 01_hmm_tutorial.ipynb | ✅ PASS | HMM (Rust) | All cells run |
 | 02_mcmc_tutorial.ipynb | ✅ PASS | mcmc_sample | Imports OK |
@@ -277,7 +277,7 @@ This design is **excellent** because:
 **Actual Status:** Notebooks use Python wrappers correctly
 
 **What I Learned:**
-1. OptimizR has excellent two-layer design
+1. Optimiz-rs has excellent two-layer design
 2. Python wrappers provide familiar OOP interface
 3. Rust acceleration is transparent to users
 4. Only 1 minor fix needed (random_state parameter)

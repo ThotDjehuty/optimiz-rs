@@ -1,6 +1,6 @@
 # Examples
 
-Practical snippets for every OptimizR component.
+Practical snippets for every Optimiz-rs component.
 
 ## Differential Evolution (global optimization)
 

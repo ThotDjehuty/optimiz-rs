@@ -1,7 +1,7 @@
 # Time-Series Integration Helpers Implementation Summary
 
 ## Overview
-Completed Priority 3 from Enhancement Strategy: Time-series integration helpers for OptimizR v0.3.0. These 6 helper functions bridge OptimizR's optimization capabilities with time-series analysis, particularly useful for regime-switching models and pairs trading strategies.
+Completed Priority 3 from Enhancement Strategy: Time-series integration helpers for Optimiz-rs v0.3.0. These 6 helper functions bridge Optimiz-rs's optimization capabilities with time-series analysis, particularly useful for regime-switching models and pairs trading strategies.
 
 ## Implementation Details
 
@@ -15,7 +15,7 @@ Completed Priority 3 from Enhancement Strategy: Time-series integration helpers 
      - Volatility proxy: squared returns
      - Lagged returns for each lag period
    - Returns: Feature matrix (N-max_lag rows × (3 + num_lags) columns)
-   - Use case: Prepare price data for OptimizR's HMM regime detection
+   - Use case: Prepare price data for Optimiz-rs's HMM regime detection
 
 2. **`rolling_hurst_exponent(returns: &[f64], window_size: usize) -> Vec<f64>`**
    - Purpose: Detect mean-reversion vs trending behavior
@@ -146,7 +146,7 @@ import optimizr
 
 prices = [100.0, 101.5, 99.8, 102.3, 103.7]
 features = optimizr.prepare_for_hmm_py(prices, [1, 2])
-# Use with OptimizR's HMM for regime detection
+# Use with Optimiz-rs's HMM for regime detection
 ```
 
 ### Mean-Reversion Check

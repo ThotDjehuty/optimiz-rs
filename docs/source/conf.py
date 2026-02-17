@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../../python'))
 
 # -- Project information -----------------------------------------------------
-project = 'OptimizR'
+project = 'Optimiz-rs'
 copyright = '2026, HFThot Research Lab'
 author = 'HFThot Research Lab'
 release = '0.3.0'
@@ -32,8 +32,8 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'furo'  # Modern, clean theme
 html_static_path = ['_static']
-html_title = 'OptimizR Documentation'
-html_short_title = 'OptimizR'
+html_title = 'Optimiz-rs Documentation'
+html_short_title = 'Optimiz-rs'
 html_logo = 'logo_optimizrs.png'
 html_favicon = 'logo_optimizrs.png'
 

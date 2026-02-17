@@ -1,6 +1,6 @@
 # Mathematical Foundations
 
-This page collects the core equations driving OptimizR’s Rust kernels, plus short intuition blurbs and micro-checks you can run in a notebook. For visuals and full walkthroughs, see the example notebooks in `examples/notebooks/`.
+This page collects the core equations driving Optimiz-rs’s Rust kernels, plus short intuition blurbs and micro-checks you can run in a notebook. For visuals and full walkthroughs, see the example notebooks in `examples/notebooks/`.
 
 ## Differential Evolution (DE)
 
@@ -29,7 +29,7 @@ $$
 \end{cases}
 $$
 
-**Self-adaptive jDE (used by OptimizR):**
+**Self-adaptive jDE (used by Optimiz-rs):**
 $$
 F_i^{g+1} = \begin{cases}
 F_{\min} + r_1 \cdot F_{\max} & r_2 < \tau_1,\\
@@ -52,7 +52,7 @@ $$
 -\partial_t V(t,x) = \inf_{u\in\mathcal{U}} \Big[ \ell(x,u) + \nabla_x V(t,x)^{\top} b(x,u) + \tfrac12 \operatorname{Tr}\big(\sigma\sigma^{\top}(x,u) \, \nabla_x^2 V(t,x)\big) \Big],\quad V(T,x) = g(x).
 $$
 
-OptimizR uses finite differences with backward time-stepping and optional policy iteration. On a uniform grid $(t_n, x_j)$:
+Optimiz-rs uses finite differences with backward time-stepping and optional policy iteration. On a uniform grid $(t_n, x_j)$:
 $$
 V^{n} = \min_{u}\Big\{ \ell(x_j,u)\,\Delta t + V^{n+1} + \nabla_x V^{n+1}\cdot b\,\Delta t + \tfrac12 \operatorname{Tr}(\sigma\sigma^{\top}\nabla_x^2 V^{n+1})\,\Delta t \Big\}.
 $$
@@ -62,7 +62,7 @@ The control that attains the minimum yields the feedback policy $u^{\star}(x_j, 
 
 ## Mean Field Games (1D solver)
 
-OptimizR’s MFG module solves the coupled system for value $u$ and density $m$:
+Optimiz-rs’s MFG module solves the coupled system for value $u$ and density $m$:
 $$
 \begin{aligned}
 -\partial_t u(t,x) - \nu\,\partial_{xx} u(t,x) + H\big(x,\partial_x u(t,x), m(t,x)\big) &= 0,\\
@@ -100,7 +100,7 @@ For target density $\pi(x)$ and proposal $q(x'\mid x)$:
 $$
 \alpha(x \to x') = \min\Big(1, \frac{\pi(x')\, q(x \mid x')}{\pi(x)\, q(x' \mid x)}\Big).
 $$
-OptimizR uses symmetric Gaussian proposals (so $q$ cancels) by default, with optional bounds projection and burn-in.
+Optimiz-rs uses symmetric Gaussian proposals (so $q$ cancels) by default, with optional bounds projection and burn-in.
 
 **Heuristic:** Tune proposal std so acceptance is ~0.25–0.35 for moderate dimensions; see `examples/notebooks/02_mcmc.ipynb` for trace plots.
 

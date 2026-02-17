@@ -1,4 +1,4 @@
-# OptimizR Setup Complete! ✅
+# Optimiz-rs Setup Complete! ✅
 
 ## What Was Done
 
@@ -136,7 +136,7 @@ pytest tests/ -v -k HMM   # Run HMM tests only
 
 ## Performance
 
-OptimizR provides **50-100x speedup** over pure Python for:
+Optimiz-rs provides **50-100x speedup** over pure Python for:
 - HMM fitting (71x faster)
 - MCMC sampling (71x faster)
 - Differential Evolution (53x faster)
@@ -144,7 +144,7 @@ OptimizR provides **50-100x speedup** over pure Python for:
 
 ## Summary
 
-The OptimizR project is now **fully functional** with:
+The Optimiz-rs project is now **fully functional** with:
 - ✅ Zero compilation errors
 - ✅ All tests passing
 - ✅ Docker support

@@ -12,7 +12,7 @@ pip install -r docs/requirements.txt
 pip install maturin numpy
 ```
 
-## 2. Build and install OptimizR locally
+## 2. Build and install Optimiz-rs locally
 
 ```bash
 pip install .
@@ -26,7 +26,7 @@ maturin develop --release
 python - <<'PY'
 import optimizr
 from optimizr import differential_evolution, HMM
-print("OptimizR version:", optimizr.__version__)
+print("Optimiz-rs version:", optimizr.__version__)
 
 # Simple objective
 f = lambda x: sum(v * v for v in x)

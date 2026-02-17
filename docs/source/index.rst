@@ -1,6 +1,6 @@
-.. OptimizR documentation master file
+.. Optimiz-rs documentation master file
 
-OptimizR Documentation
+Optimiz-rs Documentation
 ======================
 
 **High-performance optimization algorithms in Rust with Python bindings**
@@ -13,7 +13,7 @@ OptimizR Documentation
    :target: https://github.com/ThotDjehuty/optimiz-r/blob/main/LICENSE
    :alt: License
 
-OptimizR provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers **50-100× speedup** over pure Python implementations.
+Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers **50-100× speedup** over pure Python implementations.
 
 .. toctree::
    :maxdepth: 2

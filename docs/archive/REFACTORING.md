@@ -1,8 +1,8 @@
-# OptimizR Refactoring Summary
+# Optimiz-rs Refactoring Summary
 
 ## Overview
 
-This document summarizes the major refactoring applied to OptimizR to improve modularity, introduce functional programming patterns, implement design patterns, and add concurrency support.
+This document summarizes the major refactoring applied to Optimiz-rs to improve modularity, introduce functional programming patterns, implement design patterns, and add concurrency support.
 
 ## Architecture Changes
 
@@ -369,7 +369,7 @@ impl ProposalStrategy for MyProposal {
 
 ## Conclusion
 
-This refactoring significantly improves OptimizR's:
+This refactoring significantly improves Optimiz-rs's:
 - **Modularity**: Clear trait boundaries, easy to extend
 - **Maintainability**: Builder patterns, functional utilities reduce boilerplate
 - **Performance**: Parallel execution, memoization, lazy evaluation

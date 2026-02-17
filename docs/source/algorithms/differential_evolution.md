@@ -303,7 +303,7 @@ print(f"Function evaluations: {result.nfev}")
 
 ## Adaptive Control (jDE)
 
-OptimizR implements **jDE** (self-adaptive DE), where the parameters $F$ and $CR$ 
+Optimiz-rs implements **jDE** (self-adaptive DE), where the parameters $F$ and $CR$ 
 evolve with the population:
 
 $$
