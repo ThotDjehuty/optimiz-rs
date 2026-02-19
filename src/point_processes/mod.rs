@@ -1,52 +1,67 @@
-//! Point Processes Module for Order Flow Modeling
+//! Point Processes Module
 //!
-//! This module implements the mathematical framework from "A Unified Theory of
-//! Order Flow, Market Impact, and Volatility" (Muhle-Karbe et al., 2026).
+//! This module provides general-purpose implementations of point processes,
+//! fractional Brownian motion, and related mathematical tools.
 //!
 //! # Overview
 //!
-//! The module provides tools for modeling order flow in financial markets using:
-//!
-//! - **Hawkes Processes**: Self-exciting point processes for core and reaction flows
+//! - **Hawkes Processes**: Self-exciting point processes with flexible kernels
 //! - **Excitation Kernels**: Power-law and exponential kernels for temporal dependence
-//! - **Mixed Fractional Brownian Motion**: Scaling limits of aggregate order flow
-//! - **Mittag-Leffler Functions**: Key functions for scaling limit analysis
-//! - **Order Flow Analysis**: Signed/unsigned flow, Hurst estimation, market impact
+//! - **Fractional Brownian Motion (fBM)**: Long-memory Gaussian processes
+//! - **Mixed Fractional Brownian Motion (mfBM)**: BM + fBM combinations
+//! - **Mittag-Leffler Functions**: Special functions for scaling limit analysis
+//! - **Hurst Estimation**: R/S analysis and scale-dependent methods
 //!
-//! # Key Relationships (Unified Theory)
+//! # Mathematical Background
 //!
-//! All quantities are determined by a single parameter H₀ ≈ 3/4:
+//! ## Hawkes Processes
 //!
-//! - Signed order flow: Hurst index H₀
-//! - Unsigned volume: Hurst index H₀ - 1/2 (rough, ~0.25)
-//! - Volatility: Hurst index 2H₀ - 3/2 (~0 for H₀=3/4)
-//! - Market impact: power law exponent 2 - 2H₀ (~0.5, square-root law)
+//! A Hawkes process is a self-exciting point process with intensity:
+//!
+//! $$\lambda(t) = \nu + \sum_{t_i < t} \phi(t - t_i)$$
+//!
+//! where $\nu$ is the baseline intensity and $\phi$ is the excitation kernel.
+//!
+//! Supported kernels:
+//! - **Exponential**: $\phi(t) = \alpha e^{-\beta t}$ (short memory)
+//! - **Power-law**: $\phi(t) = K_0 (1+t)^{-(1+\alpha_0)}$ (long memory)
+//!
+//! ## Fractional Brownian Motion
+//!
+//! fBM $B^H_t$ with Hurst parameter $H \in (0,1)$ has covariance:
+//!
+//! $$Cov(B^H_s, B^H_t) = \frac{1}{2}(|t|^{2H} + |s|^{2H} - |t-s|^{2H})$$
+//!
+//! - $H < 0.5$: Anti-persistent (mean-reverting)
+//! - $H = 0.5$: Standard Brownian motion
+//! - $H > 0.5$: Persistent (trending)
 //!
 //! # Example
 //!
 //! ```rust,ignore
 //! use optimizr::point_processes::{
-//!     HawkesProcess, PowerLawKernel, OrderFlowAnalyzer
+//!     HawkesProcess, PowerLawKernel, FractionalBM
 //! };
 //!
-//! // Create a Hawkes process for core order flow
+//! // Create a Hawkes process with power-law kernel
 //! let kernel = PowerLawKernel::new(0.5, 1.0);  // α₀ = 0.5, K₀ = 1.0
-//! let hawkes = HawkesProcess::new(0.1, kernel);  // ν = 0.1
+//! let hawkes = HawkesProcess::new(0.1, kernel);  // baseline ν = 0.1
 //!
-//! // Simulate order arrivals
+//! // Simulate point process
 //! let arrivals = hawkes.simulate(1000.0, Some(42));
 //!
-//! // Analyze order flow
-//! let analyzer = OrderFlowAnalyzer::new();
-//! let h0 = analyzer.estimate_h0(&arrivals);
-//! println!("Estimated H₀: {:.4}", h0);
+//! // Simulate fBM with H = 0.75
+//! let mut fbm = FractionalBM::new(0.75);
+//! let path = fbm.simulate_hosking(1000, 1.0, Some(42));
+//!
+//! // Estimate Hurst exponent
+//! let h_est = FractionalBM::estimate_hurst(&path);
 //! ```
 
 mod kernels;
 mod hawkes;
 mod mittag_leffler;
 mod mixed_fbm;
-mod order_flow;
 
 #[cfg(feature = "python-bindings")]
 pub mod python_bindings;
@@ -56,8 +71,3 @@ pub use kernels::{ExcitationKernel, PowerLawKernel, ExponentialKernel};
 pub use hawkes::{HawkesProcess, HawkesProcessConfig, BivariateHawkes};
 pub use mittag_leffler::{mittag_leffler, mittag_leffler_derivative, f_alpha_lambda};
 pub use mixed_fbm::{MixedFractionalBM, FractionalBM};
-pub use order_flow::{
-    OrderFlowAnalyzer, OrderFlowMetrics, UnifiedTheoryParams,
-    signed_order_flow, unsigned_volume, market_impact_exponent,
-    volatility_hurst, volume_hurst
-};

@@ -1,14 +1,20 @@
 //! Python bindings for point processes module
+//!
+//! Provides Python access to:
+//! - Hawkes process simulation (univariate and bivariate)
+//! - Fractional Brownian motion simulation
+//! - Mixed fractional Brownian motion
+//! - Hurst exponent estimation
+//! - Mittag-Leffler special functions
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use numpy::{PyArray1, PyReadonlyArray1};
 
 use super::kernels::{ExcitationKernel, PowerLawKernel, ExponentialKernel};
-use super::hawkes::{HawkesProcess, HawkesProcessConfig, BivariateHawkes};
+use super::hawkes::{HawkesProcess, BivariateHawkes};
 use super::mittag_leffler::{mittag_leffler, f_alpha_lambda};
 use super::mixed_fbm::{FractionalBM, MixedFractionalBM};
-use super::order_flow::{OrderFlowAnalyzer, UnifiedTheoryParams, MarketImpact};
 
 /// Simulate a univariate Hawkes process
 ///
@@ -184,99 +190,6 @@ pub fn scale_dependent_hurst<'py>(
     Ok(dict)
 }
 
-/// Analyze order flow data using unified theory framework
-///
-/// # Arguments
-/// * `flow` - Signed order flow data (positive = buy, negative = sell)
-///
-/// # Returns
-/// Dictionary with metrics:
-/// - h0: Estimated H₀ (core flow persistence)
-/// - h_signed_fbm: Hurst under pure fBM assumption
-/// - h_signed_mfbm: Hurst under mfBM assumption
-/// - h_unsigned: Hurst of unsigned volume
-/// - h_volatility: Implied volatility Hurst (2H₀ - 3/2)
-/// - impact_exponent: Implied market impact exponent (2 - 2H₀)
-/// - acf_1: First-order autocorrelation
-/// - scale_hurst: Scale-dependent Hurst estimates
-#[pyfunction]
-pub fn analyze_order_flow<'py>(
-    py: Python<'py>,
-    flow: PyReadonlyArray1<f64>,
-) -> PyResult<Bound<'py, PyDict>> {
-    let slice = flow.as_slice()?;
-    
-    let analyzer = OrderFlowAnalyzer::new();
-    let metrics = analyzer.analyze_signed_flow(slice);
-    
-    let dict = PyDict::new_bound(py);
-    dict.set_item("h0", metrics.h0)?;
-    dict.set_item("h_signed_fbm", metrics.h_signed_fbm)?;
-    dict.set_item("h_signed_mfbm", metrics.h_signed_mfbm)?;
-    dict.set_item("h_unsigned", metrics.h_unsigned)?;
-    dict.set_item("h_volatility", metrics.h_volatility)?;
-    dict.set_item("impact_exponent", metrics.impact_exponent)?;
-    dict.set_item("total_signed", metrics.total_signed)?;
-    dict.set_item("total_unsigned", metrics.total_unsigned)?;
-    dict.set_item("acf_1", metrics.acf_1)?;
-    
-    // Scale-dependent Hurst as nested dict
-    let scale_dict = PyDict::new_bound(py);
-    for (scale, h) in metrics.scale_hurst {
-        scale_dict.set_item(scale, h)?;
-    }
-    dict.set_item("scale_hurst", scale_dict)?;
-    
-    Ok(dict)
-}
-
-/// Get unified theory derived quantities from H₀
-///
-/// # Arguments
-/// * `h0` - Hurst index of signed order flow (typically ~0.75)
-///
-/// # Returns
-/// Dictionary with derived parameters:
-/// - h0: Input H₀
-/// - alpha0: Tail exponent α₀ = H₀/2
-/// - h_volume: Volume Hurst H₁ = H₀ - 0.5
-/// - h_volatility: Volatility Hurst = 2H₀ - 1.5
-/// - impact_exponent: Market impact exponent δ = 2 - 2H₀
-/// - is_semimartingale: Whether mfBM is a semimartingale (H₀ > 3/4)
-#[pyfunction]
-pub fn unified_theory_params<'py>(
-    py: Python<'py>,
-    h0: f64,
-) -> PyResult<Bound<'py, PyDict>> {
-    let params = UnifiedTheoryParams::new(h0);
-    
-    let dict = PyDict::new_bound(py);
-    dict.set_item("h0", params.h0)?;
-    dict.set_item("alpha0", params.alpha0())?;
-    dict.set_item("h_volume", params.volume_hurst())?;
-    dict.set_item("h_volatility", params.volatility_hurst())?;
-    dict.set_item("impact_exponent", params.impact_exponent())?;
-    dict.set_item("is_semimartingale", params.is_semimartingale())?;
-    
-    Ok(dict)
-}
-
-/// Compute market impact for given order size
-///
-/// Impact(Q) = scale * |Q|^δ * sign(Q)
-/// where δ = 2 - 2*H₀
-#[pyfunction]
-#[pyo3(signature = (q, h0=0.75, scale=1.0))]
-pub fn market_impact<'py>(
-    _py: Python<'py>,
-    q: f64,
-    h0: f64,
-    scale: f64,
-) -> PyResult<f64> {
-    let impact = MarketImpact::from_h0(h0, scale);
-    Ok(impact.impact(q))
-}
-
 /// Register all point process functions to PyO3 module
 pub fn register_python_functions(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Hawkes processes
@@ -292,11 +205,6 @@ pub fn register_python_functions(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(simulate_mixed_fbm, m)?)?;
     m.add_function(wrap_pyfunction!(estimate_hurst, m)?)?;
     m.add_function(wrap_pyfunction!(scale_dependent_hurst, m)?)?;
-    
-    // Order flow analysis
-    m.add_function(wrap_pyfunction!(analyze_order_flow, m)?)?;
-    m.add_function(wrap_pyfunction!(unified_theory_params, m)?)?;
-    m.add_function(wrap_pyfunction!(market_impact, m)?)?;
     
     Ok(())
 }
