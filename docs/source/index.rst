@@ -36,6 +36,7 @@ Optimiz-rs provides blazingly fast, production-ready implementations of advanced
    algorithms/optimal_control
    algorithms/risk_metrics
    algorithms/grid_search
+   algorithms/point_processes
 
 .. toctree::
    :maxdepth: 2
@@ -48,6 +49,7 @@ Optimiz-rs provides blazingly fast, production-ready implementations of advanced
    api/sparse
    api/optimal_control
    api/risk_metrics
+   api/point_processes
 
 .. toctree::
    :maxdepth: 1
