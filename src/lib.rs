@@ -45,6 +45,7 @@ pub mod optimal_control;
 pub mod risk_metrics;
 pub mod sparse_optimization;
 pub mod mean_field; // Mean Field Games and Mean Field Type Control
+pub mod point_processes; // Point processes for order flow modeling (Hawkes, fBM)
 
 // Python bindings for legacy compatibility
 #[cfg(feature = "python-bindings")]
@@ -114,6 +115,9 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Mean Field Games functions
     mean_field::python_bindings::register_python_functions(m)?;
+
+    // Point Processes functions (Hawkes, fBM, order flow)
+    point_processes::python_bindings::register_python_functions(m)?;
 
     // Optimal Control functions (includes Kalman Filter)
     optimal_control::py_bindings::register_py_module(m)?;
