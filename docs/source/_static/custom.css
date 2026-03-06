@@ -1,0 +1,138 @@
+/* ─── Optimiz-rs Documentation Custom Styles ──────────────────────────────── */
+/* Brand: orange (#f97316) on furo dark theme */
+
+:root {
+    --brand-orange: #f97316;
+    --brand-orange-light: #fb923c;
+    --brand-orange-dim: rgba(249, 115, 22, 0.15);
+    --brand-orange-border: rgba(249, 115, 22, 0.35);
+}
+
+/* ── Mermaid diagram container ─────────────────────────────────────────────── */
+.mermaid {
+    background: transparent !important;
+    padding: 1.5rem 0;
+    text-align: center;
+    overflow-x: auto;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    border-radius: 12px;
+    filter: drop-shadow(0 4px 16px rgba(249, 115, 22, 0.12));
+}
+
+/* ── Better admonitions ─────────────────────────────────────────────────────── */
+.admonition {
+    border-radius: 10px !important;
+    border-left-width: 4px !important;
+    margin: 1.5rem 0 !important;
+}
+
+.admonition.note {
+    border-left-color: var(--brand-orange) !important;
+    background: var(--brand-orange-dim) !important;
+}
+
+.admonition.tip {
+    border-left-color: #22c55e !important;
+    background: rgba(34, 197, 94, 0.1) !important;
+}
+
+.admonition.warning {
+    border-left-color: #f59e0b !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.admonition.important {
+    border-left-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ── Section headers ────────────────────────────────────────────────────────── */
+h1, h2, h3 {
+    scroll-margin-top: 4rem;
+}
+
+h2 {
+    border-bottom: 2px solid var(--brand-orange-border);
+    padding-bottom: 0.4rem;
+}
+
+/* ── Code blocks ────────────────────────────────────────────────────────────── */
+.highlight {
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Inline code */
+code.literal {
+    background: rgba(249, 115, 22, 0.08) !important;
+    border: 1px solid var(--brand-orange-border) !important;
+    padding: 0.1em 0.4em !important;
+    border-radius: 4px !important;
+    color: var(--brand-orange-light) !important;
+    font-size: 0.88em !important;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────────── */
+table.docutils {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.2rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.9rem;
+}
+
+table.docutils th {
+    background: var(--brand-orange-dim) !important;
+    color: var(--brand-orange-light) !important;
+    font-weight: 700;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 2px solid var(--brand-orange-border);
+}
+
+table.docutils td {
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+table.docutils tr:hover td {
+    background: rgba(249, 115, 22, 0.04);
+}
+
+/* ── Performance metric boxes (for benchmarks) ──────────────────────────────── */
+.perf-box {
+    background: linear-gradient(135deg, rgba(249,115,22,0.12) 0%, rgba(249,115,22,0.04) 100%);
+    border: 1px solid var(--brand-orange-border);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+    display: inline-block;
+    min-width: 140px;
+    text-align: center;
+}
+
+.perf-box .val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--brand-orange);
+}
+
+.perf-box .lbl {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.2rem;
+}
+
+/* ── Navigation sidebar ─────────────────────────────────────────────────────── */
+.sidebar-tree .current > .reference {
+    color: var(--brand-orange) !important;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .mermaid svg { width: 100% !important; }
+    table.docutils { font-size: 0.78rem; }
+}

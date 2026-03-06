@@ -406,25 +406,32 @@ plt.show()
 
 ## Module Architecture
 
-```
-optimizr/point_processes/
-├── mod.rs              # Module root, public API re-exports
-├── kernels.rs          # ExcitationKernel trait + implementations
-│   ├── ExponentialKernel    (φ = αe^{-βt})
-│   ├── PowerLawKernel       (φ = K₀(1+t)^{-1-α₀})
-│   └── CompletelyMonotoneKernel (Mittag-Leffler)
-├── hawkes.rs           # Hawkes process simulation & fitting
-│   ├── HawkesProcess<K>     (univariate, Ogata thinning)
-│   └── BivariateHawkes<K>   (buy/sell reaction flow)
-├── mittag_leffler.rs   # Special functions
-│   ├── mittag_leffler()     (E_{α,β}(z))
-│   ├── f_alpha_lambda()     (Theorem 3.1 scaling fn)
-│   ├── gamma()              (Lanczos Γ function)
-│   └── incomplete_gamma*()  (upper/lower)
-├── mixed_fbm.rs        # Fractional Brownian motion
-│   ├── FractionalBM         (Cholesky & Hosking simulation)
-│   └── MixedFractionalBM    (a·B + b·B^H)
-└── python_bindings.rs  # PyO3 bindings for all functions
+```{mermaid}
+graph TD
+    MOD["📦 mod.rs\nPublic API re-exports"]
+    K["🔧 kernels.rs\nExcitationKernel trait"]
+    H["⚡ hawkes.rs\nSimulation & fitting"]
+    ML["🔢 mittag_leffler.rs\nSpecial functions"]
+    FBM["〰️ mixed_fbm.rs\nFractional Brownian motion"]
+    PY["🐍 python_bindings.rs\nPyO3 bindings"]
+
+    MOD --> K
+    MOD --> H
+    MOD --> ML
+    MOD --> FBM
+    MOD --> PY
+
+    K --> EK["ExponentialKernel\nφ = α·e^−βt"]
+    K --> PLK["PowerLawKernel\nφ = K₀(1+t)^−1−α"]
+    K --> CMK["CompletelyMonotoneKernel\nMittag-Leffler"]
+
+    H --> HP["HawkesProcess K\nunivariate · Ogata thinning"]
+    H --> BH["BivariateHawkes K\nbuy/sell reaction flow"]
+
+    ML --> mf["mittag_leffler · f_alpha_lambda\ngamma · incomplete_gamma"]
+
+    FBM --> fbm1["FractionalBM\nCholesky & Hosking"]
+    FBM --> fbm2["MixedFractionalBM\na·B + b·B^H"]
 ```
 
 ---

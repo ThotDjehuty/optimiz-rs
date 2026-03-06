@@ -169,46 +169,18 @@ $$
 
 ## Complete Algorithm
 
-```
-Algorithm: Differential Evolution
-─────────────────────────────────
-Input: objective f, bounds [l, u], pop_size N_P, F, CR, max_iter
-
-1. Initialize population:
-   For i = 1 to N_P:
-       x_{i,0} = l + rand(0,1) · (u - l)    # uniform in bounds
-   
-2. Evaluate fitness:
-   f_i = f(x_{i,0}) for all i
-
-3. While g < max_iter and not converged:
-   
-   a. For i = 1 to N_P:
-      
-      i. Mutation:
-         Select r_1, r_2, r_3 distinct and ≠ i
-         v_{i,g+1} = x_{r_1,g} + F · (x_{r_2,g} - x_{r_3,g})
-      
-      ii. Crossover:
-          j_rand = randint(1, D)
-          For j = 1 to D:
-              if rand(0,1) ≤ CR or j = j_rand:
-                  u_{i,j,g+1} = v_{i,j,g+1}
-              else:
-                  u_{i,j,g+1} = x_{i,j,g}
-      
-      iii. Boundary handling:
-           Clip u_{i,g+1} to [l, u]
-      
-      iv. Selection:
-          if f(u_{i,g+1}) ≤ f(x_{i,g}):
-              x_{i,g+1} = u_{i,g+1}
-          else:
-              x_{i,g+1} = x_{i,g}
-   
-   b. g = g + 1
-
-4. Return x_best and f(x_best)
+```{mermaid}
+flowchart TD
+    A["🎲 Initialize Population\nx_i = l + rand · (u − l)"] --> B["📊 Evaluate Fitness\nf_i = f(x_i) for all i"]
+    B --> C{{"g < max_iter?"}}
+    C -->|Yes| D["Mutation\nv = x_r1 + F · (x_r2 − x_r3)"]
+    D --> E["Crossover\nu_j = v_j if rand ≤ CR or j = j_rand\nelse u_j = x_j"]
+    E --> F["Clip to bounds [l, u]"]
+    F --> G{{"f(trial) ≤ f(target)?"}}
+    G -->|"Yes — better"| H["✅ Accept trial\nx_i ← u_i"]
+    G -->|"No — worse"| I["Keep current\nx_i unchanged"]
+    H & I --> C
+    C -->|No| J["🏆 Return x_best, f(x_best)"]
 ```
 
 ---

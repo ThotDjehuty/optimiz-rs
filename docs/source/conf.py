@@ -20,6 +20,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'myst_parser',
+    'sphinxcontrib.mermaid',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -76,3 +77,10 @@ myst_enable_extensions = [
     "deflist",
     "dollarmath",
 ]
+
+# Custom CSS
+html_css_files = ["custom.css"]
+
+# Mermaid configuration
+mermaid_version = "10.9.0"
+mermaid_init_js = "mermaid.initialize({startOnLoad:true, theme:'dark', themeVariables:{primaryColor:'#f97316',primaryTextColor:'#fff',primaryBorderColor:'#ea6a0a',lineColor:'#fb923c',secondaryColor:'#1e293b',tertiaryColor:'#0f172a'}});"

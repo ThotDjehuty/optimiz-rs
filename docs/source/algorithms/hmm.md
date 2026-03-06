@@ -458,6 +458,24 @@ For complete examples with regime detection on real market data, see the [HMM Tu
 
 ### Transition Diagram
 
+```{mermaid}
+stateDiagram-v2
+    direction LR
+    [*] --> Normal
+    Bull : 📈 Bull Market
+    Normal : 📊 Normal Regime
+    Bear : 📉 Bear Market
+    Bull --> Bull : a₁₁ (self)
+    Bull --> Normal : a₁₂
+    Normal --> Bull : a₂₁
+    Normal --> Normal : a₂₂ (self)
+    Normal --> Bear : a₂₃
+    Bear --> Normal : a₃₂
+    Bear --> Bear : a₃₃ (self)
+```
+
+**Code example** — build and visualize the transition graph programmatically:
+
 ```python
 import networkx as nx
 
