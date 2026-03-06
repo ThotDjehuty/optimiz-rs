@@ -235,68 +235,247 @@ $$\mathcal{L}F = b\,\partial_x F + \tfrac12\sigma^2\partial_{xx}F
 
 ## 4 · Optimal Control (HJB, PMP, Jumps)
 
+**Big picture.** Optimal control asks: *given a stochastic system we can steer with a
+control $u_t$, what policy minimises expected cost?*  Three complementary tools answer this:
+
+| Tool | Solves | Scales to | Intuition |
+|------|--------|-----------|-----------|
+| HJB PDE | Value function $V(t,x)$ | Low dim (PDE grid) | Dynamic programming |
+| PMP | Optimal paths $(X_t,p_t)$ | High dim (ODE) | Adjoint sensitivity |
+| HJBI | Same as HJB + jumps | Low dim | Non-local integral term |
+
+---
+
 ### 4.1 Stochastic HJB
 
-For $dX_t = b(X_t,u_t)\,dt + \sigma(X_t,u_t)\,dW_t$, minimising
-$J = \mathbb{E}[\int_0^T \ell\,dt + g(X_T)]$, the value function
-$V(t,x) = \inf_u J$ satisfies:
+**Setup.** The state $X_t \in \mathbb{R}^d$ evolves as
+
+$$dX_t = b(X_t,u_t)\,dt + \sigma(X_t,u_t)\,dW_t,$$
+
+and we minimise the total expected cost
+
+$$J(t,x;u) = \mathbb{E}\!\left[\int_t^T \ell(X_s,u_s)\,ds + g(X_T)\,\Big|\,X_t=x\right].$$
+
+The **value function** $V(t,x) = \inf_u J(t,x;u)$ satisfies:
 
 $$-\partial_t V = \inf_{u\in\mathcal{U}}\Bigl[\ell(x,u) + \nabla_x V^{\!\top} b(x,u)
 + \tfrac12\operatorname{Tr}\bigl(\sigma\sigma^{\!\top}(x,u)\,\nabla_x^2 V\bigr)\Bigr],
 \quad V(T,\cdot)=g.$$
 
-Under smooth $V$, the feedback law is
-$u^\star(t,x) = \arg\min_u[\ell(x,u)+\nabla_x V^\top b(x,u)]$.
+**Intuition.** The three terms inside the infimum are:
+- $\ell(x,u)$ — instantaneous running cost (pay now),
+- $\nabla_x V^\top b$ — drift of the value (first-order)
+- $\tfrac12\operatorname{Tr}(\sigma\sigma^\top\nabla^2 V)$ — curvature correction due to noise
+  (the stochastic analogue of a second-order Taylor term).
 
-**LQR special case** ($\ell = x^\top Q x + u^\top R u$, $b=Ax+Bu$):
+Under smooth $V$, the **feedback law** is
+$u^\star(t,x) = \arg\min_u[\ell(x,u)+\nabla_x V^\top b(x,u)].$
+
+---
+
+::::{admonition} Example — Optimal Portfolio Allocation
+:class: note
+
+Investor wealth $X_t$ follows
+$dX_t = (r + u_t(\mu-r))X_t\,dt + u_t\sigma X_t\,dW_t$,
+where $u_t\in\mathbb{R}$ is the fraction invested in the risky asset.
+
+Minimise $-\mathbb{E}[\log X_T]$ (maximise expected log-utility).
+
+**Ansatz:** $V(t,x) = \ln x + f(t)$.  Substituting into HJB:
+
+$$f'(t) = -r - \frac{(\mu-r)^2}{2\sigma^2},\qquad f(T)=0.$$
+
+The **optimal Merton rule** is constant:
+
+$$u^\star = \frac{\mu-r}{\sigma^2} \quad (\text{fraction in risky asset}).$$
+
+This is the classic Merton (1969) result: invest a fixed fraction proportional to
+the Sharpe ratio and inversely to variance — independent of wealth and time.
+::::
+
+---
+
+**LQR special case** ($\ell = x^\top Q x + u^\top R u$, $b=Ax+Bu$,
+$\sigma$ constant):
 $V(t,x)=x^\top P(t)x + v(t)$ with $P$ solving the *matrix Riccati ODE*:
 
 $$-\dot P = A^\top P + PA - PBR^{-1}B^\top P + Q,\quad P(T)=Q_T.$$
 
+The optimal control is **linear feedback**: $u^\star_t = -R^{-1}B^\top P(t)X_t$.
+
+---
+
+::::{admonition} Example — Optimal Inventory (Almgren–Chriss liquidation)
+:class: note
+
+A trader must liquidate $X_0$ shares by time $T$.  Inventory $X_t$, trading rate $u_t<0$:
+
+$$dX_t = u_t\,dt, \quad
+\ell(x,u) = \underbrace{\alpha x^2}_{\text{risk}} + \underbrace{\beta u^2}_{\text{impact}}.$$
+
+This is a **deterministic LQR** ($\sigma=0$) with
+$A=0$, $B=1$, $Q=\alpha$, $R=\beta$.
+The Riccati solution gives the TWAP-like schedule
+
+$$u^\star(t,x) = -\frac{\alpha}{\beta}\cdot\frac{\sinh(\kappa(T-t))}{\sinh(\kappa T)}\cdot X_0,
+\quad \kappa=\sqrt{\alpha/\beta}.$$
+
+Large $\kappa$ (high risk aversion or low impact cost) → aggressive front-loaded selling.
+::::
+
+---
+
 ### 4.2 Pontryagin Maximum Principle
 
 The PMP avoids the curse of dimensionality — it converts the HJB PDE into a
-two-point boundary-value problem in $(X_t, p_t)$.
+**two-point boundary-value ODE** in $(X_t, p_t)$, making it feasible in high dimensions
+where a PDE grid is intractable.
 
 ::::{admonition} Theorem (PMP)
 :class: tip
 
-Define the Hamiltonian $\mathcal{H}(x,u,p) = \ell(x,u)+p^\top b(x,u)$.
-If $(X^\star, u^\star)$ is optimal, there exists a costate process $p_t$ with:
+Define the **Hamiltonian** $\mathcal{H}(x,u,p) = \ell(x,u)+p^\top b(x,u)$.
+If $(X^\star, u^\star)$ is optimal, there exists a **costate** (adjoint) process $p_t$ with:
 
 $$\dot p_t = -\nabla_x \mathcal{H}(X_t^\star, u_t^\star, p_t),\quad p_T = \nabla_x g(X_T^\star),$$
 
 and the optimality condition $u_t^\star = \arg\min_u \mathcal{H}(X_t^\star, u, p_t)$ holds a.e.
 ::::
 
+**Costate intuition.** $p_t$ is the *shadow price* of state $X_t$:
+
+$$p_t = \nabla_x V(t, X_t^\star) = \frac{\partial (\text{optimal cost-to-go})}{\partial x}.$$
+
+Increasing the current state by $dx$ changes future cost by $p_t^\top dx$.
+This is exactly the adjoint/backpropagation equation of deep learning — PMP is the
+continuous-time version of gradient backpropagation through a dynamical system.
+
+**Algorithm (shooting method):**
+
+```
+1. Guess costate p_0
+2. Integrate forward:  dX = b(X, u*(X,p)) dt           (state ODE)
+3. Integrate backward: dp = -∇_x H(X, u*, p) dt        (costate ODE)
+4. Check boundary condition:  p_T = ∇g(X_T)
+5. If not satisfied -> update p_0 (Newton / gradient) -> go to 2
+```
+
+---
+
+::::{admonition} Example — PMP for the Merton Problem
+:class: note
+
+With $\ell = 0$, $g(x) = -\ln x$, $b = (r+u(\mu-r))x$, $\sigma^\top\sigma = u^2\sigma^2 x^2$,
+the Hamiltonian is $\mathcal{H}(x,u,p) = p(r+u(\mu-r))x$.
+
+**Costate ODE:**
+$\dot p_t = -\partial_x \mathcal{H} = -p_t(r+u^\star(\mu-r))$,
+with terminal $p_T = -1/X_T^\star$.
+
+**Optimality condition** $\partial_u\mathcal{H}=0$ gives
+$p_t(\mu-r)x + \partial_u(\tfrac12\sigma^2 u^2 x^2 \partial_{xx}V)=0$,
+recovering $u^\star = (\mu-r)/\sigma^2$ as before.
+
+The costate path $p_t = -e^{-(T-t)(r+(\mu-r)u^\star)}/X_t^\star$ confirms that the
+shadow price scales inversely with wealth.
+::::
+
+---
+
 The costate pair $(X_t^\star, p_t)$ moves along Hamiltonian geodesics on
 $T^\star\mathbb{R}^d$ — a direct link to symplectic geometry (§10.4).
 
+---
+
 ### 4.3 HJB with Jumps (HJBI)
 
-Adding the jump term from §3.4, the HJB equation gains a non-local integral operator:
+When the state can jump (§3.4), the HJB equation gains a **non-local integral operator**:
 
 $$-\partial_t V = \inf_{u}\Bigl[\ell + \nabla V^\top b + \tfrac12\operatorname{Tr}(\sigma\sigma^\top\nabla^2 V)
-+ \int\bigl[V(x+c)-V(x)-\nabla V^\top c\bigr]\nu(dz)\Bigr].$$
++ \underbrace{\int\bigl[V(x+c(x,u,z))-V(x)-\nabla V^\top c(x,u,z)\bigr]\nu(dz)}_{\text{expected value change from jumps}}\Bigr].$$
+
+**Intuition for the integral term.** A jump of size $c$ moves the state from $x$ to
+$x+c$, changing the value function by $V(x+c)-V(x)$. The compensator $\nabla V^\top c$
+subtracts the linear part already counted in the drift, following Itô's formula for
+jump processes (§3.4).
 
 The `optimal_control` module discretises the integral on a truncated support
 $[-z_{\max}, z_{\max}]$ using Gaussian quadrature.
 
+---
+
+::::{admonition} Example — Optimal Execution with Jump Risk
+:class: note
+
+Extend the inventory model with Poisson order-flow shocks:
+
+$$dX_t = u_t\,dt + \Delta J_t,\quad \Delta J_t \sim \text{Compound Poisson}(\lambda, \mathcal{N}(0,\sigma_J^2)).$$
+
+The HJBI becomes:
+
+$$-\partial_t V = \inf_u\Bigl[\alpha x^2 + \beta u^2 + \partial_x V\,u
++ \lambda\,\mathbb{E}_z[V(x+z)-V(x)-z\,\partial_x V]\Bigr].$$
+
+With Gaussian jumps, the expectation computes as
+$\lambda(\tfrac12\sigma_J^2\,\partial_{xx}V)$, so the HJBI reduces to the same LQR
+Riccati ODE but with **effective diffusion** $\sigma_{\text{eff}}^2 = \lambda\sigma_J^2$.
+
+Key insight: order-flow risk acts like additional Brownian volatility, accelerating
+the optimal sell schedule.
+::::
+
+---
+
 ### 4.4 Viscosity Solutions
 
-When $V$ fails to be $C^{1,2}$ (degenerate $\sigma$, state constraints),
-viscosity solutions (Crandall–Lions 1983) restore uniqueness.
+When $V$ fails to be $C^{1,2}$ — which happens with degenerate diffusion ($\sigma \approx 0$),
+state/control constraints, or non-smooth terminal conditions — classical solutions
+may not exist. **Viscosity solutions** (Crandall–Lions 1983) provide a rigorous
+weak notion that restores existence and uniqueness.
+
+**Why they matter:** In practice, HJB is solved on a grid and $V$ is only piecewise
+smooth. Viscosity theory guarantees the numerical scheme converges to the true solution.
 
 ::::{admonition} Definition — Viscosity Subsolution
 :class: definition
 
 A continuous $V$ is a viscosity *subsolution* if for every smooth $\phi$
-touching $V$ from above at $(t_0,x_0)$:
-$-\partial_t\phi(t_0,x_0) \le \inf_u[\ldots]$ evaluated at $\phi$.
+touching $V$ **from above** at $(t_0,x_0)$ (i.e., $V - \phi$ has a local maximum there):
+
+$$-\partial_t\phi(t_0,x_0) \le \inf_u\Bigl[\ell(x_0,u) + \nabla_x\phi^\top b + \tfrac12\operatorname{Tr}(\sigma\sigma^\top\nabla^2\phi)\Bigr].$$
+
+A *supersolution* reverses the inequality with a smooth test touching from *below*.
+The unique viscosity **solution** is simultaneously both.
 ::::
+
+**Practical interpretation.** Classical calculus says "$V$ satisfies the PDE pointwise."
+Viscosity theory says "$V$ satisfies the PDE in an averaged sense via test functions —
+even at kinks." The condition prevents $V$ from being arbitrarily steep or flat at
+non-smooth points.
 
 Optimiz-rs's backward DP converges to the viscosity solution under the CFL condition
 $\Delta t \le C\,(\Delta x)^2$.
+
+---
+
+::::{admonition} Example — American Option as a Viscosity Problem
+:class: note
+
+An American put has early-exercise payoff $g(x) = (K-x)^+$. The value function satisfies
+the **variational inequality** (a two-region HJB):
+
+$$\min\Bigl(-\partial_t V - \mathcal{L}_{\text{BS}}V,\; V - (K-x)^+\Bigr) = 0,$$
+
+where $\mathcal{L}_{\text{BS}}V = rx\partial_x V + \tfrac12\sigma^2 x^2\partial_{xx}V - rV$.
+
+- **Continuation region** ($V > (K-x)^+$): the Black–Scholes PDE holds.
+- **Exercise region** ($V = (K-x)^+$): the option is exercised immediately.
+
+At the free boundary the gradient $\partial_x V$ is continuous
+(*smooth-pasting*) but $\partial_{xx}V$ is not — so $V$ is only $C^1$,
+not $C^2$. Viscosity theory handles this kink rigorously.
+::::
 
 **Backward DP grid schema:**
 
