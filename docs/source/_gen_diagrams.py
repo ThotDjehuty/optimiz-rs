@@ -664,6 +664,226 @@ def fig_picard():
 
 
 # ════════════════════════════════════════════════════════════════════════════
+# §8  HMM REGIME STATE MACHINE  (K = 3)
+# ════════════════════════════════════════════════════════════════════════════
+
+def fig_hmm_regime():
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+    import matplotlib.patheffects as pe
+
+    fig, ax = plt.subplots(figsize=(9, 4.2))
+    ax.set_xlim(0, 9); ax.set_ylim(0, 4); ax.axis("off")
+
+    states = [
+        (1.5, 2.6, "State 1\nBull",    C2),
+        (4.5, 2.6, "State 2\nNeutral", GRAY),
+        (7.5, 2.6, "State 3\nBear",    C3),
+    ]
+    box_w, box_h = 2.0, 1.1
+    for (cx, cy, label, col) in states:
+        fancy = FancyBboxPatch((cx - box_w/2, cy - box_h/2), box_w, box_h,
+                               boxstyle="round,pad=0.08", linewidth=1.6,
+                               edgecolor=col, facecolor=col + "22",
+                               zorder=2)
+        ax.add_patch(fancy)
+        ax.text(cx, cy, label, ha="center", va="center", fontsize=10,
+                fontweight="bold", color=col, zorder=3)
+
+    # Forward arrows A₁₂, A₂₃
+    for x0, x1, label in [(2.5, 3.5, r"$A_{12}$"), (5.5, 6.5, r"$A_{23}$")]:
+        ax.annotate("", xy=(x1, 2.85), xytext=(x0, 2.85),
+                    arrowprops=dict(arrowstyle="-|>", color=C0, lw=1.5))
+        ax.text((x0+x1)/2, 2.98, label, ha="center", fontsize=9, color=C0)
+    # Backward arrows A₂₁, A₃₂
+    for x0, x1, label in [(3.5, 2.5, r"$A_{21}$"), (6.5, 5.5, r"$A_{32}$")]:
+        ax.annotate("", xy=(x1, 2.35), xytext=(x0, 2.35),
+                    arrowprops=dict(arrowstyle="-|>", color=C1, lw=1.5))
+        ax.text((x0+x1)/2, 2.22, label, ha="center", fontsize=9, color=C1)
+
+    # Emission table
+    col_labels = ["State", r"$\mu$", r"$\sigma$", "Character"]
+    rows = [
+        ["Bull",    "+0.05", "0.12", "high return, low vol"],
+        ["Neutral", " 0.00", "0.18", "flat, medium vol"],
+        ["Bear",    "−0.08", "0.35", "crash, high vol"],
+    ]
+    row_colors = [[C2+"33", C2+"33", C2+"33", C2+"33"],
+                  [GRAY+"33", GRAY+"33", GRAY+"33", GRAY+"33"],
+                  [C3+"33", C3+"33", C3+"33", C3+"33"]]
+    tbl = ax.table(cellText=rows, colLabels=col_labels, loc="bottom",
+                   cellColours=row_colors, bbox=[0.05, 0.0, 0.90, 0.42])
+    tbl.auto_set_font_size(False); tbl.set_fontsize(9)
+    for (r, c), cell in tbl.get_celld().items():
+        cell.set_edgecolor("#cccccc")
+        if r == 0:
+            cell.set_facecolor(C0 + "33")
+            cell.set_text_props(fontweight="bold")
+
+    ax.set_title(r"HMM Regime State Machine ($K=3$)  —  Emission $B_k(y)=\mathcal{N}(\mu_k,\sigma_k^2)$",
+                 fontsize=11, pad=6)
+    plt.tight_layout()
+    save("fig_hmm_regime")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# §8.2  VITERBI TRELLIS  (K=3, T=4)
+# ════════════════════════════════════════════════════════════════════════════
+
+def fig_viterbi_trellis():
+    from matplotlib.patches import Circle, FancyArrowPatch
+
+    K, T = 3, 4
+    state_labels = ["1 (Bull)", "2 (Neutral)", "3 (Bear)"]
+    map_path = {(1, 1), (1, 2)}  # state index 1 = "2 (Neutral)" at t=2,3 (0-indexed t)
+
+    fig, ax = plt.subplots(figsize=(8, 3.8))
+    ax.set_xlim(-0.5, T + 0.5); ax.set_ylim(-0.5, K - 0.3); ax.axis("off")
+
+    # x-positions: t=1..4 → 0.5, 1.5, 2.5, 3.5
+    xs = [0.6 * (t + 1) for t in range(T)]
+    ys = [K - 1 - k for k in range(K)]  # top = state 1
+
+    # Draw crossing / passing arrows (selective to show crossing)
+    arrow_kw = dict(arrowstyle="-|>", connectionstyle="arc3,rad=0.0",
+                    color=GRAY, lw=1.1, alpha=0.55)
+    cross_kw = dict(arrowstyle="-|>", connectionstyle="arc3,rad=0.18",
+                    color=GRAY, lw=1.1, alpha=0.45)
+    for t in range(T - 1):
+        for k in range(K):
+            for k2 in range(K):
+                rad = 0.0 if k == k2 else (0.18 if k2 > k else -0.18)
+                col = C0 if (k == 1 and k2 == 1 and t >= 1) else GRAY
+                alpha = 0.9 if col == C0 else 0.3
+                ax.annotate("", xy=(xs[t+1], ys[k2]), xytext=(xs[t], ys[k]),
+                            arrowprops=dict(arrowstyle="-|>",
+                                            connectionstyle=f"arc3,rad={rad}",
+                                            color=col, lw=1.2 if col == C0 else 0.8,
+                                            alpha=alpha))
+
+    # Draw nodes
+    r = 0.14
+    for k in range(K):
+        for t in range(T):
+            is_map = (k == 1 and 1 <= t <= 2)
+            fc = C0 if is_map else "white"
+            ec = C0 if is_map else GRAY
+            circ = Circle((xs[t], ys[k]), r, facecolor=fc, edgecolor=ec, lw=1.8, zorder=4)
+            ax.add_patch(circ)
+
+    # Labels on left
+    for k in range(K):
+        ax.text(-0.1, ys[k], state_labels[k], ha="right", va="center",
+                fontsize=9, color=C0 if k == 1 else "black")
+
+    # x-axis ticks
+    for t in range(T):
+        ax.text(xs[t], -0.35, f"$t={t+1}$", ha="center", va="top", fontsize=9)
+
+    # Legend
+    ax.scatter([], [], color=C0, s=80, label="● MAP (Viterbi) path", zorder=5)
+    ax.scatter([], [], facecolor="white", edgecolors=GRAY, s=80, label="○ other nodes", zorder=5)
+    ax.legend(loc="upper right", fontsize=9, framealpha=0.9)
+
+    ax.set_title(r"Viterbi Trellis  ($K=3$, $T=4$)  —  $\delta_t(k)=\max_j\,\delta_{t-1}(j)\,A_{jk}\,B_k(y_t)$",
+                 fontsize=11)
+    plt.tight_layout()
+    save("fig_viterbi_trellis")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# §10.2  STANDARD VS NATURAL GRADIENT — PROPERTY COMPARISON
+# ════════════════════════════════════════════════════════════════════════════
+
+def fig_std_vs_nat_gradient():
+    from matplotlib.patches import FancyBboxPatch
+
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.0))
+
+    panels = [
+        ("Standard Gradient\n" + r"$\theta_{k+1} = \theta_k - \eta\nabla\mathcal{L}$",
+         ["Flat $\\mathbb{R}^d$ geometry",
+          "Ignores manifold curvature",
+          "Slow on ill-conditioned $\\mathcal{I}$",
+          "$O(\\kappa(\\mathcal{I}))$ iterations"],
+         C3, C3 + "18"),
+        ("Natural Gradient\n" + r"$\theta_{k+1} = \theta_k - \eta\,\mathcal{I}(\theta)^{-1}\nabla\mathcal{L}$",
+         ["Riemannian metric $\\mathcal{I}(\\theta)$",
+          "Adapts to manifold geometry",
+          "Reparametrisation-invariant",
+          "$O(1)$ on exp. families (MLE step)"],
+         C2, C2 + "18"),
+    ]
+
+    for ax, (title, props, border, bg) in zip(axes, panels):
+        ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+        fancy = FancyBboxPatch((0.03, 0.04), 0.94, 0.92,
+                               boxstyle="round,pad=0.04", linewidth=2,
+                               edgecolor=border, facecolor=bg)
+        ax.add_patch(fancy)
+        ax.text(0.5, 0.87, title, ha="center", va="top", fontsize=10,
+                fontweight="bold", color=border, transform=ax.transAxes,
+                multialignment="center")
+        y = 0.68
+        for prop in props:
+            ax.text(0.12, y, "•  " + prop, ha="left", va="top", fontsize=9.5,
+                    transform=ax.transAxes, color="#222222")
+            y -= 0.17
+
+    fig.suptitle("Standard  vs  Natural Gradient — geometric properties", fontsize=11, y=1.02)
+    plt.tight_layout()
+    save("fig_std_vs_nat_gradient")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# §10.3  MATRIX LIE GROUP HIERARCHY
+# ════════════════════════════════════════════════════════════════════════════
+
+def fig_lie_group_hierarchy():
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+    fig, ax = plt.subplots(figsize=(9, 4.6))
+    ax.set_xlim(0, 9); ax.set_ylim(0, 4.6); ax.axis("off")
+
+    nodes = {
+        "GL":  (4.5, 4.1,  r"$\mathrm{GL}(n,\mathbb{R})$" + "\nall invertible $n\times n$", C0),
+        "SL":  (1.8, 2.85, r"$\mathrm{SL}(n,\mathbb{R})$" + "\n$\det=1$",                   C2),
+        "On":  (4.5, 2.85, r"$O(n)$" + "\n$R^\top R=I$",                                    C1),
+        "Sp":  (7.2, 2.85, r"$\mathrm{Sp}(2n,\mathbb{R})$" + "\npreserves $\omega$",         C2),
+        "SO":  (4.5, 1.55, r"$\mathrm{SO}(n)$" + "\n$\det=+1$ (rotations)",                  C2),
+        "Hn":  (1.8, 1.55, r"$H(n)$ Heisenberg" + "\nupper triangular",                      C3),
+    }
+    notes = {
+        "SO": "portfolio factor\nrotation, PCA",
+        "Sp": "Hamiltonian\nmechanics, PMP",
+        "Hn": "path-signature\nfeature maps",
+    }
+    edges = [("GL","SL"), ("GL","On"), ("GL","Sp"), ("On","SO")]
+
+    bw, bh = 2.2, 0.76
+    for key, (cx, cy, label, col) in nodes.items():
+        fbp = FancyBboxPatch((cx-bw/2, cy-bh/2), bw, bh,
+                             boxstyle="round,pad=0.07", lw=1.6,
+                             edgecolor=col, facecolor=col+"22", zorder=2)
+        ax.add_patch(fbp)
+        ax.text(cx, cy, label, ha="center", va="center", fontsize=8.5,
+                multialignment="center", color=col, fontweight="bold", zorder=3)
+        if key in notes:
+            ax.text(cx + bw/2 + 0.15, cy, notes[key], va="center",
+                    fontsize=7.5, color="#555555", fontstyle="italic")
+
+    for src, dst in edges:
+        sx, sy = nodes[src][0], nodes[src][1]
+        dx, dy = nodes[dst][0], nodes[dst][1]
+        ax.annotate("", xy=(dx, dy + bh/2 + 0.04), xytext=(sx, sy - bh/2 - 0.04),
+                    arrowprops=dict(arrowstyle="-|>", color=GRAY, lw=1.4))
+
+    ax.set_title("Matrix Lie Group Hierarchy — subgroup inclusions and finance applications",
+                 fontsize=11, pad=5)
+    plt.tight_layout()
+    save("fig_lie_group_hierarchy")
+
+
+# ════════════════════════════════════════════════════════════════════════════
 # RUN ALL
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -680,6 +900,9 @@ if __name__ == "__main__":
         fig_mcmc_energy, fig_mcmc_trace,
         fig_kl_asymmetry, fig_fisher_curvature,
         fig_curvatures, fig_natural_gradient,
+        # new §8 & §10 diagrams
+        fig_hmm_regime, fig_viterbi_trellis,
+        fig_std_vs_nat_gradient, fig_lie_group_hierarchy,
     ]
     for fn in funcs:
         print(f"  {fn.__name__} ... ", end="", flush=True)
