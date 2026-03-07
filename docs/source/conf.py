@@ -35,8 +35,8 @@ html_theme = 'furo'  # Modern, clean theme
 html_static_path = ['_static']
 html_title = 'Optimiz-rs Documentation'
 html_short_title = 'Optimiz-rs'
-html_logo = 'logo_optimizrs.png'
-html_favicon = 'logo_optimizrs.png'
+html_logo = 'logo_optimizrs_transparent.png'
+html_favicon = 'logo_optimizrs_transparent.png'
 
 html_theme_options = {
     "light_css_variables": {

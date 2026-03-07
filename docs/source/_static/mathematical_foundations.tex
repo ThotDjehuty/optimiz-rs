@@ -24,6 +24,11 @@
 \definecolor{defbg}{HTML}{EEF4FB}
 \definecolor{thmbg}{HTML}{FFF8EC}
 \definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{notebg}{HTML}{EAFAF1}
+\definecolor{optgreen}{HTML}{1A7A4A}
+\definecolor{warnbg}{HTML}{FEF3CD}
+\definecolor{optred}{HTML}{C0392B}
+
 
 %% ── Theorem environments ─────────────────────────────────────────────────────
 \usepackage{tcolorbox}
@@ -105,837 +110,1813 @@
 %% ─────────────────────────────────────────────────────────────────────────────
 \begin{document}
 
-\begin{titlepage}
-  \centering
-  \vspace*{2cm}
-  {\Huge\bfseries\sffamily\color{optblue} Mathematical Foundations\par}
-  \vspace{0.6cm}
-  {\large\sffamily Optimiz-rs — High-Performance Optimization in Rust\par}
-  \vspace{0.4cm}
-  {\large\sffamily\color{gray} Stochastic Processes · Jump Processes · Optimal Control\\
-  Mean Field Games · Information Theory · Differential Geometry\par}
-  \vspace{1cm}
-  \textcolor{optgold}{\rule{0.5\linewidth}{1.5pt}}
-  \vspace{1cm}
+\section{Mathematical Foundations}\label{mathematical-foundations}
 
-  \begin{tabular}{rl}
-    \textbf{Version} & 0.1 \\
-    \textbf{Date}    & \today \\
-    \textbf{Docs}    & \url{https://optimiz-r.readthedocs.io} \\
-    \textbf{Repo}    & \url{https://github.com/ThotDjehuty/optimiz-rs} \\
-  \end{tabular}
+This page develops the core mathematics underlying Optimiz-rs's Rust kernels --- from first principles through advanced theory. Each section opens with a \textbf{definition block}, builds intuition through \textbf{examples and diagrams}, and closes with a \textbf{notebook micro-check}. For complete walkthroughs see \texttt{examples/notebooks/}.
 
-  \vfill
-  \textit{This document is auto-generated from \texttt{docs/source/theory/mathematical\_foundations.md}.}
-\end{titlepage}
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\tableofcontents
-\newpage
+\subsection{1 · Differential Evolution (DE)}\label{differential-evolution-de}
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Differential Evolution (DE)}
-%% ═══════════════════════════════════════════════════════════════════════════
+\subsubsection{Background}\label{background}
 
-\subsection{Background}
+DE is a gradient-free population-based optimizer for \(f: \mathbb{R}^d \to \mathbb{R}\), not required to be smooth or convex. At generation \(g\) we maintain \(N\) candidate solutions \(\{\mathbf{x}_{i,g}\} \subset \mathbb{R}^d\).
 
-DE is a gradient-free population-based optimizer for $f: \R^d \to \R$,
-not required to be smooth or convex. At generation $g$ we maintain $N$ candidate
-solutions $\{\mathbf{x}_{i,g}\} \subset \R^d$.
+\textbf{Key insight:} The difference vector \(\mathbf{x}_{r_2}-\mathbf{x}_{r_3}\) is an unbiased directional finite-difference of \(f\), so DE implicitly estimates curvature without Jacobians.
 
-\textbf{Key insight:} The difference vector $\mathbf{x}_{r_2}-\mathbf{x}_{r_3}$ is an
-unbiased directional finite-difference of $f$, so DE implicitly estimates curvature
-without Jacobians.
+\subsubsection{\texorpdfstring{1.1 Geometric Intuition --- Mutation in \(\mathbb{R}^2\)}{1.1 Geometric Intuition --- Mutation in \textbackslash mathbb\{R\}\^{}2}}\label{geometric-intuition-mutation-in-mathbbr2}
 
-\subsection{Operators}
+\begin{verbatim}
+          x_r3 *
+               |
+               |  F*(x_r2 - x_r3)       F = scale factor in [0,2]
+               |  ------------------>
+          x_r2 *                    * v_i  (mutant)
+                \\                  /
+                 \\________________/
+                  (difference vec)
 
-\begin{center}
-\begin{tabular}{L{3cm} L{7cm} L{3cm}}
-\toprule
-\textbf{Step} & \textbf{Formula} & \textbf{Role} \\
-\midrule
-Mutation (rand/1) &
-  $\mathbf{v}_{i,g} = \mathbf{x}_{r_1} + F(\mathbf{x}_{r_2}-\mathbf{x}_{r_3})$ &
-  Explore \\[3pt]
-Binomial crossover &
-  $u_{i,j} = v_{i,j}$ if $U(0,1)<CR$ or $j=j_{\text{rand}}$ &
-  Mix dimensions \\[3pt]
-Greedy selection &
-  $\mathbf{x}_{i,g+1} = \mathbf{u}_{i,g}$ iff $f(\mathbf{u})\le f(\mathbf{x})$ &
-  Exploit \\
-\bottomrule
-\end{tabular}
-\end{center}
+  x_r1 *------------------------------------------------> v_i
+        base vector       mutation vector added
+\end{verbatim}
 
-\textbf{Convergence (informal):} Under bounded population diversity and Lipschitz $f$, the
-best-so-far value converges a.s.\ to a stationary point as $N,g\to\infty$
-(Price et al.\ 2005).
-
-\subsection{Self-Adaptive jDE (default)}
-
-Parameters $F,CR$ are per-individual and reset stochastically each generation:
-\begin{equation}
-  F_i^{g+1} = \begin{cases}
-    F_{\min} + r_1 F_{\max} & r_2 < \tau_1,\\
-    F_i^g               & \text{otherwise,}
-  \end{cases}
-  \qquad
-  CR_i^{g+1} = \begin{cases}
-    U(0,1) & r_3 < \tau_2,\\
-    CR_i^g & \text{otherwise.}
-  \end{cases}
-\end{equation}
-
-$\tau_1=\tau_2=0.1$ by default. On rugged landscapes this produces bimodal $F$
-histograms concentrated near~$0.8$ — a sign the landscape is highly multimodal.
-
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Stochastic Processes}
-%% ═══════════════════════════════════════════════════════════════════════════
-
-These form the probabilistic backbone of all continuous-time models in Optimiz-rs.
-
-\subsection{Brownian Motion}
-
-\begin{defbox}{Wiener Process}
-A stochastic process $W = (W_t)_{t\ge 0}$ on $(\Omega,\mathcal{F},\PP)$
-is a \emph{standard Brownian motion} if:
-\begin{enumerate}
-  \item $W_0 = 0$ a.s.
-  \item Increments are \textbf{independent}: $W_t - W_s \perp \mathcal{F}_s$ for $t>s$.
-  \item $W_t - W_s \sim \N(0, t-s)$ for all $0\le s<t$.
-  \item Paths $t\mapsto W_t(\omega)$ are \textbf{continuous} a.s.
-\end{enumerate}
-\end{defbox}
-
-\textbf{Key properties:}
 \begin{itemize}
-  \item $\E[W_t] = 0$,\quad $\operatorname{Var}(W_t) = t$,\quad $\operatorname{Cov}(W_s,W_t) = \min(s,t)$.
-  \item \textbf{Quadratic variation:} $[W]_T = T$ (paths are non-differentiable but have finite $p$-variation for $p>2$).
-  \item \textbf{Self-similarity:} $c^{-1/2}W_{ct} \overset{d}{=} W_t$ (Hurst exponent $H=\tfrac12$).
+
+\item
+  \(\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3\) are three \textbf{distinct} randomly selected parents.
+\item
+  The mutant \(\mathbf{v}_i\) lands on the other side relative to \(\mathbf{x}_{r_1}\).
+\item
+  \textbf{Crossover} then mixes \(\mathbf{v}_i\) and \(\mathbf{x}_i\) dimension-by-dimension with probability \(CR\), producing trial vector \(\mathbf{u}_i\).
+\item
+  \textbf{Selection} keeps \(\mathbf{u}_i\) only if it improves over \(\mathbf{x}_i\) --- pure greedy.
 \end{itemize}
 
-\textbf{Example — Geometric BM:}
-$S_t = S_0 \exp\!\bigl((\mu-\tfrac12\sigma^2)t + \sigma W_t\bigr)$
-is the Black--Scholes price model (log-normal marginals, nowhere-differentiable paths).
+\subsubsection{1.2 Operators}\label{operators}
 
-\subsection{Itô Calculus}
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2857}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4286}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2857}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Step
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Formula
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Role
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Mutation (rand/1) & \(\mathbf{v}_{i,g} = \mathbf{x}_{r_1} + F(\mathbf{x}_{r_2}-\mathbf{x}_{r_3})\) & explore \\
+Binomial crossover & \(u_{i,j} = v_{i,j}\) if \(U(0,1)<CR\) or \(j=j_\text{rand}\) & mix dimensions \\
+Greedy selection & \(\mathbf{x}_{i,g+1} = \mathbf{u}_{i,g}\) iff \(f(\mathbf{u})\le f(\mathbf{x})\) & exploit \\
+\end{longtable}
+}
 
-\begin{defbox}{Itô Integral}
-For adapted $f \in \mathcal{L}^2$ (i.e.\ $\E\!\int_0^T f_t^2\,dt < \infty$):
+\textbf{Convergence (informal):} Under bounded population diversity and Lipschitz \(f\), the best-so-far value converges a.s. to a stationary point as \(N,g\to\infty\) (Price et al.~2005).
+
+\subsubsection{1.3 Self-Adaptive jDE (Optimiz-rs default)}\label{self-adaptive-jde-optimiz-rs-default}
+
+Parameters \(F,CR\) are per-individual and reset stochastically each generation:
+
 \[
-  \int_0^T f_t\,dW_t \;=\; L^2\text{-}\lim_{|\pi|\to 0} \sum_{k} f_{t_k}(W_{t_{k+1}}-W_{t_k}).
+F_i^{g+1} = \begin{cases} F_{\min} + r_1 F_{\max} & r_2 < \tau_1,\\ F_i^g & \text{otherwise,}\end{cases}
+\qquad
+CR_i^{g+1} = \begin{cases} U(0,1) & r_3 < \tau_2,\\ CR_i^g & \text{otherwise.}\end{cases}
 \]
-The Itô integral is a \textbf{martingale} with zero mean and \textbf{Itô isometry}
-\[
-  \E\!\left[\left(\int_0^T f_t\,dW_t\right)^{\!2}\right] = \E\int_0^T f_t^2\,dt.
-\]
-\end{defbox}
 
-\begin{thmbox}{Itô's Lemma}
-For $dX_t = \mu_t\,dt + \sigma_t\,dW_t$ and $F \in C^{1,2}([0,T]\times\R)$:
-\begin{equation}
-  dF(t,X_t) = \partial_t F\,dt + \partial_x F\,dX_t + \tfrac{1}{2}\partial_{xx}F\,\sigma_t^2\,dt.
-\end{equation}
-The correction term $\tfrac12\sigma^2\partial_{xx}F$ (absent in ordinary calculus) arises
-from the non-zero quadratic variation $d[W]_t = dt$.
-\end{thmbox}
+\(\tau_1=\tau_2=0.1\) by default. On rugged landscapes this produces bimodal \(F\) histograms concentrated near 0.8 --- a sign the landscape is highly multimodal.
 
-\textbf{Example:} Let $X_t = \log S_t$ with $dS_t = \mu S_t\,dt + \sigma S_t\,dW_t$.
-Itô's Lemma gives
-\[dX_t = \bigl(\mu - \tfrac12\sigma^2\bigr)\,dt + \sigma\,dW_t.\]
+\subsubsection{1.4 Example --- Minimising the Rastrigin Function}\label{example-minimising-the-rastrigin-function}
 
-\subsection{General Itô SDEs}
+The Rastrigin function \(f(\mathbf{x}) = 10d + \sum_i[x_i^2 - 10\cos(2\pi x_i)]\) has \(\approx 10^d\) local minima (global minimum \(f^*=0\) at \(\mathbf{x}^*=\mathbf{0}\)).
 
-\begin{equation}
-  dX_t = b(t, X_t)\,dt + \boldsymbol{\sigma}(t, X_t)\,dW_t,\quad X_0 = x_0.
-\end{equation}
+\textbf{Why gradient methods fail:} The gradient \(\partial_{x_i}f = 2x_i + 20\pi\sin(2\pi x_i)\) oscillates rapidly --- any gradient step hops between basins.
 
-\textbf{Existence \& uniqueness (Picard--Lindelöf):} If $b, \boldsymbol{\sigma}$ are
-globally Lipschitz with linear growth, there exists a unique strong solution with
-$\E[\sup_{t\le T}\|X_t\|^2]<\infty$.
+\textbf{Why DE succeeds:} The difference vector \(F(\mathbf{x}_{r_2}-\mathbf{x}_{r_3})\) spans the characteristic basin width (\textasciitilde1.0), enabling inter-basin jumps.
 
-\medskip
-\begin{center}
-\begin{tabular}{L{3.5cm} L{6cm} L{4cm}}
-\toprule
-\textbf{Process} & \textbf{SDE} & \textbf{Stationary distribution} \\
-\midrule
-Brownian motion     & $dX = \sigma\,dW$ & — \\[3pt]
-Geometric BM        & $dX = \mu X\,dt + \sigma X\,dW$ & Log-normal \\[3pt]
-Ornstein--Uhlenbeck & $dX = \kappa(\theta-X)\,dt + \sigma\,dW$ & $\mathcal{N}(\theta,\,\sigma^2/2\kappa)$ \\[3pt]
-CIR                 & $dX = \kappa(\theta-X)\,dt + \sigma\sqrt{X}\,dW$ & Gamma$(2\kappa\theta/\sigma^2,\,\sigma^2/2\kappa)$ \\
-\bottomrule
-\end{tabular}
-\end{center}
+\begin{verbatim}
+Rastrigin 1D sketch (d=1):
 
-\subsection{Ornstein--Uhlenbeck Process (Mean-Reversion)}
+  f(x)
+  |  *   *   *           <- local minima (many)
+  | * * * * * *
+  |*           *
+  |             *       *
+  +------|------+------|-- x
+        -1      0      1
+                  ^
+                  global min  f=0
+\end{verbatim}
+
+\textbf{Typical jDE convergence} (\(d=10\), \(N=100\), \(\tau_1=\tau_2=0.1\)):
+
+\begin{verbatim}
+Gen    Best f    Mean F    Mean CR
+----   -------   -------   -------
+  1     48.3      0.50      0.50
+ 50     12.1      0.78      0.31
+200      3.4      0.82      0.24   <- F clusters near 0.8 (bimodal)
+500      0.0      0.83      0.22   <- converged
+\end{verbatim}
+
+\begin{tcolorbox}[colback=thmbg!60,colframe=optgold,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Theorem / Key Idea}} — Tip — Diagnosing Stagnation},breakable]
+If best-$f$ does not decrease for 100+ generations:
+
+1. **Check $F$ histogram.** Bimodal near 0.8 -> landscape is multimodal (increase $N$).
+   Collapsed near 0 -> diversity loss; restart with random perturbation.
+2. **Check $CR$ distribution.** Uniform -> dimensions not interacting.
+   Collapsed near 0 -> DE treating dimensions independently (separable function).
+3. **Increase $N$** to $\approx 10d$ for $d > 20$.
+\end{tcolorbox}
+
+\textbf{Notebook check} (\texttt{05\_performance\_benchmarks.ipynb}): Plot \(F_i, CR_i\) histograms every 50 generations; expect values clustering in \([0.5,0.9]\) on hard problems.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{2 · Stochastic Processes}\label{stochastic-processes}
+
+These form the probabilistic backbone of all continuous-time models in Optimiz-rs. We build the theory from scratch: random walk → Brownian motion → Itō calculus → SDEs → jump-diffusions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsubsection{2.1 Brownian Motion}\label{brownian-motion}
+
+\paragraph{2.1.0 Intuitive Construction --- From Random Walk to BM}\label{intuitive-construction-from-random-walk-to-bm}
+
+\textbf{Step 1 --- Discrete random walk.} Flip a fair coin \(n\) times per unit time. Define \(\xi_k = +1\) (heads) or \(-1\) (tails) i.i.d. After \(n\) steps of size \(1/\sqrt{n}\):
+
+\[S^{(n)}_t = \frac{1}{\sqrt{n}}\sum_{k=1}^{\lfloor nt \rfloor} \xi_k.\]
+
+By the \textbf{Central Limit Theorem}, as \(n\to\infty\): \(S^{(n)}_t \xrightarrow{d} W_t \sim \mathcal{N}(0,t)\).
+
+\begin{verbatim}
+Coin-flip random walk (n=20 steps per unit time):
+
+ W_t
++2 |       *  *
+   |     *       *  *
+ 0 |  *          * *   * *
+   |*                     *  *
+-2 |                           *
+   +----------------------------> t
+     0      0.5       1.0
+
+  n → ∞  ("zoom out"):  jagged → smooth BM fan
+\end{verbatim}
+
+\textbf{Step 2 --- Scaling limit.} The normalization \(1/\sqrt{n}\) is crucial: - Without it, variance grows as \(n\) (diverges). - With \(n^{-1/2}\): variance = \(n \cdot (1/\sqrt{n})^2 \cdot t = t\) --- exactly right.
+
+This is why \(W_t \sim \mathcal{N}(0,t)\): \textbf{variance accumulates linearly in time}.
+
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Wiener Process},breakable]
+A stochastic process $W = (W_t)_{t\ge 0}$ on $(\Omega,\mathcal{F},\mathbb{P})$
+is a *standard Brownian motion* if:
+
+1. $W_0 = 0$ a.s.
+2. Increments are **independent**: $W_t - W_s \perp \mathcal{F}_s$ for $t>s$.
+3. $W_t - W_s \sim \mathcal{N}(0, t-s)$ for all $0\le s<t$.
+4. Paths $t\mapsto W_t(\omega)$ are **continuous** a.s.
+\end{tcolorbox}
+
+\paragraph{2.1.1 Key Analytical Properties}\label{key-analytical-properties}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3667}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Property
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Formula
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Intuition
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Mean & \(\mathbb{E}[W_t] = 0\) & No drift --- symmetric random walk \\
+Variance & \(\operatorname{Var}(W_t) = t\) & Uncertainty grows with time \\
+Covariance & \(\operatorname{Cov}(W_s,W_t) = \min(s,t)\) & Shared history up to first time \\
+Non-differentiability & \(\lim_{h\to 0}(W_{t+h}-W_t)/h\) diverges a.s. & Too ``rough'' for ordinary calculus \\
+Quadratic variation & \([W]_T = T\) & Core source of Itō correction term \\
+Self-similarity & \(c^{-1/2}W_{ct} \overset{d}{=} W_t\) & Fractal structure, Hurst \(H=\tfrac12\) \\
+\end{longtable}
+}
+
+\textbf{Quadratic variation derivation (step by step):}
+
+Partition \([0,T]\) into \(n\) pieces of width \(\Delta = T/n\). Sum of squared increments:
+
+\[\sum_{k=0}^{n-1}(W_{t_{k+1}}-W_{t_k})^2 \overset{?}{=} T \quad \text{as } n\to\infty.\]
+
+\textbf{Step 1} --- Each increment: \((W_{t_{k+1}}-W_{t_k})^2 \sim \Delta \cdot \chi_1^2\), so \(\mathbb{E}[(W_{t_{k+1}}-W_{t_k})^2] = \Delta\).
+
+\textbf{Step 2} --- Sum of means: \(\sum_{k=0}^{n-1} \Delta = n\Delta = T\).
+
+\textbf{Step 3} --- Variance of the sum: \(\operatorname{Var}\!\left(\sum (W_{t_{k+1}}-W_{t_k})^2\right) = n \cdot 2\Delta^2 = 2T^2/n \xrightarrow{n\to\infty} 0\).
+
+\textbf{Conclusion:} \(\sum (W_{t_{k+1}}-W_{t_k})^2 \xrightarrow{L^2} T\). We write \(dW_t^2 = dt\).\\
+This \textbf{single identity} is the engine of all Itō calculus.
+
+\begin{tcolorbox}[colback=thmbg!60,colframe=optgold,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Theorem / Key Idea}} — Why dW² = dt is remarkable},breakable]
+In ordinary calculus, $dx^2 \approx dx \cdot dx \to 0$ (second-order infinitesimal).  
+For Brownian motion, $(dW)^2 = dt$ is **first-order** — it does **not** vanish!
+
+Physically: BM paths oscillate so rapidly ($\sim t^{0.5}$ scale) that their squared 
+increments accumulate at rate $1$ — comparable to the drift $dt$.
+
+This is the **only** reason Itō's lemma has an extra term.
+\end{tcolorbox}
+
+\textbf{Multiple sample paths} --- the fan widens as \(\propto\sqrt{t}\):
+
+\begin{verbatim}
+W_t
+ +2 |      ...........
+    |  ....           .....
+  0 |..                    .....   <- E[W_t] = 0  (all paths centered)
+    |         ....--......
+ -2 |  ........
+    +--------------------------> t
+      0                 T
+
+  Width ~ 2*sqrt(t)  (95% of paths stay within +/- 2*sqrt(t))
+  
+  Each dot is a BM path — different because different coin flips.
+  As T grows, the "trumpet" opens wider.
+\end{verbatim}
+
+\textbf{Example --- Geometric BM:} \(S_t = S_0 \exp\!\bigl((\mu-\tfrac12\sigma^2)t + \sigma W_t\bigr)\) is the Black-Scholes price model. Log-normal marginals; continuous, nowhere-differentiable paths:
+
+\begin{verbatim}
+S_t
+|       .---.
+|  .--./     \----.
+| /                \---------.
+|/
++-------------------------------> t
+  0             T
+\end{verbatim}
+
+\textbf{Multiple sample paths} --- the fan widens as \(\propto\sqrt{t}\):
+
+\begin{verbatim}
+W_t
+ +2 |      ...........
+    |  ....           .....
+  0 |..                    .....   <- E[W_t] = 0  (all paths centered)
+    |         ....--......
+ -2 |  ........
+    +--------------------------> t
+      0                 T
+
+  Width grows as sqrt(t)  (68% of paths stay within +/- sqrt(t))
+\end{verbatim}
+
+\textbf{Example --- Geometric BM:} \(S_t = S_0 \exp\!\bigl((\mu-\tfrac12\sigma^2)t + \sigma W_t\bigr)\) is the Black-Scholes price model. Log-normal marginals; continuous, nowhere-differentiable paths:
+
+\begin{verbatim}
+S_t
+|       .---.
+|  .--./     \\----.
+| /                \\---------.
+|/
++-------------------------------> t
+  0             T
+\end{verbatim}
+
+\subsubsection{2.2 Itō Calculus}\label{itux14d-calculus}
+
+\paragraph{2.2.0 Why You Cannot Use Ordinary Integration}\label{why-you-cannot-use-ordinary-integration}
+
+Attempt to define \(\int_0^T W_t\,dW_t\) using a Riemann sum: pick \(W_{t_k}\) at the \textbf{left endpoint} → get one answer; pick \((W_{t_k}+W_{t_{k+1}})/2\) (midpoint) → get a \emph{different} answer.
+
+This ambiguity occurs because \(W\) is not of bounded variation. \textbf{Itō's convention} (left endpoint) is the only one that produces a \textbf{martingale} --- ensuring no look-ahead.
+
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Itō Integral},breakable]
+For adapted $f \in \mathcal{L}^2$ (i.e. $\mathbb{E}\!\int_0^T f_t^2\,dt < \infty$):
+
+$$\int_0^T f_t\,dW_t \;:=\; L^2\text{-}\lim_{|\pi|\to 0} \sum_{k} f_{t_k}(W_{t_{k+1}}-W_{t_k}).$$
+
+Key guarantees:
+- **Zero mean:** $\mathbb{E}\!\left[\int_0^T f_t\,dW_t\right] = 0$.
+- **Itō isometry:** $\mathbb{E}\!\left[\left(\int_0^T f_t\,dW_t\right)^2\right] = \mathbb{E}\!\int_0^T f_t^2\,dt$.
+- **Martingale:** $M_t = \int_0^t f_s\,dW_s$ satisfies $\mathbb{E}[M_t\mid\mathcal{F}_s]=M_s$.
+\end{tcolorbox}
+
+\textbf{Itō isometry --- proof sketch:}\\
+Let \(I_T = \sum_k f_{t_k}\Delta W_k\) (simple process). Then:
+
+\[\mathbb{E}[I_T^2] = \sum_{j,k}\underbrace{\mathbb{E}[f_{t_j}\Delta W_j \cdot f_{t_k}\Delta W_k]}_{\text{cross terms}}\]
+
+For \(j \neq k\) (say \(j < k\)): \(f_{t_j}\Delta W_j\) and \(f_{t_k}\) are both \(\mathcal{F}_{t_k}\)-measurable, while \(\Delta W_k\) is \textbf{independent} of \(\mathcal{F}_{t_k}\) with mean 0 → cross term \(= 0\).
+
+For \(j = k\): \(\mathbb{E}[f_{t_j}^2 (\Delta W_j)^2] = \mathbb{E}[f_{t_j}^2]\Delta t_j\) (independence of \(f_{t_j}\) and \(\Delta W_j\)).
+
+\[\Rightarrow \mathbb{E}[I_T^2] = \sum_k \mathbb{E}[f_{t_k}^2]\Delta t_k \xrightarrow{|\pi|\to 0} \mathbb{E}\int_0^T f_t^2\,dt. \quad \checkmark\]
+
+\paragraph{2.2.1 Itō's Lemma --- Full Derivation}\label{itux14ds-lemma-full-derivation}
+
+\begin{tcolorbox}[colback=thmbg!60,colframe=optgold,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Theorem / Key Idea}} — Theorem — Itō's Lemma},breakable]
+For $dX_t = \mu_t\,dt + \sigma_t\,dW_t$ and $F \in C^{1,2}([0,T]\times\mathbb{R})$:
+
+$$\boxed{dF(t,X_t) = \partial_t F\,dt + \partial_x F\,dX_t + \tfrac{1}{2}\sigma_t^2\,\partial_{xx}F\,dt}$$
+
+Expanded:
+
+$$dF = \underbrace{\left(\partial_t F + \mu_t\,\partial_x F + \tfrac12\sigma_t^2\,\partial_{xx}F\right)}_{\text{drift}}\,dt
++ \underbrace{\sigma_t\,\partial_x F}_{\text{diffusion}}\,dW_t.$$
+\end{tcolorbox}
+
+\textbf{Derivation --- Taylor expand \(F(t+dt, X_{t+dt})\):}
+
+\[dF = \partial_t F\,dt + \partial_x F\,dX + \tfrac12\partial_{xx}F\,(dX)^2 + \underbrace{\partial_{tx}F\,dt\,dX + \ldots}_{\to 0} \]
+
+Compute \((dX)^2\) using the \textbf{Itō multiplication table}:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+× & \(dt\) & \(dW_t\) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(dt\) & \(0\) & \(0\) \\
+\(dW_t\) & \(0\) & \(dt\) \\
+\end{longtable}
+}
+
+\[\begin{aligned}
+(dX_t)^2 &= (\mu_t\,dt + \sigma_t\,dW_t)^2 \\
+          &= \mu_t^2\underbrace{(dt)^2}_{0} + 2\mu_t\sigma_t\underbrace{dt\cdot dW_t}_{0} + \sigma_t^2\underbrace{(dW_t)^2}_{dt}\\
+          &= \sigma_t^2\,dt.
+\end{aligned}\]
+
+Substituting:
+
+\[dF = \partial_t F\,dt + \partial_x F(\mu_t\,dt + \sigma_t\,dW_t) + \tfrac12\partial_{xx}F\cdot\sigma_t^2\,dt\]
+
+\[= \left(\partial_t F + \mu_t\partial_x F + \tfrac12\sigma_t^2\partial_{xx}F\right)dt + \sigma_t\partial_x F\,dW_t. \quad \checkmark\]
+
+\textbf{The extra term \(\tfrac12\sigma^2\partial_{xx}F\,dt\) is the ``Itō correction''.}\\
+In ordinary calculus \((dW)^2=0\), so it vanishes. In stochastic calculus, BM oscillates so rapidly that \((dW)^2 = dt\) --- a first-order effect.
+
+\textbf{Multidimensional version} (for vector \(\mathbf{X}\in\mathbb{R}^n\), matrix noise):
+
+\[dF = \partial_t F\,dt + \sum_i \partial_{x_i}F\,dX_i + \tfrac12\sum_{i,j}\partial_{x_ix_j}F\,d[X_i,X_j]_t\]
+
+where \(d[X_i, X_j]_t = d\langle X_i, X_j\rangle_t\) is the quadratic co-variation.
+
+\paragraph{2.2.2 Worked Examples of Itō's Lemma}\label{worked-examples-of-itux14ds-lemma}
+
+\textbf{Example 1 --- GBM, derive explicit solution:}
+
+SDE: \(dS_t = \mu S_t\,dt + \sigma S_t\,dW_t\).
+
+\textbf{Goal:} Find \(S_t\) in closed form.
+
+\textbf{Step 1} --- Guess \(F(t,x) = \log x\). Compute partials: \(\partial_t F = 0\), \(\partial_x F = 1/x\), \(\partial_{xx}F = -1/x^2\).
+
+\textbf{Step 2} --- Apply Itō's lemma:
+
+\[d(\log S_t) = 0 + \frac{1}{S_t}\,dS_t + \tfrac12\cdot(-\tfrac{1}{S_t^2})\cdot\sigma^2 S_t^2\,dt\]
+
+\[= \frac{\mu S_t\,dt + \sigma S_t\,dW_t}{S_t} - \tfrac12\sigma^2\,dt\]
+
+\[= \left(\mu - \tfrac12\sigma^2\right)\,dt + \sigma\,dW_t.\]
+
+\textbf{Step 3} --- Integrate (deterministic integral + Itō integral):
+
+\[\log S_T - \log S_0 = \left(\mu-\tfrac12\sigma^2\right)T + \sigma W_T.\]
+
+\textbf{Step 4} --- Exponentiate:
+
+\[\boxed{S_T = S_0\exp\!\left[\left(\mu - \tfrac12\sigma^2\right)T + \sigma W_T\right].}\]
+
+The \textbf{Itō correction} \(-\tfrac12\sigma^2 T\) lowers the expected log-return: \(\mathbb{E}[\log S_T] = \log S_0 + (\mu-\tfrac12\sigma^2)T\), but \(\mathbb{E}[S_T] = S_0 e^{\mu T}\) (Jensen's inequality explains the gap: \(e^{\mathbb{E}[X]} < \mathbb{E}[e^X]\) for non-degenerate \(X\)).
+
+\begin{verbatim}
+log S_t
+|     Ito correction: slope = mu - sigma^2/2  (lower than mu!)
+|  _.-'
+| /        <- Without Ito correction, slope would be mu (wrong!)
+|/
++----------------------------> t
+
+E[log S_t] = log S_0  +  (mu - sigma^2/2)*t
+             (time-averaged growth, always less than mu for sigma > 0)
+\end{verbatim}
+
+\textbf{Example 2 --- Itō product rule (\(d(X_t Y_t)\)):}
+
+By Itō's lemma applied to \(F(x,y) = xy\):
+
+\[d(X_t Y_t) = Y_t\,dX_t + X_t\,dY_t + d[X,Y]_t\]
+
+where \(d[X,Y]_t = \sigma_X\sigma_Y\,dt\). Compare to ordinary calculus: \(d(xy) = y\,dx + x\,dy\) (no cross term because \((dx)^2=0\)).
+
+\textbf{Example 3 --- Integration by parts for stochastic integrals:}
+
+\[\int_0^T W_t\,dW_t = \tfrac12 W_T^2 - \tfrac12 T.\]
+
+Ordinary calculus would give \(\int_0^T W_t\,dW_t = \tfrac12 W_T^2\). The \(-\tfrac12 T\) correction comes from the quadratic variation.
+
+\textbf{Verification via Itō's lemma:} Set \(F(t,x) = x^2/2\): \(dF = x\,dW + \tfrac12\cdot 1 \cdot dt = W_t\,dW_t + \tfrac12\,dt\). Integrate: \(\tfrac12 W_T^2 - 0 = \int_0^T W_t\,dW_t + \tfrac12 T\) → result follows. ✓
+
+\paragraph{2.2.3 Itō vs Stratonovich}\label{itux14d-vs-stratonovich}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2222}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2889}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4889}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Property
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Itō integral
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Stratonovich integral (\(\circ\))
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Chain rule & Modified (\(+\tfrac12\sigma^2\partial_{xx}F\) term) & Standard calculus chain rule \\
+Martingale & Yes (if \(f\) adapted) & No in general \\
+Use in finance & Natural (no look-ahead) & Physics, geometry \\
+Conversion & \(\int f\circ dW = \int f\,dW + \tfrac12\int \partial_x f\,\sigma\,dt\) & (same identity) \\
+SDE solutions & Different numerics needed & Standard ODE methods work \\
+\end{longtable}
+}
+
+\textbf{Conversion formula} --- Itō \(\to\) Stratonovich:
+
+\[\int_0^T f(X_t)\circ dW_t = \int_0^T f(X_t)\,dW_t + \tfrac{1}{2}\int_0^T f'(X_t)\sigma_t\,dt.\]
+
+\textbf{Rule of thumb:} Use Itō in finance (causality, no-arbitrage); use Stratonovich in physics/differential geometry (coordinate-invariant chain rule).
+
+\subsubsection{2.3 General Itō SDEs}\label{general-itux14d-sdes}
+
+\[dX_t = b(t, X_t)\,dt + \boldsymbol{\sigma}(t, X_t)\,dW_t,\quad X_0 = x_0.\]
+
+\paragraph{2.3.0 Existence, Uniqueness and Picard Iteration}\label{existence-uniqueness-and-picard-iteration}
+
+\begin{tcolorbox}[colback=thmbg!60,colframe=optgold,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Theorem / Key Idea}} — Theorem — Strong Solution Existence (Picard–Lindelöf for SDEs)},breakable]
+If $b$ and $\sigma$ are **globally Lipschitz** in $x$ (uniformly in $t$):
+$\|b(t,x)-b(t,y)\| + \|\sigma(t,x)-\sigma(t,y)\| \le L\|x-y\|$,
+
+and satisfy **linear growth**: $\|b(t,x)\|^2 + \|\sigma(t,x)\|^2 \le C^2(1+\|x\|^2)$,
+
+then there exists a **unique strong solution** with $\mathbb{E}\!\left[\sup_{t\le T}\|X_t\|^2\right] < \infty$.
+\end{tcolorbox}
+
+\textbf{Picard iteration --- construct the solution step by step:}
+
+Set \(X_t^{(0)} = x_0\) (constant). For \(n\ge 0\):
+
+\[X_t^{(n+1)} = x_0 + \int_0^t b(s, X_s^{(n)})\,ds + \int_0^t \sigma(s, X_s^{(n)})\,dW_s.\]
+
+\textbf{Intermediate step --- bound the error:}
+
+Let \(\varepsilon_n(t) = \mathbb{E}\!\left[\sup_{s\le t}|X_s^{(n+1)}-X_s^{(n)}|^2\right]\).
+
+By Doob's \(L^2\)-inequality and Lipschitz:
+
+\[\varepsilon_{n+1}(t) \le 2(L^2 T + L^2)\int_0^t \varepsilon_n(s)\,ds.\]
+
+By induction: \(\varepsilon_n(t) \le C \cdot \frac{(2L^2(T+1)t)^n}{n!} \to 0\). Geometric series → \(X^{(n)}\) is Cauchy in \(L^2\) → converges to the unique solution.
+
+\textbf{Intuition:}
+
+\begin{verbatim}
+Picard iteration (simplest case: dx = f(x) dt):
+
+X^(0): --------- x_0  (constant)
+X^(1): x_0 + int_0^t f(x_0) ds  = x_0 + f(x_0)*t  (linear approx)
+X^(2): x_0 + int_0^t f(X^(1)) ds  (use X^(1) in drift)
+X^(3): ...
+        
+Each iteration captures one more "correction layer":
+  n=0: constant     n=1: linear    n=2: quadratic    ...
+\end{verbatim}
+
+\paragraph{2.3.1 The Fokker-Planck Equation --- How Densities Evolve}\label{the-fokker-planck-equation-how-densities-evolve}
+
+If \(X_t\) has density \(p(t,x)\), then \(p\) satisfies the \textbf{Fokker-Planck (Kolmogorov forward) PDE}:
+
+\[\frac{\partial p}{\partial t} = -\frac{\partial}{\partial x}[b(t,x)\,p] + \frac{1}{2}\frac{\partial^2}{\partial x^2}[\sigma^2(t,x)\,p].\]
+
+\textbf{Derivation sketch:} For any test function \(\phi\):
+
+\[\frac{d}{dt}\mathbb{E}[\phi(X_t)] = \mathbb{E}[\mathcal{L}\phi(X_t)] = \mathbb{E}\!\left[b\,\phi' + \tfrac12\sigma^2\phi''\right]\]
+
+using Itō's lemma on \(\phi(X_t)\). Integration by parts in the \(x\)-integral transfers derivatives from \(\phi\) to \(p\), giving the Fokker-Planck equation.
+
+\textbf{Visual --- density flows rightward (positive drift) and spreads (positive diffusion):}
+
+\begin{verbatim}
+p(t, x)  — probability density at time t
+
+t=0:       |  peak at x_0
+           |   ***
+           |  *   *         <- narrow initial density
+           | *     *
+           +-----------------> x
+              x_0
+
+t=T/2:     |      peak shifted right
+           |         ***
+           |        *   *    <- wider (diffusion spreads it)
+           |       *     *
+           +-----------------> x
+                    x_0 + mu*T/2
+
+t=T:       |           peak drifted further
+           |               ***
+           |              *   *   <- even wider
+           |             *     *
+           +--------------------------> x
+                           x_0 + mu*T
+\end{verbatim}
+
+\textbf{For OU: \(b = \kappa(\theta-x)\), \(\sigma\) = const} → stationary solution \(p_\infty(x) = \mathcal{N}(\theta, \sigma^2/2\kappa)\).
+
+\paragraph{2.3.2 Common SDE Reference Table}\label{common-sde-reference-table}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1304}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.0725}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2754}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2464}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2754}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Process
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+SDE
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Closed-form \(X_t\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Stationary dist.
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Use in Optimiz-rs
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Brownian motion & \(dX = \sigma\,dW\) & \(X_0 + \sigma W_t\) & --- & Noise baseline \\
+Geometric BM & \(dX = \mu X\,dt + \sigma X\,dW\) & \(X_0 e^{(\mu-\sigma^2/2)t+\sigma W_t}\) & Log-normal & Price model \\
+Ornstein-Uhlenbeck & \(dX = \kappa(\theta-X)\,dt + \sigma\,dW\) & (see §2.4) & \(\mathcal{N}(\theta, \sigma^2/2\kappa)\) & Spread model \\
+CIR & \(dX = \kappa(\theta-X)\,dt + \sigma\sqrt{X}\,dW\) & (Bessel process) & Gamma\((2\kappa\theta/\sigma^2, \sigma^2/2\kappa)\) & Volatility, rates \\
+SABR & \(dF = \sigma F^\beta dW^1\), \(d\sigma = \nu\sigma\,dW^2\) & (no closed form) & --- & Volatility model \\
+\end{longtable}
+}
+
+\paragraph{2.3.3 Numerical Schemes for SDEs}\label{numerical-schemes-for-sdes}
+
+When no closed form exists, discretize with step \(\Delta t\):
+
+\textbf{Euler-Maruyama} (simplest, strong order 0.5):
+
+\[X_{t+\Delta t} \approx X_t + b(t,X_t)\,\Delta t + \sigma(t,X_t)\,\Delta W_t\]
+
+where \(\Delta W_t = \sqrt{\Delta t}\,Z\), \(Z\sim\mathcal{N}(0,1)\).
+
+\textbf{Milstein} (includes first-order Itō correction, strong order 1.0):
+
+\[X_{t+\Delta t} \approx X_t + b\,\Delta t + \sigma\,\Delta W_t + \tfrac12\sigma\,\sigma_x\bigl[(\Delta W_t)^2 - \Delta t\bigr].\]
+
+The extra term \(\tfrac12\sigma\sigma_x[(\Delta W_t)^2 - \Delta t]\) comes from applying Itō's lemma to \(\sigma(X_t)dW_t\).
+
+\begin{verbatim}
+Error comparison (log scale):
+
+ |  Euler-Maruyama   (slope = 0.5)
+ |  *
+ |    *
+ |      *
+ |        *   Milstein   (slope = 1.0)
+ |        o
+ |          o
+ |            o
+ +----------------------------> log(Delta_t)
+ (Milstein converges MUCH faster: halving dt reduces error by 4x instead of 2x)
+\end{verbatim}
+
+\subsubsection{2.4 Ornstein-Uhlenbeck (Mean-Reversion)}\label{ornstein-uhlenbeck-mean-reversion}
 
 Used in Optimiz-rs's \texttt{sparse\_mean\_reversion} and \texttt{ou\_estimator} modules:
-\begin{equation}
-  dX_t = \kappa(\theta - X_t)\,dt + \sigma\,dW_t.
-\end{equation}
 
-\textbf{Closed-form solution:}
-\begin{equation}
-  X_t = \theta + (X_0 - \theta)e^{-\kappa t} + \sigma\int_0^t e^{-\kappa(t-s)}\,dW_s.
-\end{equation}
+\[dX_t = \kappa(\theta - X_t)\,dt + \sigma\,dW_t.\]
 
-\textbf{Half-life:} $\tau_{1/2} = \ln 2/\kappa$. With $\kappa=0.2$/day, half-life $\approx 3.5$ days.
+\textbf{Intuition --- restoring force:} The drift is a spring pulling \(X_t\) back to \(\theta\):
 
-\textbf{MLE log-likelihood} (discrete observations at spacing $\Delta t$):
-\begin{equation}
-  \ell(\kappa,\theta,\sigma) = -\frac{1}{2}\sum_{i=1}^{n}\left[
-    \log(2\pi\hat\sigma_i^2) + \frac{(X_{t_i} - \hat\mu_i)^2}{\hat\sigma_i^2}
-  \right],
-\end{equation}
-where
-$\hat\mu_i = \theta + (X_{t_{i-1}}-\theta)e^{-\kappa\Delta t}$ and
-$\hat\sigma_i^2 = \dfrac{\sigma^2}{2\kappa}(1-e^{-2\kappa\Delta t})$.
+\begin{verbatim}
+X_t
+ |     upper band: theta + sigma/sqrt(2*kappa)
+ |  .--. .     ___                    <-- random excursions
+ | /    v /\  /   \
+ |/       v  /     \     -----  long-run mean: theta  (equilibrium)
+ |            \      \....
+ |             \___/
+ |     lower band: theta - sigma/sqrt(2*kappa)
+ +-------------------------------> t
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Jump Processes}
-%% ═══════════════════════════════════════════════════════════════════════════
+  Arrows: mean-reversion pull toward theta with speed kappa.
+  Half-life = ln(2) / kappa.
+  
+  Strong kappa: tight oscillations around theta (faster spring)
+  Weak kappa:   slow drift back (loose spring, more "random walk" like)
+\end{verbatim}
+
+\paragraph{2.4.1 Closed-Form Solution --- Step by Step}\label{closed-form-solution-step-by-step}
+
+\textbf{Step 1 --- Integrating factor.} Rewrite the SDE as:
+
+\[dX_t + \kappa X_t\,dt = \kappa\theta\,dt + \sigma\,dW_t.\]
+
+Multiply both sides by the integrating factor \(e^{\kappa t}\) and recognize the left-hand side:
+
+\[d\!\left(e^{\kappa t}X_t\right) = e^{\kappa t}dX_t + \kappa e^{\kappa t}X_t\,dt = e^{\kappa t}\kappa\theta\,dt + e^{\kappa t}\sigma\,dW_t.\]
+
+(Here we used Itō's product rule: \(d(e^{\kappa t}X_t) = e^{\kappa t}dX_t + X_t\cdot\kappa e^{\kappa t}dt\) --- no quadratic variation cross term since \(e^{\kappa t}\) is deterministic.)
+
+\textbf{Step 2 --- Integrate both sides from \(0\) to \(t\):}
+
+\[e^{\kappa t}X_t - X_0 = \kappa\theta\int_0^t e^{\kappa s}\,ds + \sigma\int_0^t e^{\kappa s}\,dW_s\]
+
+\[e^{\kappa t}X_t - X_0 = \theta(e^{\kappa t} - 1) + \sigma\int_0^t e^{\kappa s}\,dW_s.\]
+
+\textbf{Step 3 --- Divide by \(e^{\kappa t}\):}
+
+\[\boxed{X_t = \theta + (X_0 - \theta)e^{-\kappa t} + \sigma\int_0^t e^{-\kappa(t-s)}\,dW_s.}\]
+
+\textbf{Interpretation of each term:}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.4000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.6000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Meaning
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(\theta\) & Long-run equilibrium (the ``anchor'') \\
+\((X_0-\theta)e^{-\kappa t}\) & Deterministic decay: initial displacement shrinks at rate \(\kappa\) \\
+\(\sigma\int_0^t e^{-\kappa(t-s)}dW_s\) & Stochastic part: weighted sum of all past noise shocks, with \textbf{exponential forgetting} \\
+\end{longtable}
+}
+
+The stochastic integral \(I_t = \sigma\int_0^t e^{-\kappa(t-s)}dW_s\) is a \textbf{Gaussian} random variable (linear functional of Brownian motion) with:
+
+\[\mathbb{E}[I_t] = 0, \qquad \operatorname{Var}(I_t) = \sigma^2\int_0^t e^{-2\kappa(t-s)}\,ds = \frac{\sigma^2}{2\kappa}(1-e^{-2\kappa t}).\]
+
+\textbf{Step 4 --- Marginal distribution:}
+
+\[X_t \sim \mathcal{N}\!\left(\theta + (X_0-\theta)e^{-\kappa t},\;\frac{\sigma^2}{2\kappa}(1-e^{-2\kappa t})\right).\]
+
+As \(t\to\infty\): \(X_t \to \mathcal{N}(\theta, \sigma^2/2\kappa)\) --- the stationary distribution.
+
+\paragraph{\texorpdfstring{2.4.2 Transition Density (Conditional on \(X_s\))}{2.4.2 Transition Density (Conditional on X\_s)}}\label{transition-density-conditional-on-x_s}
+
+\[X_t \mid X_s \sim \mathcal{N}\!\left(\theta + (X_s-\theta)e^{-\kappa(t-s)},\;\frac{\sigma^2}{2\kappa}(1-e^{-2\kappa(t-s)})\right), \quad t > s.\]
+
+This is exact (no approximation) because the OU process is \textbf{linear}. Key formulas:
+
+\[\hat\mu(\tau) = \theta + (X_s-\theta)e^{-\kappa\tau}, \qquad \hat\sigma^2(\tau) = \frac{\sigma^2}{2\kappa}(1-e^{-2\kappa\tau}), \quad \tau=t-s.\]
+
+\begin{verbatim}
+Transition density spreading over time:
+
+    p(x_t | x_0 = x_0)
+
+t=0:    delta function at x_0
+        |
+        |*  <- spike
+
+t=0.2:  | **** 
+        |*    *         <- bell curve, mean shifted toward theta
+
+t=T:    |   ****
+        |  *    *       <- centered at theta, wider
+        |  *    *
+        +-----------> x
+\end{verbatim}
+
+\paragraph{2.4.3 Half-Life and Mean-Reversion Speed}\label{half-life-and-mean-reversion-speed}
+
+\textbf{Half-life:} \(\tau_{1/2} = \ln 2/\kappa\) --- time for the initial displacement to halve.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+\(\kappa\) (per year) & Half-life & Typical use \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.2 & 3.5 yr & Long-term macro factors \\
+10 & 25 days & Cross-sectional equity spreads \\
+55 & 4.6 days & Short-term pair spreads \\
+252 & 1 trading day & Intraday alpha signals \\
+\end{longtable}
+}
+
+\textbf{MLE log-likelihood} (discrete observations at spacing \(\Delta t\)):
+
+\[\ell(\kappa,\theta,\sigma) = -\frac{1}{2}\sum_{i=1}^{n}\left[\log(2\pi\hat\sigma^2) + \frac{(X_{t_i} - \hat\mu_i)^2}{\hat\sigma^2}\right],\]
+
+where \(\hat\mu_i = \theta + (X_{t_{i-1}}-\theta)e^{-\kappa\Delta t}\) and \(\hat\sigma^2 = \frac{\sigma^2}{2\kappa}(1-e^{-2\kappa\Delta t})\).
+
+\textbf{Score equations} (differentiate \(\ell\) and set to zero):
+
+\[\frac{\partial\ell}{\partial\theta} = \sum_i \frac{X_{t_i}-\hat\mu_i}{\hat\sigma^2}(1-e^{-\kappa\Delta t}) = 0,\]
+
+\[\frac{\partial\ell}{\partial\kappa} = \sum_i \frac{(X_{t_i}-\hat\mu_i)}{\hat\sigma^2}(X_{t_{i-1}}-\theta)\Delta t\,e^{-\kappa\Delta t} - \sum_i \frac{\partial\log\hat\sigma^2}{\partial\kappa} = 0.\]
+
+These are nonlinear in \(\kappa\); Optimiz-rs solves them with DE (\texttt{ou\_estimator::fit\_mle()}).
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Calibrating OU to an Equity-Pair Spread},breakable]
+**Data:** Daily log-spread $X_t = \log(P_A / P_B)$ for a co-integrated pair,
+$n=250$ observations, $\Delta t=1/252$ years.
+
+**Step 1 — MLE:** Maximize $\ell(\kappa, \theta, \sigma)$ using `ou_estimator::fit_mle()`.
+
+**Step 2 — Intermediate verification:** The OU log-likelihood surface:
+
+```
+ell(kappa, theta | sigma_hat)
+
+kappa
+ ^
+ |   +++                        <- log-lik thickening near true kappa
+ |  +++++
+ | +++++++
+ |  +++++
+ |   +++
+ |
+ +-------------------------> theta
+   (theta_hat is the sample mean of X_t, very well identified)
+   (kappa is harder: need long series to identify mean-reversion speed)
+```
+
+**Typical results:**
+
+| Parameter | Estimate | Interpretation |
+|-----------|----------|----------------|
+| $\hat\kappa$ | 55/yr | half-life approx 4.6 days |
+| $\hat\theta$ | 0.003 | long-run spread approx 0.3% |
+| $\hat\sigma$ | 0.12/yr$^{0.5}$ | daily spread vol approx 0.75% |
+
+**Step 3 — Diagnostic:**
+
+Standardized residuals: $r_i = (X_{t_i} - \hat\mu_i)/\hat\sigma$ should be $\mathcal{N}(0,1)$.
+
+```
+r_i histogram vs N(0,1)
+
+  |  .
+  | . .                <- histogram bars (sample)
+  |. . .........
+  |     ..........     <- N(0,1) curve (theory)
+  |          .   .
+  +------|------|-----> r_i
+        -2     +2
+```
+
+Ljung-Box test: checks for remaining autocorrelation in $r_i$.
+
+**Step 4 — Trading signal:**
+Enter when $|X_t - \hat\theta| > 2\hat\sigma_\infty$ where $\hat\sigma_\infty = \hat\sigma/\sqrt{2\hat\kappa}$.
+Exit at $X_t = \hat\theta$.  Expected holding time $\approx \hat\tau_{1/2} = \ln 2/\hat\kappa \approx 4.6$ days.
+
+**P&L decomposition:**
+- Gross expected profit per trade $\approx 2\hat\sigma_\infty = 2\hat\sigma/\sqrt{2\hat\kappa}$.
+- Transaction costs must be $< 2\hat\sigma_\infty$ for profitability.
+\end{tcolorbox}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{3 · Jump Processes}\label{jump-processes}
 
 Many financial time series exhibit sudden large moves that Brownian motion cannot capture.
 
-\subsection{Poisson Process}
+\subsubsection{3.1 Poisson Process}\label{poisson-process}
 
-\begin{defbox}{Poisson Process}
-A counting process $N = (N_t)_{t\ge 0}$ is a \emph{Poisson process with intensity}
-$\lambda > 0$ if:
-\begin{enumerate}
-  \item $N_0 = 0$.
-  \item Independent, stationary increments.
-  \item $\PP(N_{t+h}-N_t=1) = \lambda h + o(h)$ and $\PP(\Delta N > 1) = o(h)$.
-\end{enumerate}
-Equivalently, $N_t \sim \text{Poisson}(\lambda t)$ and inter-arrival times are $\text{Exp}(\lambda)$.
-The \emph{compensated} process $\tilde{N}_t = N_t - \lambda t$ is a martingale.
-\end{defbox}
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Poisson Process},breakable]
+A counting process $N = (N_t)_{t\ge 0}$ is a *Poisson process with
+intensity* $\lambda > 0$ if:
 
-\subsection{Compound Poisson Jump-Diffusion (Merton 1976)}
+1. $N_0 = 0$.
+2. Independent, stationary increments.
+3. $\mathbb{P}(N_{t+h}-N_t=1) = \lambda h + o(h)$ and $\mathbb{P}(\Delta N > 1) = o(h)$.
+\end{tcolorbox}
 
-\begin{equation}
-  \frac{dS_t}{S_{t^-}} = \mu\,dt + \sigma\,dW_t
-  + d\!\left(\sum_{k=1}^{N_t}(e^{J_k}-1)\right),
-\end{equation}
-with $N_t \sim \text{Poisson}(\lambda)$ and $J_k \sim \mathcal{N}(\mu_J, \sigma_J^2)$.
+Equivalently, \(N_t \sim \text{Poisson}(\lambda t)\) and inter-arrival times are \(\text{Exp}(\lambda)\). The \emph{compensated} process \(\tilde N_t = N_t - \lambda t\) is a martingale.
 
-\textbf{Merton option price} — a Poisson mixture of Black--Scholes prices:
-\begin{equation}
-  C_{\text{Merton}} = \sum_{n=0}^\infty \frac{e^{-\lambda' T}(\lambda' T)^n}{n!}
-  \cdot C_{\text{BS}}\!\left(S_0, K, T, r_n, \sigma_n^2\right),
-\end{equation}
-where
-\begin{align*}
-  \lambda' &= \lambda\, e^{\mu_J+\frac12\sigma_J^2},\\
-  r_n      &= r - \lambda\bigl(e^{\mu_J+\frac12\sigma_J^2}-1\bigr) + \frac{n(\mu_J+\tfrac12\sigma_J^2)}{T},\\
-  \sigma_n^2 &= \sigma^2 + \frac{n\sigma_J^2}{T}.
-\end{align*}
+\textbf{Sample path --- step function with random jumps (\(\lambda=2\) per unit time):}
 
-\subsection{Lévy Processes and the Lévy--Khintchine Representation}
+\begin{verbatim}
+N_t
+ 5 |                          ___________
+ 4 |               ___________
+ 3 |         ______
+ 2 |    ______
+ 1 |____
+ 0 |
+   +-----|------|-------|------|---------> t
+         tau1  tau2   tau3   tau4
+         (Exp(lambda) inter-arrivals, each tau_i ~ Exp(2))
+\end{verbatim}
 
-\begin{thmbox}{Lévy--Khintchine}
-Every Lévy process (independent, stationary increments) has characteristic function
-\begin{equation}
-  \E[e^{i\xi X_t}] = \exp\!\left(t\left[
-    ib\xi - \tfrac{1}{2}\sigma^2\xi^2
-    + \int_{\R\setminus\{0\}} \bigl(e^{i\xi z}-1-i\xi z\,\mathbf{1}_{|z|\le1}\bigr)\nu(dz)
-  \right]\right),
-\end{equation}
-where $(b, \sigma^2, \nu)$ is the \emph{Lévy triplet} and $\nu$ the \emph{Lévy measure},
+\subsubsection{3.2 Compound Poisson Jump-Diffusion (Merton 1976)}\label{compound-poisson-jump-diffusion-merton-1976}
+
+\[\frac{dS_t}{S_{t^-}} = \mu\,dt + \sigma\,dW_t + d\Bigl(\sum_{k=1}^{N_t}(e^{J_k}-1)\Bigr),\]
+
+with \(N_t\) Poisson(\(\lambda\)) and \(J_k \sim \mathcal{N}(\mu_J, \sigma_J^2)\).
+
+\textbf{Sample path --- smooth diffusion interrupted by sudden jumps:}
+
+\begin{verbatim}
+S_t
+|         ^ jump +15%
+|        /|
+|       / |
+|      /  |          v jump -20%
+|     /   \\         /|
+|    /     \\_______/ |
+|   /                \\____
+|  /                      \\...
+| /
++---------------------------------> t
+  (Brownian between jumps; jump times ~ Poisson)
+\end{verbatim}
+
+\textbf{Merton option price} --- Poisson mixture of Black-Scholes prices:
+
+\[C_{\text{Merton}} = \sum_{n=0}^\infty \frac{e^{-\lambda' T}(\lambda' T)^n}{n!}
+\cdot C_{\text{BS}}\!\left(S_0, K, T, r_n, \sigma_n^2\right),\]
+
+where \(\lambda' = \lambda e^{\mu_J+\frac12\sigma_J^2}\), \(r_n = r - \lambda(e^{\mu_J+\frac12\sigma_J^2}-1) + n(\mu_J+\tfrac12\sigma_J^2)/T\), and \(\sigma_n^2 = \sigma^2 + n\sigma_J^2/T\).
+
+\textbf{Intuition:} Condition on exactly \(n\) jumps occurring (probability \(e^{-\lambda' T}(\lambda' T)^n/n!\)). In that scenario the world is a BS world with adjusted drift \(r_n\) and total variance \(\sigma^2 T + n\sigma_J^2\). Average over the Poisson distribution of \(n\).
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Fitting Merton to a Crash Event},breakable]
+**Observed:** S&P 500, March 2020.  Implied vol surface shows a vol smile —
+OTM puts are expensive (fat left tail), which pure BS cannot explain.
+
+**Merton calibration** (4 parameters: $\sigma, \lambda, \mu_J, \sigma_J$):
+
+| Parameter | Estimated value | Interpretation |
+|-----------|----------------|----------------|
+| $\sigma$ | 0.18/yr | baseline diffusion vol |
+| $\lambda$ | 3/yr | approx 3 crash events per year |
+| $\mu_J$ | -0.12 | average log-jump = -12% |
+| $\sigma_J$ | 0.08 | jump size std = 8% |
+
+**Fitting procedure:**
+
+1. Collect implied vols for strikes $K$ and maturities $T$.
+2. Minimise $\sum_{K,T}(C_{\text{Merton}}(K,T;\theta) - C_{\text{market}})^2$
+   via `differential_evolution` (DE is ideal — 4 params, non-convex landscape).
+3. **Diagnostic:** Plot Merton vs market smile; expect fit within 0.5 vega.
+
+**Result:** Negative $\mu_J$ captures left-tail skew, explaining costly OTM puts.
+\end{tcolorbox}
+
+\subsubsection{3.3 Levy Processes and the Levy-Khintchine Representation}\label{levy-processes-and-the-levy-khintchine-representation}
+
+\begin{tcolorbox}[colback=thmbg!60,colframe=optgold,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Theorem / Key Idea}} — Theorem — Levy-Khintchine},breakable]
+Every Levy process (independent stationary increments) has characteristic function
+
+$$\mathbb{E}[e^{i\xi X_t}] = \exp\!\Bigl(t\Bigl[i b\xi - \tfrac{1}{2}\sigma^2\xi^2
++ \int_{\mathbb{R}\setminus\{0\}} \bigl(e^{i\xi z}-1-i\xi z\mathbf{1}_{|z|\le1}\bigr)\nu(dz)\Bigr]\Bigr)$$
+
+where $(b, \sigma^2, \nu)$ is the *Levy triplet* and $\nu$ the *Levy measure*,
 satisfying $\int(1\wedge z^2)\nu(dz)<\infty$.
-\end{thmbox}
+\end{tcolorbox}
 
-\begin{center}
-\begin{tabular}{L{3.5cm} L{5.5cm} L{4cm}}
-\toprule
-\textbf{Process} & \textbf{Lévy measure $\nu$} & \textbf{Use case} \\
-\midrule
-Brownian motion   & $\nu=0$                                  & Continuous diffusion \\[3pt]
-Compound Poisson  & Finite measure                           & Rare large jumps \\[3pt]
-Variance Gamma    & $\nu(dz)\propto e^{-c|z|}/|z|$          & Equity returns \\[3pt]
-CGMY              & $e^{-G|z|}/|z|^{1+Y}$ (neg), $e^{-Mx}/x^{1+Y}$ (pos) & Heavy tails, $Y\in(0,2)$ \\[3pt]
-$\alpha$-stable   & $c|z|^{-1-\alpha}$                      & Infinite-variance regimes \\
-\bottomrule
-\end{tabular}
-\end{center}
+\textbf{Levy measure tail shapes:}
 
-\subsection{SDEs with Jumps — Generator and Itô Formula}
+\begin{verbatim}
+nu(dz)/dz
 
-\begin{equation}
-  dX_t = b(X_{t^-})\,dt + \sigma(X_{t^-})\,dW_t
-  + \int_{\R} c(X_{t^-}, z)\,\widetilde{N}(dt, dz),
-\end{equation}
-where $\widetilde{N}(dt,dz) = N(dt,dz) - \nu(dz)\,dt$ is the \emph{compensated jump measure}.
+Gaussian BM:    nu = 0  (no jump component, only diffusion)
 
-\textbf{Itô formula for jump-diffusions:}
-\begin{equation}
-  dF(X_t) = \mathcal{L}F\,dt + \partial_x F\,\sigma\,dW_t
-  + \int\bigl[F(X_{t^-}+c)-F(X_{t^-})\bigr]\widetilde{N}(dt,dz),
-\end{equation}
+Compound Poisson (rare large jumps):
+  |  ^    ^         (discrete point masses at fixed jump sizes)
+  +--*----*---> z
+
+Variance Gamma (smooth exponential decay):
+  |\\
+  | \\.
+  |  \\...___
+  +---------> z    (heavier left tail than Gaussian)
+
+alpha-stable (power-law heavy tail):
+  |\\
+  | \\.....
+  +-----------> z    (infinite variance, very fat tail)
+\end{verbatim}
+
+\textbf{Levy Process Zoo}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Process & Levy measure \(\nu\) & Use case \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Brownian motion & \(\nu=0\) & continuous diffusion \\
+Compound Poisson & finite measure & rare large jumps \\
+Variance Gamma & \(\nu(dz)\propto e^{-c|z|}/|z|\) & equity returns \\
+CGMY & power-law with exponential cutoff & heavy tails, \(Y\in(0,2)\) \\
+\(\alpha\)-stable & \(c|z|^{-1-\alpha}\) & infinite-variance regimes \\
+\end{longtable}
+}
+
+\subsubsection{3.4 SDEs with Jumps --- Generator and Ito Formula}\label{sdes-with-jumps-generator-and-ito-formula}
+
+\[dX_t = b(X_{t^-})\,dt + \sigma(X_{t^-})\,dW_t
++ \int_{\mathbb{R}} c(X_{t^-}, z)\,\tilde N(dt, dz),\]
+
+where \(\tilde N(dt,dz) = N(dt,dz) - \nu(dz)\,dt\) is the \emph{compensated jump measure}.
+
+\textbf{Ito formula for jump-diffusions:}
+
+\[dF(X_t) = \mathcal{L}F\,dt + \partial_x F\,\sigma\,dW_t
++ \int\bigl[F(X_{t^-}+c)-F(X_{t^-})\bigr]\tilde N(dt,dz),\]
+
 where the \emph{generator} is
-\begin{equation}
-  \mathcal{L}F = b\,\partial_x F + \tfrac12\sigma^2\partial_{xx}F
-  + \int\bigl[F(x+c)-F(x)-c\,\partial_x F\bigr]\nu(dz).
-\end{equation}
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Optimal Control (HJB, PMP, Jumps)}
-%% ═══════════════════════════════════════════════════════════════════════════
+\[\mathcal{L}F = b\,\partial_x F + \tfrac12\sigma^2\partial_{xx}F
++ \int\bigl[F(x+c)-F(x)-c\,\partial_x F\bigr]\nu(dz).\]
 
-\textbf{Big picture.} Optimal control asks: \textit{given a stochastic system we can steer
-with a control $u_t$, what policy minimises expected cost?}  Three complementary tools
-answer this:
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\medskip
-\begin{center}
-\begin{tabular}{L{2.5cm} L{4cm} L{3cm} L{4cm}}
-\toprule
-\textbf{Tool} & \textbf{Solves} & \textbf{Scales to} & \textbf{Intuition} \\
-\midrule
-HJB PDE & Value function $V(t,x)$ & Low dim (PDE grid) & Dynamic programming \\
-PMP     & Optimal paths $(X_t,p_t)$ & High dim (ODE) & Adjoint sensitivity \\
-HJBI    & Same as HJB + jumps & Low dim & Non-local integral term \\
-\bottomrule
-\end{tabular}
-\end{center}
+\subsection{4 · Optimal Control (HJB, PMP, Jumps)}\label{optimal-control-hjb-pmp-jumps}
 
-\subsection{Stochastic Hamilton--Jacobi--Bellman Equation}
+\textbf{Big picture.} Optimal control asks: \emph{given a stochastic system we can steer with a control \(u_t\), what policy minimises expected cost?} Three complementary tools answer this:
 
-\textbf{Setup.} The state $X_t \in \R^d$ evolves as
-$dX_t = b(X_t,u_t)\,dt + \sigma(X_t,u_t)\,dW_t$,
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2222}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3056}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3056}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Tool
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Solves
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Scales to
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Intuition
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+HJB PDE & Value function \(V(t,x)\) & Low dim (PDE grid) & Dynamic programming \\
+PMP & Optimal paths \((X_t,p_t)\) & High dim (ODE) & Adjoint sensitivity \\
+HJBI & Same as HJB + jumps & Low dim & Non-local integral term \\
+\end{longtable}
+}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsubsection{4.1 Stochastic HJB}\label{stochastic-hjb}
+
+\textbf{Setup.} The state \(X_t \in \mathbb{R}^d\) evolves as
+
+\[dX_t = b(X_t,u_t)\,dt + \sigma(X_t,u_t)\,dW_t,\]
+
 and we minimise the total expected cost
-\[
-  J(t,x;u) = \E\!\left[\int_t^T \ell(X_s,u_s)\,ds + g(X_T)\,\Big|\,X_t=x\right].
-\]
 
-The \textbf{value function} $V(t,x) = \inf_u J(t,x;u)$ satisfies:
-\begin{equation}
-  \boxed{
-    -\partial_t V = \inf_{u\in\mathcal{U}}\Bigl[
-      \underbrace{\ell(x,u)}_{\text{running cost}}
-      + \underbrace{\nabla_x V^{\!\top} b(x,u)}_{\text{1st-order drift}}
-      + \underbrace{\tfrac12\tr\!\bigl(\sigma\sigma^{\!\top}(x,u)\,\nabla_x^2 V\bigr)}_{\text{curvature correction}}
-    \Bigr],\quad V(T,\cdot)=g.
-  }
-\end{equation}
+\[J(t,x;u) = \mathbb{E}\!\left[\int_t^T \ell(X_s,u_s)\,ds + g(X_T)\,\Big|\,X_t=x\right].\]
 
-Under smooth $V$, the \textbf{feedback law} is
-$u^\star(t,x) = \arg\min_u[\ell(x,u)+\nabla_x V^\top b(x,u)]$.
+The \textbf{value function} \(V(t,x) = \inf_u J(t,x;u)\) satisfies:
 
-%% ── Example: Merton portfolio ────────────────────────────────────────────
-\begin{tcolorbox}[breakable, enhanced, colback=green!5, colframe=green!40!black,
-  title={\sffamily\bfseries Example — Optimal Portfolio Allocation (Merton 1969)},
-  arc=3pt, boxrule=0.6pt]
+\[-\partial_t V = \inf_{u\in\mathcal{U}}\Bigl[\ell(x,u) + \nabla_x V^{\!\top} b(x,u)
++ \tfrac12\operatorname{Tr}\bigl(\sigma\sigma^{\!\top}(x,u)\,\nabla_x^2 V\bigr)\Bigr],
+\quad V(T,\cdot)=g.\]
+
+\textbf{Intuition --- three terms inside the infimum:} - \(\ell(x,u)\) --- instantaneous running cost (pay now). - \(\nabla_x V^\top b\) --- drift of the value function (first-order Taylor in state change). - \(\tfrac12\operatorname{Tr}(\sigma\sigma^\top\nabla^2 V)\) --- curvature correction due to noise (stochastic analogue of the second-order Taylor term).
+
+Under smooth \(V\), the \textbf{feedback law} is \(u^\star(t,x) = \arg\min_u[\ell(x,u)+\nabla_x V^\top b(x,u)].\)
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Optimal Portfolio Allocation (Merton 1969)},breakable]
 Investor wealth $X_t$ follows
 $dX_t = (r + u_t(\mu-r))X_t\,dt + u_t\sigma X_t\,dW_t$,
-with $u_t$ the fraction in the risky asset.  Maximise $\E[\log X_T]$.
+where $u_t\in\mathbb{R}$ is the fraction invested in the risky asset.
 
-\textbf{Ansatz} $V(t,x) = \ln x + f(t)$ substituted into HJB gives:
-\[
-  f'(t) = -r - \frac{(\mu-r)^2}{2\sigma^2}, \qquad f(T)=0.
-\]
-\textbf{Optimal Merton rule} (constant, independent of wealth and time):
-\begin{equation}
-  u^\star = \frac{\mu - r}{\sigma^2}.
-\end{equation}
-Invest a fraction proportional to the Sharpe ratio and inversely to variance.
+Minimise $-\mathbb{E}[\log X_T]$ (maximise expected log-utility).
+
+**Ansatz:** $V(t,x) = \ln x + f(t)$.  Substituting into HJB:
+
+$$f'(t) = -r - \frac{(\mu-r)^2}{2\sigma^2},\qquad f(T)=0.$$
+
+The **optimal Merton rule** is constant:
+
+$$u^\star = \frac{\mu-r}{\sigma^2} \quad (\text{fraction in risky asset}).$$
+
+Invest a fixed fraction proportional to the Sharpe ratio, inversely to variance —
+independent of wealth and time.
 \end{tcolorbox}
 
-\textbf{LQR special case} ($\ell = x^\top Q x + u^\top R u$, $b=Ax+Bu$):
-$V(t,x)=x^\top P(t)x + v(t)$ with $P$ solving the \emph{matrix Riccati ODE}:
-\begin{equation}
-  -\dot{P} = A^\top P + PA - PBR^{-1}B^\top P + Q,\quad P(T)=Q_T.
-\end{equation}
-The optimal control is \textbf{linear feedback}: $u^\star_t = -R^{-1}B^\top P(t)X_t$.
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-%% ── Example: Almgren-Chriss ──────────────────────────────────────────────
-\begin{tcolorbox}[breakable, enhanced, colback=green!5, colframe=green!40!black,
-  title={\sffamily\bfseries Example — Optimal Inventory Liquidation (Almgren--Chriss)},
-  arc=3pt, boxrule=0.6pt]
-Trader liquidates $X_0$ shares by $T$.  Inventory $X_t$, rate $u_t < 0$:
-\[
-  dX_t = u_t\,dt,\qquad \ell(x,u) = \alpha x^2 + \beta u^2.
-\]
-Deterministic LQR ($\sigma=0$), $A=0$, $B=1$, $Q=\alpha$, $R=\beta$.
-Riccati solution gives the optimal TWAP-like schedule:
-\begin{equation}
-  u^\star(t) = -\frac{\kappa}{\sinh(\kappa T)}\cosh(\kappa(T-t))\,X_0,
-  \qquad \kappa=\sqrt{\alpha/\beta}.
-\end{equation}
-Large $\kappa$ (high risk aversion, low impact) $\to$ aggressive front-loaded selling.
+\textbf{LQR special case} (\(\ell = x^\top Q x + u^\top R u\), \(b=Ax+Bu\), \(\sigma\) constant): \(V(t,x)=x^\top P(t)x + v(t)\) with \(P\) solving the \emph{matrix Riccati ODE}:
+
+\[-\dot P = A^\top P + PA - PBR^{-1}B^\top P + Q,\quad P(T)=Q_T.\]
+
+The optimal control is \textbf{linear feedback}: \(u^\star_t = -R^{-1}B^\top P(t)X_t\).
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Optimal Inventory (Almgren-Chriss liquidation)},breakable]
+Liquidate $X_0$ shares by time $T$.  Inventory $X_t$, trading rate $u_t<0$:
+
+$$dX_t = u_t\,dt, \quad
+\ell(x,u) = \underbrace{\alpha x^2}_{\text{risk}} + \underbrace{\beta u^2}_{\text{impact}}.$$
+
+This is a **deterministic LQR** with
+$A=0$, $B=1$, $Q=\alpha$, $R=\beta$.
+The Riccati solution gives the TWAP-like schedule
+
+$$u^\star(t,x) = -\frac{\alpha}{\beta}\cdot\frac{\sinh(\kappa(T-t))}{\sinh(\kappa T)}\cdot X_0,
+\quad \kappa=\sqrt{\alpha/\beta}.$$
+
+Large $\kappa$ (high risk aversion or low impact cost) -> aggressive front-loaded selling.
 \end{tcolorbox}
 
-\subsection{Pontryagin Maximum Principle (PMP)}
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-The PMP converts the HJB PDE into a \textbf{two-point boundary-value ODE},
-feasible in high dimensions where a grid is intractable.
+\subsubsection{4.2 Pontryagin Maximum Principle}\label{pontryagin-maximum-principle}
 
-\begin{thmbox}{Pontryagin Maximum Principle}
-Define the \textbf{Hamiltonian} $\mathcal{H}(x,u,p) = \ell(x,u)+p^\top b(x,u)$.
-If $(X^\star, u^\star)$ is optimal, there exists a \textbf{costate} (adjoint) process
-$p_t$ satisfying:
-\begin{equation}
-  \dot{p}_t = -\nabla_x \mathcal{H}(X_t^\star, u_t^\star, p_t),
-  \quad p_T = \nabla_x g(X_T^\star),
-\end{equation}
-with the optimality condition
-$u_t^\star = \arg\min_u \mathcal{H}(X_t^\star, u, p_t)$ holding a.e.
-\end{thmbox}
+The PMP avoids the curse of dimensionality --- it converts HJB into a \textbf{two-point boundary-value ODE} in \((X_t, p_t)\), feasible when a PDE grid is intractable.
 
-\textbf{Costate intuition.} $p_t$ is the \emph{shadow price} of state $X_t$:
-\[
-  p_t = \nabla_x V(t, X_t^\star)
-  = \frac{\partial(\text{optimal cost-to-go})}{\partial x}.
-\]
-Increasing the current state by $dx$ changes future cost by $p_t^\top dx$.
-This is the continuous-time analogue of \textbf{backpropagation} through a
-dynamical system — the costate = gradient of the loss w.r.t.\ state.
+\begin{tcolorbox}[colback=thmbg!60,colframe=optgold,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Theorem / Key Idea}} — Theorem (PMP)},breakable]
+Define the **Hamiltonian** $\mathcal{H}(x,u,p) = \ell(x,u)+p^\top b(x,u)$.
+If $(X^\star, u^\star)$ is optimal, there exists a **costate** process $p_t$ with:
 
-\textbf{Shooting algorithm:}
-\begin{codebox}
+$$\dot p_t = -\nabla_x \mathcal{H}(X_t^\star, u_t^\star, p_t),\quad p_T = \nabla_x g(X_T^\star),$$
+
+and the optimality condition $u_t^\star = \arg\min_u \mathcal{H}(X_t^\star, u, p_t)$ holds a.e.
+\end{tcolorbox}
+
+\textbf{Costate intuition.} \(p_t\) is the \emph{shadow price} of state \(X_t\):
+
+\[p_t = \nabla_x V(t, X_t^\star) = \frac{\partial (\text{optimal cost-to-go})}{\partial x}.\]
+
+This is exactly the adjoint / backpropagation equation of deep learning --- PMP is the continuous-time version of gradient backpropagation through a dynamical system.
+
+\textbf{Algorithm (shooting method):}
+
+\begin{verbatim}
 1. Guess costate p_0
-2. Integrate forward:  dX = b(X, u*(X,p)) dt       [state ODE]
-3. Integrate backward: dp = -grad_x H(X, u*, p) dt  [costate ODE]
-4. Check boundary:  p_T = grad g(X_T)
-5. Not satisfied -> update p_0 (Newton/gradient) -> back to 2
-\end{codebox}
+2. Integrate forward:  dX = b(X, u*(X,p)) dt           (state ODE)
+3. Integrate backward: dp = -grad_x H(X, u*, p) dt     (costate ODE)
+4. Check boundary condition:  p_T = grad g(X_T)
+5. If not satisfied -> update p_0 (Newton / gradient) -> go to 2
+\end{verbatim}
 
-%% ── Example: PMP for Merton ──────────────────────────────────────────────
-\begin{tcolorbox}[breakable, enhanced, colback=green!5, colframe=green!40!black,
-  title={\sffamily\bfseries Example — PMP Costate for the Merton Problem},
-  arc=3pt, boxrule=0.6pt]
-With $g(x) = -\!\ln x$, the terminal costate is $p_T = -1/X_T^\star$.
-The costate ODE $\dot{p}_t = -p_t(r+u^\star(\mu-r))$ integrates to
-\[
-  p_t = -\frac{e^{-(T-t)(r+u^\star(\mu-r))}}{X_t^\star},
-\]
-confirming $p_t = \partial_x V = 1/x$ (log-utility shadow price is inverse wealth).
-Optimality $\partial_u\mathcal{H}=0$ recovers $u^\star = (\mu-r)/\sigma^2$.
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — PMP for the Merton Problem},breakable]
+With $\ell = 0$, $g(x) = -\ln x$, $b = (r+u(\mu-r))x$,
+the Hamiltonian is $\mathcal{H}(x,u,p) = p(r+u(\mu-r))x$.
+
+**Costate ODE:**
+$\dot p_t = -\partial_x \mathcal{H} = -p_t(r+u^\star(\mu-r))$,
+with terminal $p_T = -1/X_T^\star$.
+
+**Optimality condition** $\partial_u\mathcal{H}=0$ recovers $u^\star = (\mu-r)/\sigma^2$.
+
+The costate path $p_t = -e^{-(T-t)(r+(\mu-r)u^\star)}/X_t^\star$ confirms that the
+shadow price scales inversely with wealth — poorer investors value state more.
 \end{tcolorbox}
 
-The costate pair $(X_t^\star, p_t)$ moves along Hamiltonian geodesics on
-$T^\star\R^d$ — a direct link to symplectic geometry (\S\ref{sec:symplectic}).
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\subsection{HJB with Jumps (HJBI)}
+The costate pair \((X_t^\star, p_t)\) moves along Hamiltonian geodesics on \(T^\star\mathbb{R}^d\) --- a direct link to symplectic geometry (§10.4).
 
-When the state can jump (\S3.4), the HJB equation gains a
-\textbf{non-local integral operator}:
-\begin{equation}
-  -\partial_t V = \inf_{u}\Bigl[
-    \ell + \nabla V^\top b + \tfrac12\tr(\sigma\sigma^\top\nabla^2 V)
-    + \underbrace{\int\bigl[V(x+c)-V(x)-\nabla V^\top c\bigr]\nu(dz)}_{\text{expected value change from jumps}}
-  \Bigr].
-\end{equation}
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\textbf{Intuition for the integral term.} A jump of size $c$ moves the state from $x$
-to $x+c$, changing the value function by $V(x+c)-V(x)$.  The compensator
-$\nabla V^\top c$ subtracts the linear part already counted by the drift,
-following Itô's formula for jump processes.
+\subsubsection{4.3 HJB with Jumps (HJBI)}\label{hjb-with-jumps-hjbi}
 
-%% ── Example: jumps in inventory ─────────────────────────────────────────
-\begin{tcolorbox}[breakable, enhanced, colback=green!5, colframe=green!40!black,
-  title={\sffamily\bfseries Example — Optimal Execution with Jump Risk},
-  arc=3pt, boxrule=0.6pt]
+When the state can jump (§3.4), the HJB equation gains a \textbf{non-local integral operator}:
+
+\[-\partial_t V = \inf_{u}\Bigl[\ell + \nabla V^\top b + \tfrac12\operatorname{Tr}(\sigma\sigma^\top\nabla^2 V)
++ \underbrace{\int\bigl[V(x+c(x,u,z))-V(x)-\nabla V^\top c(x,u,z)\bigr]\nu(dz)}_{\text{expected value change from jumps}}\Bigr].\]
+
+\textbf{Intuition for the integral term.} A jump of size \(c\) moves the state from \(x\) to \(x+c\), changing the value function by \(V(x+c)-V(x)\). The compensator \(\nabla V^\top c\) subtracts the linear part already counted in the drift.
+
+The \texttt{optimal\_control} module discretises the integral on truncated support using Gaussian quadrature.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Optimal Execution with Jump Risk},breakable]
 Extend the inventory model with Poisson order-flow shocks:
-\[
-  dX_t = u_t\,dt + d\!\left(\sum_{k=1}^{N_t} Z_k\right),
-  \quad Z_k \sim \mathcal{N}(0,\sigma_J^2),\; N_t\sim\text{Poisson}(\lambda).
-\]
-The HJBI for $V(t,x)$ becomes:
-\[
-  -\partial_t V = \inf_u\Bigl[\alpha x^2 + \beta u^2 + \partial_x V\,u
-  + \lambda\,\E_z[V(x+z)-V(x)-z\,\partial_x V]\Bigr].
-\]
-With Gaussian jumps the expectation evaluates to
-$\tfrac12\lambda\sigma_J^2\,\partial_{xx}V$, so the HJBI reduces to the same Riccati
-ODE but with \textbf{effective diffusion} $\sigma_{\rm eff}^2 = \lambda\sigma_J^2$:
-order-flow risk acts like additional Brownian volatility, accelerating the sell schedule.
+
+$$dX_t = u_t\,dt + \Delta J_t,\quad \Delta J_t \sim \text{Compound Poisson}(\lambda, \mathcal{N}(0,\sigma_J^2)).$$
+
+With Gaussian jumps, the HJBI reduces to the same LQR Riccati ODE but with
+**effective diffusion** $\sigma_{\text{eff}}^2 = \lambda\sigma_J^2$.
+
+Key insight: order-flow risk acts like additional Brownian volatility, accelerating
+the optimal sell schedule.
 \end{tcolorbox}
 
-\subsection{Viscosity Solutions}
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-When $V$ fails to be $C^{1,2}$ (degenerate diffusion, constraints, non-smooth terminal
-payoff), classical solutions may not exist.  \textbf{Viscosity solutions}
-(Crandall--Lions 1983) provide a rigorous weak notion restoring existence and uniqueness.
+\subsubsection{4.4 Viscosity Solutions}\label{viscosity-solutions}
 
-\textbf{Why they matter in practice:} HJB is solved on a grid where $V$ is only
-piecewise smooth.  Viscosity theory guarantees the numerical scheme converges to
-the true solution.
+When \(V\) fails to be \(C^{1,2}\) --- degenerate diffusion, constraints, or non-smooth terminal conditions --- classical solutions may not exist. \textbf{Viscosity solutions} (Crandall-Lions 1983) provide a rigorous weak notion that restores existence and uniqueness.
 
-\begin{defbox}{Viscosity Subsolution}
-A continuous $V$ is a viscosity \emph{subsolution} if for every smooth $\phi$
-touching $V$ \textbf{from above} at $(t_0,x_0)$ (i.e.\ $V-\phi$ has a local maximum):
-\[
-  -\partial_t\phi(t_0,x_0) \le
-  \inf_u\Bigl[\ell(x_0,u) + \nabla_x\phi^\top b + \tfrac12\tr(\sigma\sigma^\top\nabla^2\phi)\Bigr].
-\]
-A \emph{supersolution} reverses the inequality with a test touching from \emph{below}.
-The unique viscosity \textbf{solution} is simultaneously both.
-\end{defbox}
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Viscosity Subsolution},breakable]
+A continuous $V$ is a viscosity *subsolution* if for every smooth $\phi$
+touching $V$ **from above** at $(t_0,x_0)$:
 
-\textbf{Practical interpretation.} Classical calculus requires $V$ to satisfy the PDE
-pointwise.  Viscosity theory says $V$ satisfies it in an averaged sense via smooth test
-functions — valid even at kinks and free boundaries.
+$$-\partial_t\phi(t_0,x_0) \le \inf_u\Bigl[\ell(x_0,u) + \nabla_x\phi^\top b + \tfrac12\operatorname{Tr}(\sigma\sigma^\top\nabla^2\phi)\Bigr].$$
 
-%% ── Example: American option ─────────────────────────────────────────────
-\begin{tcolorbox}[breakable, enhanced, colback=green!5, colframe=green!40!black,
-  title={\sffamily\bfseries Example — American Option as a Viscosity Problem},
-  arc=3pt, boxrule=0.6pt]
-An American put with payoff $g(x)=(K-x)^+$ satisfies the \textbf{variational inequality}:
-\[
-  \min\Bigl(-\partial_t V - \mathcal{L}_{\rm BS}V,\; V - (K-x)^+\Bigr) = 0,
-\]
-where $\mathcal{L}_{\rm BS}V = rx\partial_x V + \tfrac12\sigma^2 x^2\partial_{xx}V - rV$.
-\begin{itemize}
-  \item \textbf{Continuation region} ($V>(K-x)^+$): Black--Scholes PDE holds.
-  \item \textbf{Exercise region} ($V=(K-x)^+$): option exercised immediately.
-\end{itemize}
-At the free boundary, $\partial_x V$ is continuous (\emph{smooth-pasting}) but
-$\partial_{xx}V$ is not — so $V\in C^1$ but $V\notin C^2$.
-Viscosity theory handles this kink without modification.
+A *supersolution* reverses the inequality. The unique viscosity **solution** is both.
 \end{tcolorbox}
 
-The backward DP converges to the viscosity solution under the CFL condition
-$\Delta t \le C\,(\Delta x)^2$.
+\textbf{Practical interpretation:} Classical: ``\(V\) satisfies the PDE pointwise.'' Viscosity: ``\(V\) satisfies the PDE in an averaged sense --- even at kinks.''
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Mean Field Games (1D Solver)}
-%% ═══════════════════════════════════════════════════════════════════════════
+Optimiz-rs's backward DP converges to the viscosity solution under CFL: \(\Delta t \le C\,(\Delta x)^2\).
 
-MFG couples a \textbf{backward HJB} (individual value) with a
-\textbf{forward Fokker--Planck} (population density):
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\begin{align}
-  \text{HJB (backward):}\quad
-    &{-\partial_t u - \nu\partial_{xx}u + H(x,\partial_x u, m) = 0,}
-    &u(T,x)&=g(x),\\
-  \text{Fokker--Planck (forward):}\quad
-    &{\partial_t m - \nu\partial_{xx}m - \partial_x(m\,\partial_p H) = 0,}
-    &m(0,x)&=m_0(x).
-\end{align}
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — American Option as a Viscosity Problem},breakable]
+American put payoff $g(x) = (K-x)^+$ gives the **variational inequality**:
 
-\textbf{Coupling:} $H$ depends on $m$ (mean-field interaction), creating a fixed-point problem.
+$$\min\Bigl(-\partial_t V - \mathcal{L}_{\text{BS}}V,\; V - (K-x)^+\Bigr) = 0.$$
+
+- **Continuation region** ($V > g$): Black-Scholes PDE holds.
+- **Exercise region** ($V = g$): option exercised immediately.
+
+At the free boundary: $\partial_x V$ is continuous (*smooth-pasting*) but $\partial_{xx}V$ is not
+— $V$ is $C^1$ but not $C^2$. Viscosity theory handles this kink rigorously.
+\end{tcolorbox}
+
+\textbf{Backward DP grid schema:}
+
+\begin{verbatim}
+t=T    [ g(x_1)  g(x_2)  ...  g(x_n) ]   terminal condition
+t=T-1  [ V^1     V^2     ...  V^n    ]   one backward step
+ .
+ .
+t=0    [ V_0^1   V_0^2   ...  V_0^n  ]  -> optimal policy u*(x,0)
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{5 · Mean Field Games (1D Solver)}\label{mean-field-games-1d-solver}
+
+MFG couples a \textbf{backward HJB} (individual value) with a \textbf{forward Fokker-Planck} (population density):
+
+\[\begin{aligned}
+\text{HJB (backward): } &
+-\partial_t u - \nu\partial_{xx}u + H(x,\partial_x u, m) = 0, & u(T,x)&=g(x),\\
+\text{Fokker-Planck (forward): } &
+\partial_t m - \nu\partial_{xx}m - \partial_x(m\,\partial_p H) = 0, & m(0,x)&=m_0(x).
+\end{aligned}\]
+
+\textbf{Coupling:} \(H\) depends on \(m\) (mean-field interaction), creating a fixed-point problem.
+
+\textbf{Backward-forward information flow:}
+
+\begin{verbatim}
+t = 0                                t = T
+  m_0 (known)                          g(x) (known)
+    |                                    |
+    |  Fokker-Planck (forward -->)        |
+    |  evolves population density m       |
+    |                                    |
+    v                                    v
+  m(t,x)  <----- mutually consistent ---  u(t,x)
+                HJB (backward <--)
+                optimal value function
+
+  Each agent uses u to choose optimal control.
+  Population density m feeds back into u via H(x, du, m).
+  Fixed point: m and u are simultaneously consistent (Nash equilibrium).
+\end{verbatim}
 
 \textbf{Fixed-point algorithm:}
-\begin{codebox}
+
+\begin{verbatim}
 1. Initialise m^0 = m_0  (e.g. Gaussian)
-2. Solve HJB backward -> u^{k+1}
+2. Solve HJB backward  -> u^{k+1}
 3. Extract optimal drift: alpha*(x,t) = -d_p H(x, d_x u^{k+1}, m^k)
 4. Solve Fokker-Planck forward with alpha* -> m^{k+1}
 5. Check ||m^{k+1} - m^k||_1 < eps; if not, k++ -> go to 2
-\end{codebox}
+\end{verbatim}
 
-\textbf{Convergence:} For monotone coupling (Lasry--Lions 2007), the system has a unique
-solution and the fixed-point iteration contracts. Monitor both
-$\|m^{k+1}-m^k\|_1$ and $\|u^{k+1}-u^k\|_\infty$.
+\textbf{Convergence:} For monotone coupling (Lasry-Lions 2007), the system has a unique solution and the fixed-point iteration contracts.
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Kalman Filtering}
-%% ═══════════════════════════════════════════════════════════════════════════
+\textbf{Practical tip:} Monitor both \(\|m^{k+1}-m^k\|_1\) and \(\|u^{k+1}-u^k\|_\infty\); divergence of either signals non-monotone coupling or too large a time step.
 
-\subsection{Linear-Gaussian State Space}
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Optimal Liquidation with Many Agents},breakable]
+**Setup:** $N \gg 1$ traders each hold $x_t$ shares and must liquidate by $T$.
+Aggregate selling rate $\bar u_t = \int u\,m(t,dx)$ depresses the price.
 
-\begin{equation}
-  \mathbf{x}_t = F\mathbf{x}_{t-1} + \mathbf{w}_t,\quad
-  \mathbf{w}_t\sim\mathcal{N}(0,Q);\qquad
-  \mathbf{y}_t = H\mathbf{x}_t + \mathbf{v}_t,\quad
-  \mathbf{v}_t\sim\mathcal{N}(0,R).
-\end{equation}
+**Mean-field Hamiltonian:**
+
+$$H(x, p, m) = \inf_u \Bigl[\alpha x^2 + \beta u^2 + pu\Bigr]
++ \underbrace{\gamma \bar u(m)}_{\text{aggregate impact}}\,x.$$
+
+**Nash equilibrium insight:** Each trader liquidates faster when they believe others sell
+slowly (first-mover advantage), but this belief is self-defeating in equilibrium.
+The MFG fixed point is **more aggressive** than the single-agent Almgren-Chriss schedule
+because each agent accounts for crowd impact.
+\end{tcolorbox}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{6 · Kalman Filtering}\label{kalman-filtering}
+
+\subsubsection{6.1 Linear-Gaussian State Space}\label{linear-gaussian-state-space}
+
+\[\mathbf{x}_t = F\mathbf{x}_{t-1} + \mathbf{w}_t,\; \mathbf{w}_t\sim\mathcal{N}(0,Q); \qquad
+\mathbf{y}_t = H\mathbf{x}_t + \mathbf{v}_t,\; \mathbf{v}_t\sim\mathcal{N}(0,R).\]
 
 \textbf{Predict:}
-\begin{equation}
-  \hat{\mathbf{x}}^-_t = F\hat{\mathbf{x}}_{t-1},\qquad
-  P^-_t = FP_{t-1}F^\top+Q.
-\end{equation}
+
+\[\hat{\mathbf{x}}^-_t = F\hat{\mathbf{x}}_{t-1},\quad P^-_t = FP_{t-1}F^\top+Q.\]
 
 \textbf{Update:}
-\begin{align}
-  K_t &= P^-_t H^\top(HP^-_t H^\top + R)^{-1},\\
-  \hat{\mathbf{x}}_t &= \hat{\mathbf{x}}^-_t + K_t(\mathbf{y}_t - H\hat{\mathbf{x}}^-_t),\\
-  P_t &= (I-K_t H)P^-_t.
-\end{align}
 
-$K_t$ is the \emph{Kalman gain} — it interpolates between full prior trust ($K\to0$)
-and full observation trust ($K\to H^{-1}$).
+\[K_t = P^-_t H^\top(HP^-_t H^\top + R)^{-1},\quad
+\hat{\mathbf{x}}_t = \hat{\mathbf{x}}^-_t + K_t(\mathbf{y}_t - H\hat{\mathbf{x}}^-_t),\quad
+P_t = (I-K_t H)P^-_t.\]
 
-\subsection{Information-Theoretic View}
+\(K_t\) is the \emph{Kalman gain} --- it interpolates between full prior trust (\(K\to0\)) and full observation trust (\(K\to H^{-1}\)).
 
-The Kalman filter computes the exact conditional mean
-$\hat{\mathbf{x}}_t = \E[\mathbf{x}_t \mid \mathbf{y}_{1:t}]$ in Gaussian models
-and minimises $\KL{p(\mathbf{x}_t|\mathbf{y}_{1:t})}{\mathcal{N}(\hat{\mathbf{x}}_t, P_t)}$
-over all Gaussian approximations.
+\textbf{Bayesian update --- uncertainty ellipses shrinking:}
 
-\subsection{Continuous-Time Limit (Kalman--Bucy)}
+\begin{verbatim}
+Before observation (predict):    After observation (update):
 
-For $d\mathbf{X}_t = A\mathbf{X}_t\,dt + B\,d\mathbf{W}_t$,
-$d\mathbf{Y}_t = C\mathbf{X}_t\,dt + d\mathbf{V}_t$, the error covariance satisfies
-the \emph{Riccati ODE}:
-\begin{equation}
-  \dot{P} = AP + PA^\top + BQB^\top - PC^\top R^{-1}CP,\qquad P(0)=P_0.
-\end{equation}
+  +------------------+           +--------+
+  |                  |           |        |
+  |   p(x | y_1:t-1) |  ---->    |p(x|y_t)|
+  |    wide ellipse  |           |  tight |
+  +------------------+           +--------+
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{MCMC (Metropolis--Hastings and Langevin)}
-%% ═══════════════════════════════════════════════════════════════════════════
+  Kalman gain K interpolates between:
+    K -> 0        (huge R, ignore y_t)  =>  x_hat = prior
+    K -> H^-1     (R=0, trust y_t)      =>  x_hat = H^-1 y_t
+\end{verbatim}
 
-\subsection{Metropolis--Hastings}
+\textbf{Covariance convergence:} \(P_t \to P_\infty\) (algebraic Riccati solution) exponentially fast when \((F,H)\) is observable.
 
-For target $\pi(x) \propto e^{-U(x)}$ and proposal $q(x'\mid x)$:
-\begin{equation}
-  \alpha(x\to x') = \min\!\left(1, \frac{\pi(x')q(x\mid x')}{\pi(x)q(x'\mid x)}\right).
-\end{equation}
+\subsubsection{6.2 Information-Theoretic View}\label{information-theoretic-view}
 
-\textbf{Detailed balance} $\pi(x)\alpha(x\to x') = \pi(x')\alpha(x'\to x)$
-ensures $\pi$ is the unique stationary distribution.
+The Kalman filter computes the exact conditional mean \(\hat{\mathbf{x}}_t = \mathbb{E}[\mathbf{x}_t \mid \mathbf{y}_{1:t}]\) in Gaussian models and minimises \(D_{\mathrm{KL}}(p(\mathbf{x}_t|\mathbf{y}_{1:t})\,\|\,\mathcal{N}(\hat{\mathbf{x}}_t, P_t))\) over all Gaussian approximations.
 
-\textbf{Optimal scaling:} With Gaussian proposal $q(x'|x)=\mathcal{N}(x,h^2 I_d)$,
-the step $h^\star \approx 2.38/\sqrt{d}$ (Roberts--Gelman--Gilks 1997) targets $\approx 23$--$45\%$
-acceptance.
+\subsubsection{6.3 Continuous-Time Limit (Kalman-Bucy)}\label{continuous-time-limit-kalman-bucy}
 
-\subsection{Langevin Dynamics (MALA)}
+For \(d\mathbf{X}_t = A\mathbf{X}_t\,dt + B\,d\mathbf{W}_t\), \(d\mathbf{Y}_t = C\mathbf{X}_t\,dt + d\mathbf{V}_t\), the error covariance satisfies the \emph{Riccati ODE}:
+
+\[\dot P = AP + PA^\top + BQB^\top - PC^\top R^{-1}CP,\qquad P(0)=P_0.\]
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Tracking a Noisy AR(1) Signal},breakable]
+**Model:** Latent trend $x_t = 0.95 x_{t-1} + w_t$ ($Q=0.01$);
+noisy observation $y_t = x_t + v_t$ ($R=1.0$).
+
+Steady-state: $P_\infty \approx 0.17$, so $K_\infty \approx 0.15$.
+Kalman weights the new observation at 15%, prior at 85%.
+
+```
+P_t
+1.0 |*
+0.8 | \\
+0.6 |  \\
+0.4 |   \\___
+0.2 |       \\__________________  P_inf ~ 0.17
+    +--------------------------------> t
+     (fast convergence to steady-state uncertainty)
+```
+
+**Implication:** With $R/Q = 100$ (much noisier obs than process), the filter heavily
+smooths observations — useful for noisy financial signals like tick prices.
+\end{tcolorbox}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{7 · MCMC (Metropolis-Hastings and Langevin)}\label{mcmc-metropolis-hastings-and-langevin}
+
+\subsubsection{7.1 Metropolis-Hastings}\label{metropolis-hastings}
+
+For target \(\pi(x) \propto e^{-U(x)}\) and proposal \(q(x'\mid x)\):
+
+\[\alpha(x\to x') = \min\!\Bigl(1, \frac{\pi(x')q(x\mid x')}{\pi(x)q(x'\mid x)}\Bigr).\]
+
+\textbf{Detailed balance} \(\pi(x)\alpha(x\to x') = \pi(x')\alpha(x'\to x)\) ensures \(\pi\) is the unique stationary distribution.
+
+\textbf{Optimal scaling:} With Gaussian proposal, step \(h^\star \approx 2.38/\sqrt{d}\) (Roberts-Gelman-Gilks 1997) targets \textasciitilde23-45\% acceptance.
+
+\textbf{Energy landscape and accept/reject:}
+
+\begin{verbatim}
+U(x)  (negative log-posterior)
+
+  |     *         *          <- local minima (modes of pi)
+  |    / \\       / \\
+  |   /   \\     /   \\
+  |  /     *___*     \\       <- saddle between modes
+  | /                 \\
+  +-------------------------> x
+
+  Proposal x' = x + h * xi:
+    If U(x') < U(x):  always accept  (moving downhill)
+    If U(x') > U(x):  accept with prob exp(-(U(x')-U(x)))
+    Prevents getting trapped in local minima.
+\end{verbatim}
+
+\textbf{Trace plot of a well-mixed chain:}
+
+\begin{verbatim}
+x_t
++2 |  . . .  .    .  .       <- upper mode
+   |  .  . . .   . .
+ 0 |...              ...      <- transitions between modes
+   |         . . .  .  .
+-2 |          .  .    ..     <- lower mode
+   +-----------------------------> t
+   (crossing between modes = good mixing)
+\end{verbatim}
+
+\subsubsection{7.2 Langevin Dynamics (MALA)}\label{langevin-dynamics-mala}
 
 Metropolis-Adjusted Langevin proposal:
-\begin{equation}
-  x' = x - \tfrac{h^2}{2}\nabla U(x) + h\,\xi, \quad \xi\sim\mathcal{N}(0,I_d),
-\end{equation}
+
+\[x' = x - \tfrac{h^2}{2}\nabla U(x) + h\,\xi, \quad \xi\sim\mathcal{N}(0,I_d),\]
+
 a discretisation of the \emph{overdamped Langevin SDE}:
-\begin{equation}
-  dX_t = -\nabla U(X_t)\,dt + \sqrt{2}\,dW_t,
-\end{equation}
-whose stationary distribution is exactly $\pi \propto e^{-U}$ (Fokker--Planck analysis).
 
-MALA converges in $O(d^{1/3})$ steps vs $O(d)$ for RW-MH — a key advantage
-for high-dimensional posteriors.
+\[dX_t = -\nabla U(X_t)\,dt + \sqrt{2}\,dW_t,\]
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Hidden Markov Models (HMM)}
-%% ═══════════════════════════════════════════════════════════════════════════
+whose stationary distribution is exactly \(\pi \propto e^{-U}\).
 
-\subsection{Model}
+MALA converges in \(O(d^{1/3})\) steps vs \(O(d)\) for RW-MH --- key advantage for high-dimensional posteriors.
 
-Latent Markov chain $Z_t \in \{1,\ldots,K\}$ with transition matrix
-$A_{ij}=\PP(Z_t=j\mid Z_{t-1}=i)$ generates observations
-$Y_t \mid Z_t=k \sim B_k(y)$.
+\textbf{MALA vs RW-MH trajectory comparison:}
 
-\subsection{Baum--Welch (EM)}
+\begin{verbatim}
+  RW-MH (random walk):          MALA (gradient-guided):
+    .  .  .                         ^ -grad U (towards mode)
+   .  .  . .          -->          /
+     .  .                      . /. .
+   (diffusive, slow mixing)    (directed, fast mixing)
+\end{verbatim}
 
-\textbf{E-step (forward--backward):}
-\begin{align}
-  \alpha_t(k) &= B_k(y_t)\sum_j \alpha_{t-1}(j)A_{jk}, &
-  \beta_t(k)  &= \sum_j A_{kj}B_j(y_{t+1})\beta_{t+1}(j).\\[4pt]
-  \gamma_t(k) &= \frac{\alpha_t(k)\beta_t(k)}{\sum_j \alpha_t(j)\beta_t(j)}, &
-  \xi_t(j,k)  &= \frac{\alpha_t(j)A_{jk}B_k(y_{t+1})\beta_{t+1}(k)}{\mathcal{L}}.
-\end{align}
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Calibrating OU Parameters via MCMC},breakable]
+**Goal:** Full Bayesian inference on $(\kappa, \theta, \sigma)$ of an OU process.
+**Prior:** $\kappa \sim \text{Gamma}(2,0.1)$, $\theta \sim \mathcal{N}(0,1)$,
+$\sigma \sim \text{HalfNormal}(0.5)$.
+
+**MALA chain** ($d=3$, step $h=0.02$):
+
+```
+Iteration  kappa   theta   sigma   log-post
+---------  -----   -----   -----   --------
+  1000      42.1   0.003   0.11     125.3
+  2000      55.3   0.003   0.12     128.7   <- burn-in complete
+  3000      58.1   0.003   0.12     129.2
+ 50000      54.8   0.003   0.12     128.9   <- stable posterior
+```
+
+**Marginal posterior** (kappa): 95% CI $[44, 67]$, peak at 55/yr —
+wider than the MLE point estimate, reflecting genuine parameter uncertainty.
+\end{tcolorbox}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{8 · Hidden Markov Models (HMM)}\label{hidden-markov-models-hmm}
+
+\subsubsection{8.1 Model}\label{model}
+
+Latent Markov chain \(Z_t \in \{1,\ldots,K\}\) with transition matrix \(A_{ij}=\mathbb{P}(Z_t=j\mid Z_{t-1}=i)\) generates observations \(Y_t \mid Z_t=k \sim B_k(y)\).
+
+\textbf{State machine diagram (\(K=3\) regimes):}
+
+\begin{verbatim}
+         A_12                A_23
+  +------------+        +------------+
+  |  State 1   |------->|  State 2   |-------> State 3
+  |  (Bull)    |        | (Neutral)  |         (Bear/Crash)
+  +------------+<-------+------------+<--------
+         A_21                A_32
+
+  Each state k emits Y_t ~ B_k(y):
+    B_1: N(mu=+0.05, sigma=0.12)   high return, low vol
+    B_2: N(mu=+0.00, sigma=0.18)   flat, medium vol
+    B_3: N(mu=-0.08, sigma=0.35)   crash regime, high vol
+
+  Transition matrix A:
+    A = [ 0.97  0.02  0.01 ]   (row 1: from State 1)
+        [ 0.01  0.97  0.02 ]   (row 2: from State 2)
+        [ 0.05  0.05  0.90 ]   (row 3: from State 3)
+  (rows sum to 1; diagonal = regime persistence)
+\end{verbatim}
+
+\subsubsection{8.2 Baum-Welch (EM)}\label{baum-welch-em}
+
+\textbf{E-step (forward-backward):}
+
+\[\alpha_t(k) = B_k(y_t)\sum_j \alpha_{t-1}(j)A_{jk}, \qquad
+\beta_t(k) = \sum_j A_{kj}B_j(y_{t+1})\beta_{t+1}(j).\]
+
+\[\gamma_t(k) = \frac{\alpha_t(k)\beta_t(k)}{\sum_j \alpha_t(j)\beta_t(j)}, \qquad
+\xi_t(j,k) = \frac{\alpha_t(j)A_{jk}B_k(y_{t+1})\beta_{t+1}(k)}{\mathcal{L}}.\]
 
 \textbf{M-step:}
-\begin{equation}
-  \hat{A}_{jk} = \frac{\sum_t \xi_t(j,k)}{\sum_t\gamma_t(j)}, \qquad
-  \hat{\mu}_k  = \frac{\sum_t \gamma_t(k)\,y_t}{\sum_t \gamma_t(k)}.
-\end{equation}
 
-\textbf{Information-theoretic view:} Baum--Welch is EM on the complete-data log-likelihood;
-each iteration monotonically increases $\mathcal{L}(\theta)$ by Jensen's inequality.
+\[\hat A_{jk} = \frac{\sum_t \xi_t(j,k)}{\sum_t\gamma_t(j)}, \qquad
+\hat\mu_k = \frac{\sum_t \gamma_t(k)\,y_t}{\sum_t \gamma_t(k)}.\]
 
-\textbf{Viterbi (MAP path):} Replace sum-product with max-product:
-$\delta_t(k) = \max_j \delta_{t-1}(j)A_{jk} \cdot B_k(y_t)$, runs in $O(TK^2)$.
+\textbf{Information-theoretic view:} Baum-Welch is EM on the complete-data log-likelihood; each iteration monotonically increases \(\mathcal{L}(\theta)\) by Jensen's inequality.
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Information Theory}
-%% ═══════════════════════════════════════════════════════════════════════════
+\textbf{Viterbi trellis diagram (\(K=3\), \(T=4\)):}
 
-\subsection{Entropy and KL Divergence}
+\begin{verbatim}
+State  t=1           t=2           t=3           t=4
+  1    delta1(1) --> delta2(1) --> delta3(1) --> delta4(1)
+           \              \\  //
+  2    delta1(2) --> delta2(2) --> delta3(2) --> delta4(2)
+           \              \         \
+  3    delta1(3) --> delta2(3) --> delta3(3) --> delta4(3)
 
-\begin{defbox}{KL Divergence}
+  delta_t(k) = max_j [ delta_{t-1}(j) * A_jk * B_k(y_t) ]
+  psi_t(k)   = argmax (backtrack pointer -> records best prev state)
+
+  After forward pass: trace back from t=T to t=1 via psi to get MAP sequence
+    z_1*, z_2*, z_3*, z_4*
+\end{verbatim}
+
+\textbf{Viterbi (MAP path):} \(\delta_t(k) = \max_j \delta_{t-1}(j)A_{jk} \cdot B_k(y_t)\), \(O(TK^2)\).
+
+\textbf{Quality check:} Log-likelihood must be non-decreasing; confusion matrix of Viterbi labels vs ground truth validates regime recovery.
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Equity Regime Detection (S&P 500)},breakable]
+**Data:** S&P 500 daily log-returns, 2000-2023, $T=5820$ observations.
+
+**Fit $K=3$ HMM** using `hmm::fit_baum_welch()` with 20 random restarts.
+
+**Estimated regime parameters:**
+
+| Regime | Ann. return | Ann. vol | Avg duration |
+|--------|------------|---------|-------------|
+| Bull   | +18%       | 10%     | 350 days    |
+| Neutral | +2%       | 17%     | 80 days     |
+| Bear   | -40%       | 38%     | 25 days     |
+
+**Smoothed state probabilities** $\gamma_t(k)$:
+
+```
+P(Bull)   1.0|XXXXXXXXXX        XXXXXXXXXX        XXXXX
+              |          XXXXXXXX          XXXXXXXX
+          0.0 +-------------------------> t (years)
+              2000    2003    2008    2020   2023
+                  ^                ^    ^
+                  dot-com bust  GFC  COVID crash
+```
+
+**Use in Optimiz-rs:** Regime beliefs $\gamma_t$ feed as features into
+`differential_evolution` to switch risk-aversion $\alpha$ dynamically.
+\end{tcolorbox}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{9 · Information Theory}\label{information-theory}
+
+\subsubsection{9.1 Entropy and KL Divergence}\label{entropy-and-kl-divergence}
+
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — KL Divergence},breakable]
 For densities $p, q$:
-\begin{equation}
-  \KL{p}{q} = \int p(x)\log\frac{p(x)}{q(x)}\,dx \;\ge\; 0,
-\end{equation}
-with equality iff $p=q$ a.e.\ (Gibbs' inequality). Non-symmetric.
-\end{defbox}
 
-\textbf{Connection to model selection:}
-AIC $= 2k - 2\ln\hat{\mathcal{L}}$ and BIC $= k\ln n - 2\ln\hat{\mathcal{L}}$
-bound $\KL{p_{\text{true}}}{p_\theta}$.
+$$D_{\mathrm{KL}}(p\,\|\,q) = \int p(x)\log\frac{p(x)}{q(x)}\,dx \;\ge\; 0,$$
 
-\subsection{Fisher Information}
+with equality iff $p=q$ a.e. (Gibbs inequality).  Non-symmetric.
+\end{tcolorbox}
 
-\begin{defbox}{Fisher Information Matrix}
+\textbf{KL asymmetry --- a critical practical distinction:}
+
+\begin{verbatim}
+p = N(0,1)  (narrow Gaussian)      q = N(0,4)  (wide Gaussian)
+
+  D_KL(p||q):  integrate under p.
+    p lives mostly in [-2,2] where q is large -> small penalty.
+    D_KL(p||q) is small.  (q "covers" p)
+
+  D_KL(q||p):  integrate under q.
+    q places mass in [-6,6]; in tails p is tiny but q is not -> large penalty.
+    D_KL(q||p) is large.  (p does NOT cover q)
+
+  Rule of thumb:
+    D_KL(p||q): fitting q to match p  (mean-seeking, mode-averaging)
+    D_KL(q||p): q must cover p        (mode-seeking, mode-fitting)
+\end{verbatim}
+
+\textbf{Connection to model selection:} AIC \(= 2k - 2\ln\hat{\mathcal{L}}\) and BIC \(= k\ln n - 2\ln\hat{\mathcal{L}}\) bound \(D_{\mathrm{KL}}(p_{\text{true}}\,\|\,p_\theta)\).
+
+\subsubsection{9.2 Fisher Information}\label{fisher-information}
+
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Fisher Information Matrix},breakable]
 For parametric model $p(x;\theta)$:
-\begin{equation}
-  \mathcal{I}(\theta)_{ij}
-  = \E_{x\sim p}\!\left[\partial_{\theta_i}\log p\;\partial_{\theta_j}\log p\right]
-  = -\E\!\left[\partial^2_{\theta_i\theta_j}\log p\right].
-\end{equation}
-\end{defbox}
 
-\textbf{Cramér--Rao bound:} Any unbiased estimator $\hat{\theta}$ satisfies
-$\operatorname{Cov}(\hat{\theta}) \succeq \mathcal{I}(\theta)^{-1}$.
-MLE achieves equality asymptotically.
+$$\mathcal{I}(\theta)_{ij}
+= \mathbb{E}_{x\sim p}\!\left[\partial_{\theta_i}\log p\;\partial_{\theta_j}\log p\right]
+= -\mathbb{E}\!\left[\partial^2_{\theta_i\theta_j}\log p\right].$$
+\end{tcolorbox}
 
-\textbf{Example — Gaussian emission} $B_k = \mathcal{N}(\mu_k,\sigma_k^2)$:
-$\mathcal{I}(\mu_k)=\sigma_k^{-2}$,\quad $\mathcal{I}(\sigma_k^2)=(2\sigma_k^4)^{-1}$.
+\textbf{Fisher information as curvature of the log-likelihood:}
 
-\subsection{Mutual Information and Feature Relevance}
+\begin{verbatim}
+log L(theta | x_obs)
 
-\begin{equation}
-  I(X;Y) = \KL{p(X,Y)}{p(X)p(Y)} = H(X) - H(X\mid Y) \ge 0.
-\end{equation}
+  |        .----.
+  |      ./      \.
+  |    ./          \.
+  |  ./              \.
+  +-----------------------> theta
+         theta*
 
-\textbf{mRMR criterion} (minimum redundancy, maximum relevance):
-\begin{equation}
-  \max_{Y_i} \Bigl[I(Y_i;\text{target}) - \frac{1}{|S|}\sum_{Y_j\in S}I(Y_i;Y_j)\Bigr].
-\end{equation}
+  I(theta*) = -d^2/dtheta^2 log L at the peak
 
-\subsection{Natural Gradient (Preview)}
+  High I (sharp peak):  theta well-identified, low estimation variance
+  Low  I (flat  peak):  theta hard to identify, high estimation variance
 
-Classical gradient descent ignores the geometry of parameter space. The \emph{natural gradient}
-replaces $\nabla_\theta\mathcal{L}$ with $\mathcal{I}(\theta)^{-1}\nabla_\theta\mathcal{L}$,
-giving a reparametrisation-invariant update — see \S\ref{sec:infogeo} for the full development.
+  Cramer-Rao: Var(theta_hat) >= 1 / I(theta)  for any unbiased estimator
+\end{verbatim}
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section{Differential Geometry}
-%% ═══════════════════════════════════════════════════════════════════════════
+\textbf{Cramer-Rao bound:} Any unbiased estimator \(\hat\theta\) satisfies \(\operatorname{Cov}(\hat\theta) \succeq \mathcal{I}(\theta)^{-1}\). MLE achieves equality asymptotically.
 
-\subsection{Riemannian Manifolds}
+\textbf{Example:} For \(B_k = \mathcal{N}(\mu_k,\sigma_k^2)\): \(\mathcal{I}(\mu_k)=\sigma_k^{-2}\), \(\mathcal{I}(\sigma_k^2)=(2\sigma_k^4)^{-1}\). Higher emission variance -\textgreater{} smaller Fisher info -\textgreater{} less certain parameter estimates.
 
-\begin{defbox}{Riemannian Manifold}
-A \emph{Riemannian manifold} $(M, g)$ is a smooth manifold $M$ with a
-\emph{metric tensor} $g_p$: a symmetric, positive-definite bilinear form on each
+\subsubsection{9.3 Mutual Information and Feature Relevance}\label{mutual-information-and-feature-relevance}
+
+\[I(X;Y) = D_{\mathrm{KL}}\bigl(p(X,Y)\,\|\,p(X)p(Y)\bigr) = H(X) - H(X\mid Y) \ge 0.\]
+
+\textbf{Interpretation:} \(I(X;Y)\) = how much knowing \(Y\) reduces uncertainty about \(X\). \(X \perp Y \Rightarrow I=0\). \(Y\) determines \(X\) fully \(\Rightarrow I = H(X)\).
+
+\textbf{mRMR criterion} (minimum redundancy, maximum relevance) for the sparse module:
+
+\[\max_{Y_i} \Bigl[I(Y_i;\text{target}) - \frac{1}{|S|}\sum_{Y_j\in S}I(Y_i;Y_j)\Bigr].\]
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Entropy of HMM Regime Probabilities},breakable]
+Define discrete regime distribution at time $t$:
+
+$$\mathbf{p}_t = (\gamma_t(1), \gamma_t(2), \gamma_t(3)).$$
+
+**Regime entropy** $H_t = -\sum_k \gamma_t(k)\log \gamma_t(k) \in [0, \log 3]$:
+
+| Date | P(Bull) | P(Neutral) | P(Bear) | $H_t$ | Certainty |
+|------|---------|-----------|---------|-------|-----------|
+| 2019-12 | 0.92 | 0.07 | 0.01 | 0.36 | High (Bull clear) |
+| 2020-03 | 0.01 | 0.12 | 0.87 | 0.54 | Medium (Bear likely) |
+| 2020-06 | 0.42 | 0.45 | 0.13 | 1.05 | Low (mixed) |
+
+Max entropy $\log 3 \approx 1.10$ = fully uncertain.
+**Trading filter:** Only trade when $H_t < 0.7$ (certain regime).
+\end{tcolorbox}
+
+\subsubsection{9.4 Natural Gradient (Preview)}\label{natural-gradient-preview}
+
+Classical gradient descent ignores parameter-space geometry. The \emph{natural gradient} replaces \(\nabla_\theta\mathcal{L}\) with \(\mathcal{I}(\theta)^{-1}\nabla_\theta\mathcal{L}\), giving a reparametrisation-invariant update --- see §10.2 for the full geometric development.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{10 · Differential Geometry}\label{differential-geometry}
+
+\subsubsection{10.1 Riemannian Manifolds}\label{riemannian-manifolds}
+
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Riemannian Manifold},breakable]
+A *Riemannian manifold* $(M, g)$ is a smooth manifold $M$ with a
+*metric tensor* $g_p$: a symmetric, positive-definite bilinear form on each
 tangent space $T_p M$.
-\end{defbox}
+\end{tcolorbox}
 
-\textbf{Geodesics} (locally shortest paths) satisfy:
-\begin{equation}
-  \ddot\gamma^k + \sum_{i,j}\Gamma^k_{ij}\,\dot\gamma^i\dot\gamma^j = 0,
-\end{equation}
-where
-$\Gamma^k_{ij} = \tfrac12 g^{kl}(\partial_i g_{jl}+\partial_j g_{il}-\partial_l g_{ij})$
-are the \emph{Christoffel symbols} encoding intrinsic curvature.
+\textbf{Three canonical curvatures:}
 
-\subsection{Information Geometry and Fisher--Rao Metric}
-\label{sec:infogeo}
+\begin{verbatim}
+K > 0  (sphere S2)    K = 0  (flat R2)    K < 0  (hyperbolic H2)
 
-The statistical manifold $\mathcal{M} = \{p(\cdot;\theta)\}$ carries the
-\textbf{Fisher--Rao metric} $g_{ij}(\theta) = \mathcal{I}(\theta)_{ij}$.
+  (N)                     |                    /
+  /|\                     |                   /
+ / | \  geodesics       --+--  parallel      /   geodesics
+/  |  \ reconverge (N-S)  |    lines         /   diverge exponentially
+\end{verbatim}
 
-\textbf{Natural gradient (Amari 1998):} Steepest descent on $(\mathcal{M}, g)$:
-\begin{equation}
-  \theta \leftarrow \theta - \eta\,\mathcal{I}(\theta)^{-1}\nabla_\theta\mathcal{L}.
-\end{equation}
+\textbf{Tangent space --- linear approximation at \(p\):}
 
-This is \emph{invariant to reparametrisation} and achieves quadratic convergence
-on convex objectives — equivalent to Fisher scoring.
+\begin{verbatim}
+   M (curved 2D surface):        TpM (flat tangent plane at p):
 
-\textbf{KL geometry:}
-\begin{equation}
-  \KL{p_\theta}{p_{\theta+d\theta}}
-  = \tfrac12\,d\theta^\top\mathcal{I}(\theta)\,d\theta + O(\|d\theta\|^3),
-\end{equation}
-confirming Fisher--Rao as the intrinsic KL metric.
+     .~~~~.                          ___________
+    /      \      -->               |    TpM    |
+   | p *    |                       |     * p   |
+   |        |                       |___________|
+    \      /
+     .~~~~.
+  (not flat globally, but TpM is flat locally — used for calculus on M)
+\end{verbatim}
 
-\textbf{Dually flat structure:} Exponential families
-$p(x;\theta)=h(x)\exp(\theta^\top T(x)-A(\theta))$
-are $e$-flat in natural parameters and $m$-flat in mean parameters
-$\eta=\nabla A(\theta)$, with vanishing sectional curvature $K=0$ —
-explaining exact Newton/natural-gradient convergence on these models.
+\textbf{Geodesics} satisfy:
 
-\subsection{Lie Groups and Geometric Control}
+\[\ddot\gamma^k + \sum_{i,j}\Gamma^k_{ij}\,\dot\gamma^i\dot\gamma^j = 0,\]
 
-\begin{defbox}{Lie Group}
-A \emph{Lie group} $G$ is a smooth manifold with a group structure where
-multiplication and inversion are smooth. The \emph{Lie algebra} $\mathfrak{g} = T_e G$
+where \(\Gamma^k_{ij} = \tfrac12 g^{kl}(\partial_i g_{jl}+\partial_j g_{il}-\partial_l g_{ij})\) are the \emph{Christoffel symbols} encoding intrinsic curvature.
+
+\subsubsection{10.2 Information Geometry and Fisher-Rao Metric}\label{information-geometry-and-fisher-rao-metric}
+
+The statistical manifold \(\mathcal{M} = \{p(\cdot;\theta)\}\) carries the \textbf{Fisher-Rao metric} \(g_{ij}(\theta) = \mathcal{I}(\theta)_{ij}\).
+
+\textbf{Standard vs natural gradient:}
+
+\begin{verbatim}
+Standard gradient descent:       Natural gradient descent:
+  theta_{k+1} = theta_k - eta * grad L    theta_{k+1} = theta_k - eta * I^{-1} grad L
+
+  Parameter space = flat R^d.    Parameter space = Riemannian (metric I(theta)).
+  Ignores curvature.             Adapts step to local geometry.
+  Slow on ill-conditioned I.     Invariant to reparametrisation.
+  O(kappa(I)) iterations.        O(1) iterations on exponential families.
+\end{verbatim}
+
+\textbf{Natural gradient (Amari 1998):}
+
+\[\theta \leftarrow \theta - \eta\,\mathcal{I}(\theta)^{-1}\nabla_\theta\mathcal{L}.\]
+
+\textbf{KL geometry:} \(D_{\mathrm{KL}}(p_\theta\,\|\,p_{\theta+d\theta}) = \tfrac12\,d\theta^\top\mathcal{I}(\theta)\,d\theta + O(\|d\theta\|^3)\), confirming Fisher-Rao as the intrinsic KL metric.
+
+\textbf{Dually flat structure:} Exponential families \(p(x;\theta)=h(x)\exp(\theta^\top T(x)-A(\theta))\) have \(K=0\) --- explaining exact Newton/natural-gradient convergence.
+
+\begin{tcolorbox}[colback=notebg!60,colframe=optgreen,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Example}} — Example — Natural Gradient on a Gaussian Model},breakable]
+For $p(x;\theta) = \mathcal{N}(\mu, \sigma^2)$, $\theta=(\mu,\sigma^2)$:
+
+$$\mathcal{I}(\theta) = \begin{pmatrix} 1/\sigma^2 & 0 \\ 0 & 1/(2\sigma^4) \end{pmatrix}.$$
+
+**Natural gradient** of $\mathcal{L} = -\log p(x_{\rm obs};\theta)$:
+
+$$\tilde\nabla_\theta\mathcal{L} = \mathcal{I}^{-1}\nabla\mathcal{L} = \begin{pmatrix}\mu-x \\ \sigma^2 - (x-\mu)^2/2\end{pmatrix}.$$
+
+One Newton step on this exponential family finds the MLE exactly because the
+Hessian equals $\mathcal{I}$ (dually flat, $K=0$).
+\end{tcolorbox}
+
+\subsubsection{10.3 Lie Groups and Geometric Control}\label{lie-groups-and-geometric-control}
+
+\begin{tcolorbox}[colback=defbg!60,colframe=optblue,fonttitle=\bfseries\sffamily,title={\textsf{\textbf{Definition}} — Definition — Lie Group},breakable]
+A *Lie group* $G$ is a smooth manifold with a group structure where
+multiplication and inversion are smooth.  The *Lie algebra* $\mathfrak{g} = T_e G$
 linearises the group at the identity.
-\end{defbox}
+\end{tcolorbox}
 
-\textbf{Examples:} $SO(d)$ (rotation group), $GL(d)$ (invertible matrices),
-Heisenberg group (path-signature features).
+\textbf{Matrix Lie group hierarchy:}
 
-\textbf{Left-invariant control system on $G$:}
-\begin{equation}
-  \dot{g}(t) = g(t)\,\xi(t), \quad g\in G,\; \xi(t)\in\mathfrak{g}.
-\end{equation}
+\begin{verbatim}
+GL(n,R)  general linear group (all invertible n x n real matrices)
+   |
+   |--- SL(n,R)  special linear (det = 1)
+   |
+   |--- O(n)     orthogonal (R'R = I)
+   |       |
+   |       +---- SO(n)  special orthogonal (det = +1, pure rotations)
+   |                    Used in: portfolio factor rotation, PCA constraints
+   |
+   +--- Sp(2n,R) symplectic (preserves symplectic form omega)
+                 Used in: Hamiltonian mechanics, PMP sections 4.2 and 10.4
 
-PMP on Lie groups yields the \emph{Lie--Poisson (Euler--Poincaré) equations}
-(Holm--Marsden--Ratiu), providing structure-preserving optimal trajectories.
+Heisenberg group H(n): upper triangular with 1s on diagonal.
+  Used in: path-signature feature maps (lab_signature_methods)
+\end{verbatim}
 
-\subsection{Symplectic Geometry and Hamiltonian Structure}
-\label{sec:symplectic}
+\textbf{Left-invariant control system on \(G\):}
 
-The phase space $(T^\star M, \omega)$ carries the symplectic 2-form
-$\omega = \sum_i dp_i \wedge dq_i$. Hamilton's equations preserve $\omega$
-(\emph{Liouville's theorem} — phase-space volume conserved).
+\[\dot g(t) = g(t)\,\xi(t), \quad g\in G,\; \xi(t)\in\mathfrak{g}.\]
 
-\textbf{Connection to PMP:} The costate pair $(X_t^\star, p_t)$ solves
-Hamilton's equations, i.e., the PMP is a symplectic flow on $T^\star\R^d$.
+PMP on Lie groups yields the \emph{Lie-Poisson (Euler-Poincare) equations} (Holm-Marsden-Ratiu), providing structure-preserving optimal trajectories.
 
-\textbf{Symplectic integrators} (Störmer--Verlet, Ruth--Forest) preserve $\omega$
-discretely, keeping the Hamiltonian nearly constant over long horizons.
+\subsubsection{10.4 Symplectic Geometry and Hamiltonian Structure}\label{symplectic-geometry-and-hamiltonian-structure}
 
-\subsection{Sectional Curvature and Landscape Geometry}
+The phase space \((T^\star M, \omega)\) carries the symplectic 2-form \(\omega = \sum_i dp_i \wedge dq_i\). Hamilton's equations preserve \(\omega\) (\emph{Liouville's theorem} --- phase-space volume conserved).
 
-The sectional curvature $K(\sigma)$ governs how quickly nearby geodesics diverge:
+\textbf{Connection to PMP:} The costate pair \((X_t^\star, p_t)\) solves Hamilton's equations, i.e., the PMP is a symplectic flow on \(T^\star\mathbb{R}^d\).
 
-\begin{center}
-\begin{tabular}{L{3cm} L{5cm} L{5cm}}
-\toprule
-$K>0$ (sphere) & Geodesics converge & Compact optimiser trajectories \\
-$K=0$ (flat)   & Euclidean behaviour & Newton / natural gradient exact \\
-$K<0$ (hyperbolic) & Exponential spread & Efficient landscape exploration \\
-\bottomrule
-\end{tabular}
-\end{center}
+\textbf{Symplectic integrators} (Stormer-Verlet, Ruth-Forest) preserve \(\omega\) discretely, keeping the Hamiltonian nearly constant over long horizons --- critical for multi-year allocation back-tests in Optimiz-rs.
 
-For exponential families in natural/mean parameters, $K=0$ — explaining exact
-Newton convergence without curvature correction.
+\subsubsection{10.5 Sectional Curvature and Landscape Geometry}\label{sectional-curvature-and-landscape-geometry}
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section*{Quick Reference}
-%% ═══════════════════════════════════════════════════════════════════════════
-\addcontentsline{toc}{section}{Quick Reference}
+The sectional curvature \(K(\sigma)\) governs how quickly nearby geodesics diverge:
 
-\begin{center}
-\small
-\begin{tabularx}{\linewidth}{L{3.8cm} X L{3.2cm}}
-\toprule
-\textbf{Concept} & \textbf{Key equation / object} & \textbf{Module} \\
-\midrule
-Brownian motion           & $W_t - W_s \sim \mathcal{N}(0,t-s)$ & \texttt{point\_processes} \\
-Itô SDE                   & $dX=b\,dt+\sigma\,dW$ & \texttt{ou\_estimator} \\
-Poisson / Compound Poisson& $N_t\sim\text{Poisson}(\lambda t)$ & \texttt{point\_processes} \\
-Lévy process              & triplet $(b,\sigma^2,\nu)$ & \texttt{point\_processes} \\
-HJB PDE                   & $-\partial_t V = \inf_u[\ell + \nabla V^\top b + \tfrac12\tr\sigma\sigma^\top\nabla^2 V]$ & \texttt{optimal\_control} \\
-HJBI (jumps)              & $+\int[V(\cdot+c)-V-\nabla V^\top c]\nu\,dz$ & \texttt{optimal\_control} \\
-PMP costate               & $\dot{p} = -\nabla_x\mathcal{H}$,\; $u^\star=\arg\min_u\mathcal{H}$ & \texttt{optimal\_control} \\
-MFG (HJB + KFP)           & fixed-point $u,m$ & \texttt{mean\_field\_games} \\
-Kalman filter             & $K_t = P^-H^\top(HP^-H^\top+R)^{-1}$ & \texttt{optimal\_control} \\
-MALA                      & $x'=x-\tfrac{h^2}{2}\nabla U+h\xi$ & \texttt{mcmc} \\
-HMM                       & Baum--Welch EM + Viterbi & \texttt{hmm} \\
-Fisher information        & $\mathcal{I}_{ij}=\E[\partial_i\ell\,\partial_j\ell]$ & \texttt{hmm}, \texttt{sparse} \\
-Natural gradient          & $\mathcal{I}^{-1}\nabla_\theta\mathcal{L}$ & \texttt{differential\_evolution} \\
-Riemannian / Lie geometry & Christoffel symbols, Lie--Poisson eqs & experimental \\
-DE (jDE)                  & mutation + crossover + selection & \texttt{differential\_evolution} \\
-\bottomrule
-\end{tabularx}
-\end{center}
+\begin{verbatim}
+K > 0 (sphere): geodesics converge   -> compact optimiser trajectories
+K = 0 (flat  ): Euclidean behaviour  -> Newton / natural gradient exact
+K < 0 (hyper.): exponential spread   -> efficient landscape exploration
+\end{verbatim}
 
-%% ═══════════════════════════════════════════════════════════════════════════
-\section*{References}
-%% ═══════════════════════════════════════════════════════════════════════════
-\addcontentsline{toc}{section}{References}
+For exponential families in natural/mean parameters \(K=0\) --- explaining exact Newton convergence without curvature correction.
 
-\begin{enumerate}[label={[\arabic*]}, leftmargin=2em]
-  \item Øksendal, B. \textit{Stochastic Differential Equations}, 6th ed. Springer, 2003.
-  \item Cont, R. \& Tankov, P. \textit{Financial Modelling with Jump Processes}. CRC Press, 2004.
-  \item Fleming, W.H. \& Soner, H.M. \textit{Controlled Markov Processes and Viscosity Solutions}. Springer, 2006.
-  \item Lasry, J.-M. \& Lions, P.-L. ``Mean field games.'' \textit{Jpn.\ J.\ Math.}\ \textbf{2} (2007) 229--260.
-  \item Amari, S. \textit{Information Geometry and Its Applications}. Springer, 2016.
-  \item do Carmo, M.P. \textit{Riemannian Geometry}. Birkhäuser, 1992.
-  \item Holm, D.D., Marsden, J.E. \& Ratiu, T.S. ``The Euler--Poincaré equations.'' \textit{Adv.\ Math.}\ \textbf{137} (1998).
-  \item Price, K.V., Storn, R.M. \& Lampinen, J.A. \textit{Differential Evolution}. Springer, 2005.
-  \item Roberts, G.O., Gelman, A. \& Gilks, W.R. ``Weak convergence of Metropolis algorithms.'' (1997).
-  \item Merton, R.C. ``Option pricing when underlying stock returns are discontinuous.'' \textit{JFE}\ \textbf{3} (1976).
-  \item Crandall, M.G. \& Lions, P.-L. ``Viscosity solutions of Hamilton--Jacobi equations.'' \textit{Trans.\ AMS} (1983).
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Quick Reference}\label{quick-reference}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.1800}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4400}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Concept
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Key equation / object
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Optimiz-rs module
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Brownian motion & \(W_t - W_s \sim \mathcal{N}(0,t-s)\) & \texttt{point\_processes} \\
+Ito SDE & \(dX=b\,dt+\sigma\,dW\) & \texttt{ou\_estimator} \\
+Poisson / Compound Poisson & \(N_t\sim\text{Poisson}(\lambda t)\) & \texttt{point\_processes} \\
+Levy process & triplet \((b,\sigma^2,\nu)\) & \texttt{point\_processes} \\
+HJB PDE & \(-\partial_t V = \inf_u[\ell + \nabla V^\top b + \tfrac12\operatorname{Tr}\sigma\sigma^\top\nabla^2 V]\) & \texttt{optimal\_control} \\
+HJBI (jumps) & \(+\int[V(\cdot+c)-V-\nabla V^\top c]\nu\,dz\) & \texttt{optimal\_control} \\
+PMP costate & \(\dot p = -\nabla_x\mathcal{H}\), \(u^\star=\arg\min_u\mathcal{H}\) & \texttt{optimal\_control} \\
+MFG (HJB + KFP) & fixed-point \(u,m\) & \texttt{mean\_field\_games} \\
+Kalman filter & \(K_t = P^-H^\top(HP^-H^\top+R)^{-1}\) & \texttt{optimal\_control} \\
+MALA & \(x'=x-\tfrac{h^2}{2}\nabla U+h\xi\) & \texttt{mcmc} \\
+HMM & Baum-Welch EM + Viterbi & \texttt{hmm} \\
+Fisher information & \(\mathcal{I}_{ij}=\mathbb{E}[\partial_i\ell\,\partial_j\ell]\) & \texttt{hmm}, \texttt{sparse} \\
+Natural gradient & \(\mathcal{I}^{-1}\nabla_\theta\mathcal{L}\) & \texttt{differential\_evolution} \\
+Riemannian / Lie geometry & Christoffel symbols, Lie-Poisson equations & experimental \\
+DE (jDE) & mutation + crossover + selection & \texttt{differential\_evolution} \\
+\end{longtable}
+}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{References}\label{references}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+
+\item
+  Oksendal, B. \emph{Stochastic Differential Equations}, 6th ed.~Springer, 2003.
+\item
+  Cont, R. \& Tankov, P. \emph{Financial Modelling with Jump Processes}. CRC Press, 2004.
+\item
+  Fleming, W.H. \& Soner, H.M. \emph{Controlled Markov Processes and Viscosity Solutions}. Springer, 2006.
+\item
+  Lasry, J.-M. \& Lions, P.-L. ``Mean field games.'' \emph{Jpn. J. Math.} \textbf{2} (2007) 229-260.
+\item
+  Amari, S. \emph{Information Geometry and Its Applications}. Springer, 2016.
+\item
+  do Carmo, M.P. \emph{Riemannian Geometry}. Birkhauser, 1992.
+\item
+  Holm, D.D., Marsden, J.E. \& Ratiu, T.S. ``The Euler-Poincare equations.'' \emph{Adv. Math.} \textbf{137} (1998).
+\item
+  Price, K.V., Storn, R.M. \& Lampinen, J.A. \emph{Differential Evolution}. Springer, 2005.
+\item
+  Roberts, G.O., Gelman, A. \& Gilks, W.R. ``Weak convergence of Metropolis algorithms.'' (1997).
+\item
+  Merton, R.C. ``Option pricing when underlying stock returns are discontinuous.'' \emph{JFE} \textbf{3} (1976).
+\item
+  Crandall, M.G. \& Lions, P.-L. ``Viscosity solutions of Hamilton-Jacobi equations.'' \emph{Trans. AMS} (1983).
+\item
+  Almgren, R. \& Chriss, N. ``Optimal execution of portfolio transactions.'' \emph{J. Risk} \textbf{3} (2001).
+\item
+  Carmona, R. \& Delarue, F. \emph{Probabilistic Theory of Mean Field Games}. Springer, 2018.
 \end{enumerate}
 
 \end{document}
