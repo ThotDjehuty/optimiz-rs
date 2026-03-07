@@ -22,17 +22,21 @@ without Jacobians.
 ### 1.1 Geometric Intuition — Mutation in $\mathbb{R}^2$
 
 ```
-          x_r3 *
-               |
-               |  F*(x_r2 - x_r3)       F = scale factor in [0,2]
-               |  ------------------>
-          x_r2 *                    * v_i  (mutant)
-                \\                  /
-                 \\________________/
-                  (difference vec)
+  Mutation geometry in ℝ²
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  x_r1 *------------------------------------------------> v_i
-        base vector       mutation vector added
+        ◆ x_r3
+           ╲
+            ╲  F·(x_r2 − x_r3)           F ∈ [0, 2]
+             ╲────────────────────────▶ ◆ v_i  ← mutant
+        ◆ x_r2                     ╱
+             ╲___________________╱
+              └── difference vec ┘
+
+  ◆ x_r1 ─────────────────────────────────▶ ◆ v_i
+    └─ base     └── mutation vector added ──┘
+
+  v_i = x_r1  +  F · (x_r2 − x_r3)
 ```
 
 - $\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3$ are three **distinct** randomly selected parents.
@@ -77,17 +81,22 @@ oscillates rapidly — any gradient step hops between basins.
 spans the characteristic basin width (~1.0), enabling inter-basin jumps.
 
 ```
-Rastrigin 1D sketch (d=1):
+  Rastrigin 1D  ─  f(x) = 10 + x² − 10·cos(2πx)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  f(x)
-  |  *   *   *           <- local minima (many)
-  | * * * * * *
-  |*           *
-  |             *       *
-  +------|------+------|-- x
-        -1      0      1
-                  ^
-                  global min  f=0
+  f(x) ▲
+    20 │  ●       ●       ●       ●       ●
+       │ ╱ ╲     ╱ ╲     ╱ ╲     ╱ ╲     ╱ ╲
+    10 │╱   ╲   ╱   ╲   ╱   ╲   ╱   ╲   ╱   ╲
+       │      ╲ ╱     ╲ ╱     ╲ ╱     ╲ ╱
+     0 │───────●───────────────●───────────────▶ x
+       │  -2  -1    ★   0       1       2
+                    ↑
+               f*=0  (global min)
+
+  ✦ ~10^d local minima for d dimensions
+  ✦ Gradient oscillates rapidly → gradient descent fails
+  ✦ DE difference-vector ~spans basin width ~1.0 → can escape
 ```
 
 **Typical jDE convergence** ($d=10$, $N=100$, $\tau_1=\tau_2=0.1$):
@@ -137,18 +146,19 @@ $$S^{(n)}_t = \frac{1}{\sqrt{n}}\sum_{k=1}^{\lfloor nt \rfloor} \xi_k.$$
 By the **Central Limit Theorem**, as $n\to\infty$: $S^{(n)}_t \xrightarrow{d} W_t \sim \mathcal{N}(0,t)$.
 
 ```
-Coin-flip random walk (n=20 steps per unit time):
+  Coin-flip random walk  (n = 20 steps per unit time)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
- W_t
-+2 |       *  *
-   |     *       *  *
- 0 |  *          * *   * *
-   |*                     *  *
--2 |                           *
-   +----------------------------> t
-     0      0.5       1.0
+  W_t ▲
+  +2  │       ◦  ◦
+      │    ◦        ◦  ◦
+   0  ┼──◦──────────◦◦────◦ ◦─────────▶ t
+      │◦                        ◦  ◦
+  -2  │                                ◦
+      └────┬──────────┬──────────┬────
+           0         0.5        1.0
 
-  n → ∞  ("zoom out"):  jagged → smooth BM fan
+       n → ∞  ──▶  jagged path smooths into BM fan
 ```
 
 **Step 2 — Scaling limit.**  The normalization $1/\sqrt{n}$ is crucial:
@@ -212,19 +222,20 @@ This is the **only** reason Itō's lemma has an extra term.
 **Multiple sample paths** — the fan widens as $\propto\sqrt{t}$:
 
 ```
-W_t
- +2 |      ...........
-    |  ....           .....
-  0 |..                    .....   <- E[W_t] = 0  (all paths centered)
-    |         ....--......
- -2 |  ........
-    +--------------------------> t
-      0                 T
+  Brownian motion — multiple sample paths  ("trumpet fan")
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  Width ~ 2*sqrt(t)  (95% of paths stay within +/- 2*sqrt(t))
-  
-  Each dot is a BM path — different because different coin flips.
-  As T grows, the "trumpet" opens wider.
+  W_t ▲
+  +2σ │╌╌╌╌╌╌╌╮                        ╭───────  95% band ≈ ±2√t
+      │        ╰─╮      ╭──╮     ╭─────╯
+   0  ┼────────────╲──╱────╲────╱──────────────▶ t
+      │         ╭──╯  ╰╮    ╰╮
+  -2σ │╌╌╌╌╌╌╌╯         ╰────╯                   95% band ≈ −2√t
+      └──────────────────────────────────────
+           0        T/2              T
+
+  ← narrow ─────────── trumpet opens as √t ──────── wide →
+  𝔼[W_t] = 0 for all t  (all paths oscillate around zero)
 ```
 
 **Example — Geometric BM:**
@@ -232,42 +243,20 @@ $S_t = S_0 \exp\!\bigl((\mu-\tfrac12\sigma^2)t + \sigma W_t\bigr)$
 is the Black-Scholes price model.  Log-normal marginals; continuous, nowhere-differentiable paths:
 
 ```
-S_t
-|       .---.
-|  .--./     \----.
-| /                \---------.
-|/
-+-------------------------------> t
-  0             T
-```
+  Geometric BM — log-normal price path  S_t = S_0 · exp(·)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-**Multiple sample paths** — the fan widens as $\propto\sqrt{t}$:
+  S_t ▲
+  1.3 │          ╭──╮
+  1.1 │   ╭──╮  ╱    ╲──╮
+  1.0 │──╱    ╲╱         ╲────────╮
+  0.9 │                            ╲─────
+  0.7 │
+      └──────────────────────────────────▶ t
+           0         T/2               T
 
-```
-W_t
- +2 |      ...........
-    |  ....           .....
-  0 |..                    .....   <- E[W_t] = 0  (all paths centered)
-    |         ....--......
- -2 |  ........
-    +--------------------------> t
-      0                 T
-
-  Width grows as sqrt(t)  (68% of paths stay within +/- sqrt(t))
-```
-
-**Example — Geometric BM:**
-$S_t = S_0 \exp\!\bigl((\mu-\tfrac12\sigma^2)t + \sigma W_t\bigr)$
-is the Black-Scholes price model.  Log-normal marginals; continuous, nowhere-differentiable paths:
-
-```
-S_t
-|       .---.
-|  .--./     \\----.
-| /                \\---------.
-|/
-+-------------------------------> t
-  0             T
+  𝔼[S_t] = S_0·e^{μt}   (grows at rate μ)
+  𝔼[log S_t] = log S_0 + (μ − σ²/2)·t   (Itō correction!)
 ```
 
 ### 2.2 Itō Calculus
@@ -386,15 +375,20 @@ but $\mathbb{E}[S_T] = S_0 e^{\mu T}$ (Jensen's inequality explains the gap:
 $e^{\mathbb{E}[X]} < \mathbb{E}[e^X]$ for non-degenerate $X$).
 
 ```
-log S_t
-|     Ito correction: slope = mu - sigma^2/2  (lower than mu!)
-|  _.-'
-| /        <- Without Ito correction, slope would be mu (wrong!)
-|/
-+----------------------------> t
+  Itō correction:  𝔼[log Sₜ]  vs  naive slope  μ
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-E[log S_t] = log S_0  +  (mu - sigma^2/2)*t
-             (time-averaged growth, always less than mu for sigma > 0)
+  log Sₜ ▲
+          │           ╭────  slope μ  (naive, WRONG)
+          │       ╭───╯
+          │   ╭───╯    ╌╌slope μ−σ²/2  (Itō, correct)
+          │╭──╯╌╌╌╌╌╌╌╌╌
+          ┼────────────────────────────────────▶ t
+          0                                    T
+
+  Gap = σ²·T/2   (Jensen's inequality: e^{𝔼[X]} ≤ 𝔼[e^X])
+  Grows with volatility σ and horizon T
+  Itō correction always lowers expected log-return
 ```
 
 **Example 2 — Itō product rule ($d(X_t Y_t)$):**
@@ -470,15 +464,21 @@ Geometric series → $X^{(n)}$ is Cauchy in $L^2$ → converges to the unique so
 **Intuition:**
 
 ```
-Picard iteration (simplest case: dx = f(x) dt):
+  Picard iteration  (dx = f(x) dt,  simplest case)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-X^(0): --------- x_0  (constant)
-X^(1): x_0 + int_0^t f(x_0) ds  = x_0 + f(x_0)*t  (linear approx)
-X^(2): x_0 + int_0^t f(X^(1)) ds  (use X^(1) in drift)
-X^(3): ...
-        
-Each iteration captures one more "correction layer":
-  n=0: constant     n=1: linear    n=2: quadratic    ...
+  X_t ▲
+       │                          ╭──  X^(∞) = true solution
+       │                      ╭───╯
+       │                  ╭───╯    ╌╌  X^(3)
+       │              ╭───╯   ╌╌╌╌╌╌  X^(2)
+  x_0  ┼──────────────────╌╌╌╌╌╌╌╌╌╌  X^(1)  linear
+       │──────────────────────────────  X^(0)  constant
+       └──────────────────────────────▶ t
+
+  Each iteration adds one correction layer:
+    n=0 ──▶ constant   n=1 ──▶ linear   n=2 ──▶ quadratic   …
+  ε_n(t) ≤ C·(2L²(T+1)t)ⁿ/n! → 0  (factorial decay)
 ```
 
 #### 2.3.1 The Fokker-Planck Equation — How Densities Evolve
@@ -497,28 +497,31 @@ derivatives from $\phi$ to $p$, giving the Fokker-Planck equation.
 **Visual — density flows rightward (positive drift) and spreads (positive diffusion):**
 
 ```
-p(t, x)  — probability density at time t
+  Fokker-Planck evolution  — density drifts and spreads
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-t=0:       |  peak at x_0
-           |   ***
-           |  *   *         <- narrow initial density
-           | *     *
-           +-----------------> x
-              x_0
+  p(x) ▲
+        │
+   t=0  │    ▐█▌          narrow spike at x₀
+        │   ▐███▌
+        │  ▐█████▌
+        └──────────────────────────────────▶ x
+                x₀
 
-t=T/2:     |      peak shifted right
-           |         ***
-           |        *   *    <- wider (diffusion spreads it)
-           |       *     *
-           +-----------------> x
-                    x_0 + mu*T/2
+   t=T/2│             ╭──╮   drift right + widen
+        │           ╭─╯  ╰─╮
+        │          ╱        ╲
+        └──────────────────────────────────▶ x
+                          x₀ + μT/2
 
-t=T:       |           peak drifted further
-           |               ***
-           |              *   *   <- even wider
-           |             *     *
-           +--------------------------> x
-                           x_0 + mu*T
+   t=T  │                    ╭────╮  even wider
+        │                 ╭──╯    ╰──╮
+        │                ╱           ╲
+        └──────────────────────────────────▶ x
+                               x₀ + μT
+
+  Drift term   −∂ₓ[b·p]  ──▶  shifts peak rightward
+  Diffusion    +½∂ₓₓ[σ²p] ──▶  broadens the bell
 ```
 
 **For OU: $b = \kappa(\theta-x)$, $\sigma$ = const** →
@@ -551,18 +554,22 @@ $$X_{t+\Delta t} \approx X_t + b\,\Delta t + \sigma\,\Delta W_t + \tfrac12\sigma
 The extra term $\tfrac12\sigma\sigma_x[(\Delta W_t)^2 - \Delta t]$ comes from applying Itō's lemma to $\sigma(X_t)dW_t$.
 
 ```
-Error comparison (log scale):
+  Strong error  ‖X_T − X̂_T‖  vs  step size  Δt  (log–log scale)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
- |  Euler-Maruyama   (slope = 0.5)
- |  *
- |    *
- |      *
- |        *   Milstein   (slope = 1.0)
- |        o
- |          o
- |            o
- +----------------------------> log(Delta_t)
- (Milstein converges MUCH faster: halving dt reduces error by 4x instead of 2x)
+  log ▲
+  err │ ●                   Euler-Maruyama  (order ½)
+      │   ●
+      │     ●
+      │       ●         ◆   Milstein  (order 1)
+      │           ◆
+      │               ◆
+      │                   ◆
+      └──────────────────────────────▶  log Δt
+        Δt=0.1            Δt=0.001
+
+  Halve Δt ──▶  Euler: error ÷√2 ≈ 0.71×
+                Milstein: error ÷4  =  0.25×  ✓ much faster!
 ```
 
 ### 2.4 Ornstein-Uhlenbeck (Mean-Reversion)
@@ -574,21 +581,23 @@ $$dX_t = \kappa(\theta - X_t)\,dt + \sigma\,dW_t.$$
 **Intuition — restoring force:** The drift is a spring pulling $X_t$ back to $\theta$:
 
 ```
-X_t
- |     upper band: theta + sigma/sqrt(2*kappa)
- |  .--. .     ___                    <-- random excursions
- | /    v /\  /   \
- |/       v  /     \     -----  long-run mean: theta  (equilibrium)
- |            \      \....
- |             \___/
- |     lower band: theta - sigma/sqrt(2*kappa)
- +-------------------------------> t
+  Ornstein-Uhlenbeck — mean-reversion  dX = κ(θ−X)dt + σdW
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  Arrows: mean-reversion pull toward theta with speed kappa.
-  Half-life = ln(2) / kappa.
-  
-  Strong kappa: tight oscillations around theta (faster spring)
-  Weak kappa:   slow drift back (loose spring, more "random walk" like)
+  X_t ▲
+  +2σ∞│╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌  ← upper ±2σ∞ band
+      │   ╭─╮        ╭──╮
+      │  ╱   ╲   ╭──╯   ╲
+   θ  ┼─╯     ╲─╯        ╲──╭─╮──────────────  ← long-run mean θ
+      │                       ╰─╯
+  −2σ∞│╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌  ← lower ±2σ∞ band
+      └──────────────────────────────────────▶ t
+
+  σ∞ = σ/√(2κ)   (stationary std dev)
+  τ½ = ln2/κ     (half-life of displacement)
+
+  ↓ Strong κ: tight, rapid oscillations (stiff spring)
+  ↓ Weak   κ: slow drift back (loose spring ≈ random walk)
 ```
 
 #### 2.4.1 Closed-Form Solution — Step by Step
@@ -641,21 +650,20 @@ This is exact (no approximation) because the OU process is **linear**.  Key form
 $$\hat\mu(\tau) = \theta + (X_s-\theta)e^{-\kappa\tau}, \qquad \hat\sigma^2(\tau) = \frac{\sigma^2}{2\kappa}(1-e^{-2\kappa\tau}), \quad \tau=t-s.$$
 
 ```
-Transition density spreading over time:
+  OU transition density  p(xₜ | x₀)  spreading toward θ
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-    p(x_t | x_0 = x_0)
+  p ▲
+    │  t=0: spike           t=τ½: shifted + wider
+    │                  t=∞: centred on θ (stationary)
+    │  │                ╭╮            ╭──────╮
+    │  │               ╱  ╲         ╭─╯      ╰─╮
+    │  █          ────╱    ╲──    ──╯            ╰──
+    └──┼──────────────────────────────────────────▶ x
+       x₀               μ̂(τ½)                  θ
 
-t=0:    delta function at x_0
-        |
-        |*  <- spike
-
-t=0.2:  | **** 
-        |*    *         <- bell curve, mean shifted toward theta
-
-t=T:    |   ****
-        |  *    *       <- centered at theta, wider
-        |  *    *
-        +-----------> x
+  mean:  μ̂(τ) = θ + (x₀−θ)·e^{−κτ}  ───▶  θ  as τ→∞
+  var:   σ̂²(τ) = (σ²/2κ)·(1−e^{−2κτ}) ───▶  σ²/2κ
 ```
 
 #### 2.4.3 Half-Life and Mean-Reversion Speed
@@ -694,19 +702,20 @@ $n=250$ observations, $\Delta t=1/252$ years.
 **Step 2 — Intermediate verification:** The OU log-likelihood surface:
 
 ```
-ell(kappa, theta | sigma_hat)
+  Log-likelihood surface  ℓ(κ, θ | σ̂)  ─ contour plot
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-kappa
- ^
- |   +++                        <- log-lik thickening near true kappa
- |  +++++
- | +++++++
- |  +++++
- |   +++
- |
- +-------------------------> theta
-   (theta_hat is the sample mean of X_t, very well identified)
-   (kappa is harder: need long series to identify mean-reversion speed)
+   κ ▲
+  80 │          · · ·
+  65 │       · · ◎ · ·      ◎ = MLE optimum
+  55 │      · · ◎◎◎ · ·    contours: ─── ℓ = const
+  45 │       · · ◎ · ·
+  30 │          · · ·
+     └─────────────────────────────────────────▶ θ
+           0.000   0.003   0.006
+
+  θ is tightly identified  (≈ sample mean of Xₜ)
+  κ needs long series  (eigenvalue of autocorrelation)
 ```
 
 **Typical results:**
@@ -722,15 +731,19 @@ kappa
 Standardized residuals: $r_i = (X_{t_i} - \hat\mu_i)/\hat\sigma$ should be $\mathcal{N}(0,1)$.
 
 ```
-r_i histogram vs N(0,1)
+  Residual diagnostic:  rᵢ = (Xₜᵢ − μ̂ᵢ)/σ̂  vs  𝒩(0,1)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  |  .
-  | . .                <- histogram bars (sample)
-  |. . .........
-  |     ..........     <- N(0,1) curve (theory)
-  |          .   .
-  +------|------|-----> r_i
-        -2     +2
+  density ▲
+      0.4 │           ╭───╮
+      0.3 │         ╭─╯   ╰─╮   ─── 𝒩(0,1) theory
+      0.2 │        ╱  ▓ ▓ ▓  ╲  ▓▓▓ sample histogram
+      0.1 │      ╱  ▓▓▓▓▓▓▓▓▓  ╲
+      0.0 └────────────────────────────────▶ rᵢ
+               -3   -2  -1   0   1   2   3
+
+  ✓ bars hug the curve  → OU model fits
+  ✗ heavy tails / skew  → consider jump-diffusion
 ```
 
 Ljung-Box test: checks for remaining autocorrelation in $r_i$.
@@ -770,16 +783,21 @@ is a martingale.
 **Sample path — step function with random jumps ($\lambda=2$ per unit time):**
 
 ```
-N_t
- 5 |                          ___________
- 4 |               ___________
- 3 |         ______
- 2 |    ______
- 1 |____
- 0 |
-   +-----|------|-------|------|---------> t
-         tau1  tau2   tau3   tau4
-         (Exp(lambda) inter-arrivals, each tau_i ~ Exp(2))
+  Poisson process  Nₜ ~ Poisson(λt)  (λ = 2 jumps/unit)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  Nₜ ▲
+   5  │                              ┌─────────
+   4  │                 ┌────────────┘    ↑
+   3  │        ┌────────┘           τ₄ ~ Exp(2)
+   2  │  ┌─────┘    ↑
+   1  ├──┘    τ₂ ~ Exp(2)
+   0  │
+      └────┬────┬────┬────┬───────────────────▶ t
+           τ₁   τ₂   τ₃   τ₄
+
+  Each inter-arrival τₖ ∼ Exp(λ)  ─  memoryless!
+  Compensated: Ñₜ = Nₜ − λt  is a martingale
 ```
 
 ### 3.2 Compound Poisson Jump-Diffusion (Merton 1976)
@@ -791,18 +809,22 @@ with $N_t$ Poisson($\lambda$) and $J_k \sim \mathcal{N}(\mu_J, \sigma_J^2)$.
 **Sample path — smooth diffusion interrupted by sudden jumps:**
 
 ```
-S_t
-|         ^ jump +15%
-|        /|
-|       / |
-|      /  |          v jump -20%
-|     /   \\         /|
-|    /     \\_______/ |
-|   /                \\____
-|  /                      \\...
-| /
-+---------------------------------> t
-  (Brownian between jumps; jump times ~ Poisson)
+  Merton jump-diffusion — Sₜ path  (μ=0.05, σ=0.18, λ=2/yr)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  S_t ▲
+  1.25│            ↑ +15% jump
+  1.15│          ╱▕
+  1.05│    ╭────╯ ▕
+  1.00│───╯       ╲▕      ↓ −20% jump
+  0.85│            ╰──────╮▕
+  0.75│                    ╰─────╮
+  0.65│                           ╰────────
+      └────────────────────────────────────▶ t
+
+  ──── smooth Brownian diffusion between jumps
+  ▕    jump discontinuity (Poisson arrival)
+  Each segment: dS = μS dt + σS dW  (GBM)
 ```
 
 **Merton option price** — Poisson mixture of Black-Scholes prices:
@@ -860,24 +882,27 @@ satisfying $\int(1\wedge z^2)\nu(dz)<\infty$.
 **Levy measure tail shapes:**
 
 ```
-nu(dz)/dz
+  Lévy measure tails  ν(dz)/dz  ─ log scale
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-Gaussian BM:    nu = 0  (no jump component, only diffusion)
+  ν ▲
+    │  Compound Poisson: point masses  ▼       ▼
+    │                                  ●       ●
+    │
+    │  Variance Gamma: ν ∝ e^{−c|z|}/|z|
+    │  ╲
+    │   ╲
+    │    ╲───────────────___________
+    │
+    │  α-stable: ν ∝ |z|^{−1−α}   (heavier)
+    │  ╲
+    │   ╲____
+    │         ╲_______________________
+    └──────────────────────────────────▶ z
+         −2   −1    0    1    2
 
-Compound Poisson (rare large jumps):
-  |  ^    ^         (discrete point masses at fixed jump sizes)
-  +--*----*---> z
-
-Variance Gamma (smooth exponential decay):
-  |\\
-  | \\.
-  |  \\...___
-  +---------> z    (heavier left tail than Gaussian)
-
-alpha-stable (power-law heavy tail):
-  |\\
-  | \\.....
-  +-----------> z    (infinite variance, very fat tail)
+  Gaussian BM:  ν ≡ 0  (no jump component at all)
+  Heavier ν tail ──▶ more frequent/larger jumps
 ```
 
 **Levy Process Zoo**
@@ -1273,14 +1298,20 @@ Steady-state: $P_\infty \approx 0.17$, so $K_\infty \approx 0.15$.
 Kalman weights the new observation at 15%, prior at 85%.
 
 ```
-P_t
-1.0 |*
-0.8 | \\
-0.6 |  \\
-0.4 |   \\___
-0.2 |       \\__________________  P_inf ~ 0.17
-    +--------------------------------> t
-     (fast convergence to steady-state uncertainty)
+  Kalman error covariance convergence  P_t → P∞
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  P_t ▲
+  1.0 │●
+  0.8 │ ╲
+  0.6 │  ╲
+  0.4 │   ╲──╮
+  0.2 │       ╰─────────╌╌╌╌╌╌╌╌╌╌╌╌  P∞ ≈ 0.17
+  0.0 └────────────────────────────────▶ t
+       0    5    10   15   20   ∞
+
+  Fast decay (exponential rate ∝ spectral gap of Riccati)
+  R/Q = 100 → heavy smoothing, Kalman gain ≈ 0.15
 ```
 
 **Implication:** With $R/Q = 100$ (much noisier obs than process), the filter heavily
@@ -1306,32 +1337,39 @@ ensures $\pi$ is the unique stationary distribution.
 **Energy landscape and accept/reject:**
 
 ```
-U(x)  (negative log-posterior)
+  Energy landscape  U(x) = −log π(x)  (bimodal example)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  |     *         *          <- local minima (modes of pi)
-  |    / \\       / \\
-  |   /   \\     /   \\
-  |  /     *___*     \\       <- saddle between modes
-  | /                 \\
-  +-------------------------> x
+  U ▲
+    │   ●               ●    ← local maxima (low π)
+    │  ╱ ╲             ╱ ╲
+    │ ╱   ╲           ╱   ╲
+    │╱     ╲         ╱     ╲
+    │       ╲──○────╱        ╲  ← saddle
+    │        mode A  mode B      ╲───
+    └──────────────────────────────────▶ x
 
-  Proposal x' = x + h * xi:
-    If U(x') < U(x):  always accept  (moving downhill)
-    If U(x') > U(x):  accept with prob exp(-(U(x')-U(x)))
-    Prevents getting trapped in local minima.
+  Proposal x’ = x + h·ξ,  ξ∼𝒩(0,1):
+    U(x’) < U(x)  → accept always  (step downhill)
+    U(x’) > U(x)  → accept with exp(−ΔU)  (sometimes climb)
+  ↳ prevents permanent trapping in one mode
 ```
 
 **Trace plot of a well-mixed chain:**
 
 ```
-x_t
-+2 |  . . .  .    .  .       <- upper mode
-   |  .  . . .   . .
- 0 |...              ...      <- transitions between modes
-   |         . . .  .  .
--2 |          .  .    ..     <- lower mode
-   +-----------------------------> t
-   (crossing between modes = good mixing)
+  MCMC trace plot — well-mixed chain (bimodal π)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  x_t ▲
+  +2  │  · · ·   ·   · ·    ← upper mode
+      │  ·  · · ·  · ·
+   0  ┼─···─────────────···──────────────▶ t
+      │          · · ·  ·  ·
+  -2  │           ·  ·   ··   ← lower mode
+
+  ✓ frequent crossings → good mixing (both modes visited)
+  ✗ stuck in one band  → poor mixing (reduce h or use MALA)
 ```
 
 ### 7.2 Langevin Dynamics (MALA)
@@ -1352,11 +1390,18 @@ for high-dimensional posteriors.
 **MALA vs RW-MH trajectory comparison:**
 
 ```
+  RW-MH vs MALA trajectories
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
   RW-MH (random walk):          MALA (gradient-guided):
-    .  .  .                         ^ -grad U (towards mode)
-   .  .  . .          -->          /
-     .  .                      . /. .
-   (diffusive, slow mixing)    (directed, fast mixing)
+
+  ◦  ◦  ◦                         ▲ −∇U ← toward mode
+   ◦  ◦  ◦  ◦      vs             ╱
+      ◦  ◦                       ◦ ╱ ◦  ◦
+   ◦     ◦  ◦                     ◦     ◦
+
+  diffusive, O(d) steps            directed, O(d^{1/3}) steps
+  each step ∼ isotropic ξ          each step biased by −∇U(x)
 ```
 
 ::::{admonition} Example — Calibrating OU Parameters via MCMC
@@ -1394,23 +1439,25 @@ $Y_t \mid Z_t=k \sim B_k(y)$.
 **State machine diagram ($K=3$ regimes):**
 
 ```
-         A_12                A_23
-  +------------+        +------------+
-  |  State 1   |------->|  State 2   |-------> State 3
-  |  (Bull)    |        | (Neutral)  |         (Bear/Crash)
-  +------------+<-------+------------+<--------
-         A_21                A_32
+  HMM regime state machine  (K = 3)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  Each state k emits Y_t ~ B_k(y):
-    B_1: N(mu=+0.05, sigma=0.12)   high return, low vol
-    B_2: N(mu=+0.00, sigma=0.18)   flat, medium vol
-    B_3: N(mu=-0.08, sigma=0.35)   crash regime, high vol
+       A₁₂ →                A₂₃ →
+  ┌─────────────┐        ┌─────────────┐        ┌─────────────┐
+  │  State 1   │──────▶│  State 2   │──────▶│  State 3   │
+  │   Bull     │◀──────│  Neutral   │◀──────│  Bear     │
+  └─────────────┘        └─────────────┘        └─────────────┘
+           ← A₂₁              ← A₃₂
 
-  Transition matrix A:
-    A = [ 0.97  0.02  0.01 ]   (row 1: from State 1)
-        [ 0.01  0.97  0.02 ]   (row 2: from State 2)
-        [ 0.05  0.05  0.90 ]   (row 3: from State 3)
-  (rows sum to 1; diagonal = regime persistence)
+  Emission B_k(y) = 𝒩(μ_k, σ_k²):
+  ┌────────┬────────┬────────┬──────────────────┐
+  │ State  │  μ    │  σ    │ Character             │
+  ├────────┼────────┼────────┼──────────────────┤
+  │ Bull   │ +0.05 │  0.12 │ high return, low vol  │
+  │ Neutral│  0.00 │  0.18 │ flat, medium vol      │
+  │ Bear   │ -0.08 │  0.35 │ crash, high vol       │
+  └────────┴────────┴────────┴──────────────────┘
+  (self-transition: A₁₁=0.97,  A₂₂=0.97,  A₃₃=0.90)
 ```
 
 ### 8.2 Baum-Welch (EM)
@@ -1434,18 +1481,21 @@ iteration monotonically increases $\mathcal{L}(\theta)$ by Jensen's inequality.
 **Viterbi trellis diagram ($K=3$, $T=4$):**
 
 ```
-State  t=1           t=2           t=3           t=4
-  1    delta1(1) --> delta2(1) --> delta3(1) --> delta4(1)
-           \              \\  //
-  2    delta1(2) --> delta2(2) --> delta3(2) --> delta4(2)
-           \              \         \
-  3    delta1(3) --> delta2(3) --> delta3(3) --> delta4(3)
+  Viterbi trellis  (K=3, T=4)
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  delta_t(k) = max_j [ delta_{t-1}(j) * A_jk * B_k(y_t) ]
-  psi_t(k)   = argmax (backtrack pointer -> records best prev state)
+  State   t=1         t=2         t=3         t=4
 
-  After forward pass: trace back from t=T to t=1 via psi to get MAP sequence
-    z_1*, z_2*, z_3*, z_4*
+    1    ○─────────▶○─────────▶○─────────▶○
+           ╲              ╳
+    2    ○─────────▶●─────────▶●─────────▶○   ● = MAP path
+           ╲       ╲         ╲
+    3    ○─────────▶○─────────▶○─────────▶○
+
+  δ_t(k) = max_j [δ_{t−1}(j) · A_jk · B_k(y_t)]
+  ψ_t(k) = argmax_j  ← backtrack pointer
+
+  Traceback: z_4★ ← z_3★ ← z_2★ ← z_1★  via ψ
 ```
 
 **Viterbi (MAP path):** $\delta_t(k) = \max_j \delta_{t-1}(j)A_{jk} \cdot B_k(y_t)$, $O(TK^2)$.
@@ -1535,21 +1585,22 @@ $$\mathcal{I}(\theta)_{ij}
 **Fisher information as curvature of the log-likelihood:**
 
 ```
-log L(theta | x_obs)
+  Fisher information = curvature of log-likelihood
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  |        .----.
-  |      ./      \.
-  |    ./          \.
-  |  ./              \.
-  +-----------------------> theta
-         theta*
+  log ℒ ▲
+            │         ╭──╮
+            │       ╭─╯  ╰─╮   High ℐ: sharp peak
+  sharp →   │      ╱        ╲   tight C-R bound
+            ┼─────────────────────▶ θ
+           wide peak examples:│
+  flat →    │  ╭───────────╮  Low  ℐ: flat peak
+            │╱              ╲   loose C-R bound
+            └─────────────────────▶ θ
+                           θ★
 
-  I(theta*) = -d^2/dtheta^2 log L at the peak
-
-  High I (sharp peak):  theta well-identified, low estimation variance
-  Low  I (flat  peak):  theta hard to identify, high estimation variance
-
-  Cramer-Rao: Var(theta_hat) >= 1 / I(theta)  for any unbiased estimator
+  ℐ(θ★) = −∂²θθ log ℒ  at the peak
+  Cramér-Rao:  Var(θ̂) ≥ 1/ℐ(θ)  ∀ unbiased θ̂
 ```
 
 **Cramer-Rao bound:** Any unbiased estimator $\hat\theta$ satisfies
@@ -1613,12 +1664,19 @@ tangent space $T_p M$.
 **Three canonical curvatures:**
 
 ```
-K > 0  (sphere S2)    K = 0  (flat R2)    K < 0  (hyperbolic H2)
+  Three canonical curvatures
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  (N)                     |                    /
-  /|\                     |                   /
- / | \  geodesics       --+--  parallel      /   geodesics
-/  |  \ reconverge (N-S)  |    lines         /   diverge exponentially
+  K > 0 (sphere S²)    K = 0 (flat ℝ²)    K < 0 (hyperbolic H²)
+
+     ▲N                     │                ╱   ╲
+    ╱│╲                    │               ╱       ╲
+   ╱ │ ╲  geodesics      ──┼──  parallel   ╱         ╲  exponential
+  ╱  │  ╲ reconverge      │   lines       ╱           ╲ divergence
+                                           ╱             ╲
+
+  exponential families → K=0 → Newton / natural gradient exact
+  portfolio sphere → K>0 → geodesics curve back (compact orbits)
 ```
 
 **Tangent space — linear approximation at $p$:**
@@ -1650,13 +1708,20 @@ The statistical manifold $\mathcal{M} = \{p(\cdot;\theta)\}$ carries the
 **Standard vs natural gradient:**
 
 ```
-Standard gradient descent:       Natural gradient descent:
-  theta_{k+1} = theta_k - eta * grad L    theta_{k+1} = theta_k - eta * I^{-1} grad L
+  Standard vs natural gradient
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  Parameter space = flat R^d.    Parameter space = Riemannian (metric I(theta)).
-  Ignores curvature.             Adapts step to local geometry.
-  Slow on ill-conditioned I.     Invariant to reparametrisation.
-  O(kappa(I)) iterations.        O(1) iterations on exponential families.
+  Standard:  θ_{k+1} = θ_k − η·∇ℒ       Natural:  θ_{k+1} = θ_k − η·ℐ(θ)^{−1}∇ℒ
+  ────────────────────────────────────────────
+
+  ┌────────────────────┐ ┌────────────────────┐
+  │ Flat ℝᵈ geometry    │ │ Riemannian metric ℐ(θ) │
+  │ Ignores curvature  │ │ Adapts to geometry    │
+  │ Slow on ill-cond ℐ │ │ Reparam invariant     │
+  │ O(κ(ℐ)) iters      │ │ O(1) on exp families  │
+  └────────────────────┘ └────────────────────┘
+
+  On Gaussian / exponential family:  ℐ⁻¹∇ℒ = MLE step → 1 iteration!
 ```
 
 **Natural gradient (Amari 1998):**
@@ -1699,20 +1764,22 @@ linearises the group at the identity.
 **Matrix Lie group hierarchy:**
 
 ```
-GL(n,R)  general linear group (all invertible n x n real matrices)
-   |
-   |--- SL(n,R)  special linear (det = 1)
-   |
-   |--- O(n)     orthogonal (R'R = I)
-   |       |
-   |       +---- SO(n)  special orthogonal (det = +1, pure rotations)
-   |                    Used in: portfolio factor rotation, PCA constraints
-   |
-   +--- Sp(2n,R) symplectic (preserves symplectic form omega)
-                 Used in: Hamiltonian mechanics, PMP sections 4.2 and 10.4
+  Matrix Lie group hierarchy
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-Heisenberg group H(n): upper triangular with 1s on diagonal.
-  Used in: path-signature feature maps (lab_signature_methods)
+  GL(n,ℝ)  ─  all invertible n×n real matrices
+      │
+      ├──▶ SL(n,ℝ)   det = 1
+      │
+      ├──▶ O(n)      RᵀR = I  (orthogonal)
+      │      └─▶ SO(n)  det = +1  (pure rotations)
+      │               ↳ portfolio factor rotation, PCA constraints
+      │
+      └──▶ Sp(2n,ℝ)  preserves symplectic form ω
+                     ↳ Hamiltonian mechanics, PMP §4.2 / §10.4
+
+  H(n)  Heisenberg  ─  upper triangular, 1s on diagonal
+             ↳ path-signature feature maps
 ```
 
 **Left-invariant control system on $G$:**
@@ -1740,9 +1807,15 @@ allocation back-tests in Optimiz-rs.
 The sectional curvature $K(\sigma)$ governs how quickly nearby geodesics diverge:
 
 ```
-K > 0 (sphere): geodesics converge   -> compact optimiser trajectories
-K = 0 (flat  ): Euclidean behaviour  -> Newton / natural gradient exact
-K < 0 (hyper.): exponential spread   -> efficient landscape exploration
+  Sectional curvature and optimiser geometry
+  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  K > 0 (sphere)  → geodesics converge   → compact optimiser orbits
+  K = 0 (flat)    → Euclidean behaviour  → Newton / nat. grad. exact
+  K < 0 (hyper.)  → exponential spread   → fast landscape exploration
+
+  Exponential families live on K = 0 manifold (dually flat).
+  DE explores K < 0 terrain: difference vectors "fan out" exponentially.
 ```
 
 For exponential families in natural/mean parameters $K=0$ — explaining exact
