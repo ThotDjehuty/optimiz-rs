@@ -21,22 +21,9 @@ without Jacobians.
 
 ### 1.1 Geometric Intuition — Mutation in $\mathbb{R}^2$
 
-```
-  Mutation geometry in ℝ²
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-        ◆ x_r3
-           ╲
-            ╲  F·(x_r2 − x_r3)           F ∈ [0, 2]
-             ╲────────────────────────▶ ◆ v_i  ← mutant
-        ◆ x_r2                     ╱
-             ╲___________________╱
-              └── difference vec ┘
-
-  ◆ x_r1 ─────────────────────────────────▶ ◆ v_i
-    └─ base     └── mutation vector added ──┘
-
-  v_i = x_r1  +  F · (x_r2 − x_r3)
+```{figure} ../_static/diagrams/fig_de_mutation.svg
+:align: center
+:alt: DE mutation geometry in R²
 ```
 
 - $\mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3$ are three **distinct** randomly selected parents.
@@ -80,23 +67,9 @@ oscillates rapidly — any gradient step hops between basins.
 **Why DE succeeds:** The difference vector $F(\mathbf{x}_{r_2}-\mathbf{x}_{r_3})$
 spans the characteristic basin width (~1.0), enabling inter-basin jumps.
 
-```
-  Rastrigin 1D  ─  f(x) = 10 + x² − 10·cos(2πx)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  f(x) ▲
-    20 │  ●       ●       ●       ●       ●
-       │ ╱ ╲     ╱ ╲     ╱ ╲     ╱ ╲     ╱ ╲
-    10 │╱   ╲   ╱   ╲   ╱   ╲   ╱   ╲   ╱   ╲
-       │      ╲ ╱     ╲ ╱     ╲ ╱     ╲ ╱
-     0 │───────●───────────────●───────────────▶ x
-       │  -2  -1    ★   0       1       2
-                    ↑
-               f*=0  (global min)
-
-  ✦ ~10^d local minima for d dimensions
-  ✦ Gradient oscillates rapidly → gradient descent fails
-  ✦ DE difference-vector ~spans basin width ~1.0 → can escape
+```{figure} ../_static/diagrams/fig_rastrigin.svg
+:align: center
+:alt: Rastrigin function 1D — many local minima with one global optimum at zero
 ```
 
 **Typical jDE convergence** ($d=10$, $N=100$, $\tau_1=\tau_2=0.1$):
@@ -145,20 +118,9 @@ $$S^{(n)}_t = \frac{1}{\sqrt{n}}\sum_{k=1}^{\lfloor nt \rfloor} \xi_k.$$
 
 By the **Central Limit Theorem**, as $n\to\infty$: $S^{(n)}_t \xrightarrow{d} W_t \sim \mathcal{N}(0,t)$.
 
-```
-  Coin-flip random walk  (n = 20 steps per unit time)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  W_t ▲
-  +2  │       ◦  ◦
-      │    ◦        ◦  ◦
-   0  ┼──◦──────────◦◦────◦ ◦─────────▶ t
-      │◦                        ◦  ◦
-  -2  │                                ◦
-      └────┬──────────┬──────────┬────
-           0         0.5        1.0
-
-       n → ∞  ──▶  jagged path smooths into BM fan
+```{figure} ../_static/diagrams/fig_random_walk.svg
+:align: center
+:alt: Coin-flip random walk converging to Brownian motion as n grows
 ```
 
 **Step 2 — Scaling limit.**  The normalization $1/\sqrt{n}$ is crucial:
@@ -221,42 +183,18 @@ This is the **only** reason Itō's lemma has an extra term.
 
 **Multiple sample paths** — the fan widens as $\propto\sqrt{t}$:
 
-```
-  Brownian motion — multiple sample paths  ("trumpet fan")
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  W_t ▲
-  +2σ │╌╌╌╌╌╌╌╮                        ╭───────  95% band ≈ ±2√t
-      │        ╰─╮      ╭──╮     ╭─────╯
-   0  ┼────────────╲──╱────╲────╱──────────────▶ t
-      │         ╭──╯  ╰╮    ╰╮
-  -2σ │╌╌╌╌╌╌╌╯         ╰────╯                   95% band ≈ −2√t
-      └──────────────────────────────────────
-           0        T/2              T
-
-  ← narrow ─────────── trumpet opens as √t ──────── wide →
-  𝔼[W_t] = 0 for all t  (all paths oscillate around zero)
+```{figure} ../_static/diagrams/fig_bm_fan.svg
+:align: center
+:alt: Brownian motion fan — multiple sample paths widening as sqrt(t)
 ```
 
 **Example — Geometric BM:**
 $S_t = S_0 \exp\!\bigl((\mu-\tfrac12\sigma^2)t + \sigma W_t\bigr)$
 is the Black-Scholes price model.  Log-normal marginals; continuous, nowhere-differentiable paths:
 
-```
-  Geometric BM — log-normal price path  S_t = S_0 · exp(·)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  S_t ▲
-  1.3 │          ╭──╮
-  1.1 │   ╭──╮  ╱    ╲──╮
-  1.0 │──╱    ╲╱         ╲────────╮
-  0.9 │                            ╲─────
-  0.7 │
-      └──────────────────────────────────▶ t
-           0         T/2               T
-
-  𝔼[S_t] = S_0·e^{μt}   (grows at rate μ)
-  𝔼[log S_t] = log S_0 + (μ − σ²/2)·t   (Itō correction!)
+```{figure} ../_static/diagrams/fig_gbm.svg
+:align: center
+:alt: Geometric Brownian motion — log-normal price paths with drift and volatility
 ```
 
 ### 2.2 Itō Calculus
@@ -374,21 +312,9 @@ $\mathbb{E}[\log S_T] = \log S_0 + (\mu-\tfrac12\sigma^2)T$,
 but $\mathbb{E}[S_T] = S_0 e^{\mu T}$ (Jensen's inequality explains the gap: 
 $e^{\mathbb{E}[X]} < \mathbb{E}[e^X]$ for non-degenerate $X$).
 
-```
-  Itō correction:  𝔼[log Sₜ]  vs  naive slope  μ
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  log Sₜ ▲
-          │           ╭────  slope μ  (naive, WRONG)
-          │       ╭───╯
-          │   ╭───╯    ╌╌slope μ−σ²/2  (Itō, correct)
-          │╭──╯╌╌╌╌╌╌╌╌╌
-          ┼────────────────────────────────────▶ t
-          0                                    T
-
-  Gap = σ²·T/2   (Jensen's inequality: e^{𝔼[X]} ≤ 𝔼[e^X])
-  Grows with volatility σ and horizon T
-  Itō correction always lowers expected log-return
+```{figure} ../_static/diagrams/fig_ito_correction.svg
+:align: center
+:alt: Itō correction — expected log-return is always below the naive slope mu
 ```
 
 **Example 2 — Itō product rule ($d(X_t Y_t)$):**
@@ -463,22 +389,9 @@ Geometric series → $X^{(n)}$ is Cauchy in $L^2$ → converges to the unique so
 
 **Intuition:**
 
-```
-  Picard iteration  (dx = f(x) dt,  simplest case)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  X_t ▲
-       │                          ╭──  X^(∞) = true solution
-       │                      ╭───╯
-       │                  ╭───╯    ╌╌  X^(3)
-       │              ╭───╯   ╌╌╌╌╌╌  X^(2)
-  x_0  ┼──────────────────╌╌╌╌╌╌╌╌╌╌  X^(1)  linear
-       │──────────────────────────────  X^(0)  constant
-       └──────────────────────────────▶ t
-
-  Each iteration adds one correction layer:
-    n=0 ──▶ constant   n=1 ──▶ linear   n=2 ──▶ quadratic   …
-  ε_n(t) ≤ C·(2L²(T+1)t)ⁿ/n! → 0  (factorial decay)
+```{figure} ../_static/diagrams/fig_picard.svg
+:align: center
+:alt: Picard iteration — successive approximations converging to the true SDE solution
 ```
 
 #### 2.3.1 The Fokker-Planck Equation — How Densities Evolve
@@ -496,32 +409,9 @@ derivatives from $\phi$ to $p$, giving the Fokker-Planck equation.
 
 **Visual — density flows rightward (positive drift) and spreads (positive diffusion):**
 
-```
-  Fokker-Planck evolution  — density drifts and spreads
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  p(x) ▲
-        │
-   t=0  │    ▐█▌          narrow spike at x₀
-        │   ▐███▌
-        │  ▐█████▌
-        └──────────────────────────────────▶ x
-                x₀
-
-   t=T/2│             ╭──╮   drift right + widen
-        │           ╭─╯  ╰─╮
-        │          ╱        ╲
-        └──────────────────────────────────▶ x
-                          x₀ + μT/2
-
-   t=T  │                    ╭────╮  even wider
-        │                 ╭──╯    ╰──╮
-        │                ╱           ╲
-        └──────────────────────────────────▶ x
-                               x₀ + μT
-
-  Drift term   −∂ₓ[b·p]  ──▶  shifts peak rightward
-  Diffusion    +½∂ₓₓ[σ²p] ──▶  broadens the bell
+```{figure} ../_static/diagrams/fig_fokker_planck.svg
+:align: center
+:alt: Fokker-Planck evolution — probability density drifts right and broadens over time
 ```
 
 **For OU: $b = \kappa(\theta-x)$, $\sigma$ = const** →
@@ -553,23 +443,9 @@ $$X_{t+\Delta t} \approx X_t + b\,\Delta t + \sigma\,\Delta W_t + \tfrac12\sigma
 
 The extra term $\tfrac12\sigma\sigma_x[(\Delta W_t)^2 - \Delta t]$ comes from applying Itō's lemma to $\sigma(X_t)dW_t$.
 
-```
-  Strong error  ‖X_T − X̂_T‖  vs  step size  Δt  (log–log scale)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  log ▲
-  err │ ●                   Euler-Maruyama  (order ½)
-      │   ●
-      │     ●
-      │       ●         ◆   Milstein  (order 1)
-      │           ◆
-      │               ◆
-      │                   ◆
-      └──────────────────────────────▶  log Δt
-        Δt=0.1            Δt=0.001
-
-  Halve Δt ──▶  Euler: error ÷√2 ≈ 0.71×
-                Milstein: error ÷4  =  0.25×  ✓ much faster!
+```{figure} ../_static/diagrams/fig_em_milstein.svg
+:align: center
+:alt: Strong convergence comparison — Euler-Maruyama order 1/2 vs Milstein order 1
 ```
 
 ### 2.4 Ornstein-Uhlenbeck (Mean-Reversion)
@@ -580,24 +456,9 @@ $$dX_t = \kappa(\theta - X_t)\,dt + \sigma\,dW_t.$$
 
 **Intuition — restoring force:** The drift is a spring pulling $X_t$ back to $\theta$:
 
-```
-  Ornstein-Uhlenbeck — mean-reversion  dX = κ(θ−X)dt + σdW
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  X_t ▲
-  +2σ∞│╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌  ← upper ±2σ∞ band
-      │   ╭─╮        ╭──╮
-      │  ╱   ╲   ╭──╯   ╲
-   θ  ┼─╯     ╲─╯        ╲──╭─╮──────────────  ← long-run mean θ
-      │                       ╰─╯
-  −2σ∞│╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌  ← lower ±2σ∞ band
-      └──────────────────────────────────────▶ t
-
-  σ∞ = σ/√(2κ)   (stationary std dev)
-  τ½ = ln2/κ     (half-life of displacement)
-
-  ↓ Strong κ: tight, rapid oscillations (stiff spring)
-  ↓ Weak   κ: slow drift back (loose spring ≈ random walk)
+```{figure} ../_static/diagrams/fig_ou_path.svg
+:align: center
+:alt: Ornstein-Uhlenbeck path — mean-reverting diffusion with stationary confidence bands
 ```
 
 #### 2.4.1 Closed-Form Solution — Step by Step
@@ -649,21 +510,9 @@ This is exact (no approximation) because the OU process is **linear**.  Key form
 
 $$\hat\mu(\tau) = \theta + (X_s-\theta)e^{-\kappa\tau}, \qquad \hat\sigma^2(\tau) = \frac{\sigma^2}{2\kappa}(1-e^{-2\kappa\tau}), \quad \tau=t-s.$$
 
-```
-  OU transition density  p(xₜ | x₀)  spreading toward θ
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  p ▲
-    │  t=0: spike           t=τ½: shifted + wider
-    │                  t=∞: centred on θ (stationary)
-    │  │                ╭╮            ╭──────╮
-    │  │               ╱  ╲         ╭─╯      ╰─╮
-    │  █          ────╱    ╲──    ──╯            ╰──
-    └──┼──────────────────────────────────────────▶ x
-       x₀               μ̂(τ½)                  θ
-
-  mean:  μ̂(τ) = θ + (x₀−θ)·e^{−κτ}  ───▶  θ  as τ→∞
-  var:   σ̂²(τ) = (σ²/2κ)·(1−e^{−2κτ}) ───▶  σ²/2κ
+```{figure} ../_static/diagrams/fig_ou_transition.svg
+:align: center
+:alt: OU transition density — distribution shifts toward theta and broadens with time
 ```
 
 #### 2.4.3 Half-Life and Mean-Reversion Speed
@@ -701,21 +550,9 @@ $n=250$ observations, $\Delta t=1/252$ years.
 
 **Step 2 — Intermediate verification:** The OU log-likelihood surface:
 
-```
-  Log-likelihood surface  ℓ(κ, θ | σ̂)  ─ contour plot
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-   κ ▲
-  80 │          · · ·
-  65 │       · · ◎ · ·      ◎ = MLE optimum
-  55 │      · · ◎◎◎ · ·    contours: ─── ℓ = const
-  45 │       · · ◎ · ·
-  30 │          · · ·
-     └─────────────────────────────────────────▶ θ
-           0.000   0.003   0.006
-
-  θ is tightly identified  (≈ sample mean of Xₜ)
-  κ needs long series  (eigenvalue of autocorrelation)
+```{figure} ../_static/diagrams/fig_ou_loglik.svg
+:align: center
+:alt: OU log-likelihood surface — kappa broadly identified, theta tightly localised
 ```
 
 **Typical results:**
@@ -730,20 +567,9 @@ $n=250$ observations, $\Delta t=1/252$ years.
 
 Standardized residuals: $r_i = (X_{t_i} - \hat\mu_i)/\hat\sigma$ should be $\mathcal{N}(0,1)$.
 
-```
-  Residual diagnostic:  rᵢ = (Xₜᵢ − μ̂ᵢ)/σ̂  vs  𝒩(0,1)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  density ▲
-      0.4 │           ╭───╮
-      0.3 │         ╭─╯   ╰─╮   ─── 𝒩(0,1) theory
-      0.2 │        ╱  ▓ ▓ ▓  ╲  ▓▓▓ sample histogram
-      0.1 │      ╱  ▓▓▓▓▓▓▓▓▓  ╲
-      0.0 └────────────────────────────────▶ rᵢ
-               -3   -2  -1   0   1   2   3
-
-  ✓ bars hug the curve  → OU model fits
-  ✗ heavy tails / skew  → consider jump-diffusion
+```{figure} ../_static/diagrams/fig_ou_residuals.svg
+:align: center
+:alt: OU residual diagnostics — standardised residuals histogram vs N(0,1)
 ```
 
 Ljung-Box test: checks for remaining autocorrelation in $r_i$.
@@ -782,22 +608,9 @@ is a martingale.
 
 **Sample path — step function with random jumps ($\lambda=2$ per unit time):**
 
-```
-  Poisson process  Nₜ ~ Poisson(λt)  (λ = 2 jumps/unit)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  Nₜ ▲
-   5  │                              ┌─────────
-   4  │                 ┌────────────┘    ↑
-   3  │        ┌────────┘           τ₄ ~ Exp(2)
-   2  │  ┌─────┘    ↑
-   1  ├──┘    τ₂ ~ Exp(2)
-   0  │
-      └────┬────┬────┬────┬───────────────────▶ t
-           τ₁   τ₂   τ₃   τ₄
-
-  Each inter-arrival τₖ ∼ Exp(λ)  ─  memoryless!
-  Compensated: Ñₜ = Nₜ − λt  is a martingale
+```{figure} ../_static/diagrams/fig_poisson.svg
+:align: center
+:alt: Poisson process sample path — step function with random jump times
 ```
 
 ### 3.2 Compound Poisson Jump-Diffusion (Merton 1976)
@@ -808,23 +621,9 @@ with $N_t$ Poisson($\lambda$) and $J_k \sim \mathcal{N}(\mu_J, \sigma_J^2)$.
 
 **Sample path — smooth diffusion interrupted by sudden jumps:**
 
-```
-  Merton jump-diffusion — Sₜ path  (μ=0.05, σ=0.18, λ=2/yr)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  S_t ▲
-  1.25│            ↑ +15% jump
-  1.15│          ╱▕
-  1.05│    ╭────╯ ▕
-  1.00│───╯       ╲▕      ↓ −20% jump
-  0.85│            ╰──────╮▕
-  0.75│                    ╰─────╮
-  0.65│                           ╰────────
-      └────────────────────────────────────▶ t
-
-  ──── smooth Brownian diffusion between jumps
-  ▕    jump discontinuity (Poisson arrival)
-  Each segment: dS = μS dt + σS dW  (GBM)
+```{figure} ../_static/diagrams/fig_jump_diffusion.svg
+:align: center
+:alt: Merton jump-diffusion path — GBM with sudden discontinuous jumps
 ```
 
 **Merton option price** — Poisson mixture of Black-Scholes prices:
@@ -881,28 +680,9 @@ satisfying $\int(1\wedge z^2)\nu(dz)<\infty$.
 
 **Levy measure tail shapes:**
 
-```
-  Lévy measure tails  ν(dz)/dz  ─ log scale
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  ν ▲
-    │  Compound Poisson: point masses  ▼       ▼
-    │                                  ●       ●
-    │
-    │  Variance Gamma: ν ∝ e^{−c|z|}/|z|
-    │  ╲
-    │   ╲
-    │    ╲───────────────___________
-    │
-    │  α-stable: ν ∝ |z|^{−1−α}   (heavier)
-    │  ╲
-    │   ╲____
-    │         ╲_______________________
-    └──────────────────────────────────▶ z
-         −2   −1    0    1    2
-
-  Gaussian BM:  ν ≡ 0  (no jump component at all)
-  Heavier ν tail ──▶ more frequent/larger jumps
+```{figure} ../_static/diagrams/fig_levy_tails.svg
+:align: center
+:alt: Lévy measure tail comparison — power-law vs Gaussian tails on log scale
 ```
 
 **Levy Process Zoo**
@@ -1209,53 +989,9 @@ t = 0                                t = T
 5. Check ||m^{k+1} - m^k||_1 < eps; if not, k++ -> go to 2
 ```
 
-**Convergence:** For monotone coupling (Lasry-Lions 2007), the system has a unique solution
-and the fixed-point iteration contracts.
-
-**Practical tip:** Monitor both $\|m^{k+1}-m^k\|_1$ and $\|u^{k+1}-u^k\|_\infty$;
-divergence of either signals non-monotone coupling or too large a time step.
-
-::::{admonition} Example — Optimal Liquidation with Many Agents
-:class: note
-
-**Setup:** $N \gg 1$ traders each hold $x_t$ shares and must liquidate by $T$.
-Aggregate selling rate $\bar u_t = \int u\,m(t,dx)$ depresses the price.
-
-**Mean-field Hamiltonian:**
-
-$$H(x, p, m) = \inf_u \Bigl[\alpha x^2 + \beta u^2 + pu\Bigr]
-+ \underbrace{\gamma \bar u(m)}_{\text{aggregate impact}}\,x.$$
-
-**Nash equilibrium insight:** Each trader liquidates faster when they believe others sell
-slowly (first-mover advantage), but this belief is self-defeating in equilibrium.
-The MFG fixed point is **more aggressive** than the single-agent Almgren-Chriss schedule
-because each agent accounts for crowd impact.
-::::
-
----
-
-## 6 · Kalman Filtering
-
-### 6.1 Linear-Gaussian State Space
-
-$$\mathbf{x}_t = F\mathbf{x}_{t-1} + \mathbf{w}_t,\; \mathbf{w}_t\sim\mathcal{N}(0,Q); \qquad
-\mathbf{y}_t = H\mathbf{x}_t + \mathbf{v}_t,\; \mathbf{v}_t\sim\mathcal{N}(0,R).$$
-
-**Predict:**
-
-$$\hat{\mathbf{x}}^-_t = F\hat{\mathbf{x}}_{t-1},\quad P^-_t = FP_{t-1}F^\top+Q.$$
-
-**Update:**
-
-$$K_t = P^-_t H^\top(HP^-_t H^\top + R)^{-1},\quad
-\hat{\mathbf{x}}_t = \hat{\mathbf{x}}^-_t + K_t(\mathbf{y}_t - H\hat{\mathbf{x}}^-_t),\quad
-P_t = (I-K_t H)P^-_t.$$
-
-$K_t$ is the *Kalman gain* — it interpolates between full prior trust ($K\to0$)
-and full observation trust ($K\to H^{-1}$).
-
-**Bayesian update — uncertainty ellipses shrinking:**
-
+```{figure} ../_static/diagrams/fig_kalman_covariance.svg
+:align: center
+:alt: Kalman filter covariance convergence — P_t converges to steady state
 ```
 Before observation (predict):    After observation (update):
 
@@ -1268,7 +1004,6 @@ Before observation (predict):    After observation (update):
   Kalman gain K interpolates between:
     K -> 0        (huge R, ignore y_t)  =>  x_hat = prior
     K -> H^-1     (R=0, trust y_t)      =>  x_hat = H^-1 y_t
-```
 
 **Covariance convergence:** $P_t \to P_\infty$ (algebraic Riccati solution) exponentially fast
 when $(F,H)$ is observable.
@@ -1297,23 +1032,6 @@ noisy observation $y_t = x_t + v_t$ ($R=1.0$).
 Steady-state: $P_\infty \approx 0.17$, so $K_\infty \approx 0.15$.
 Kalman weights the new observation at 15%, prior at 85%.
 
-```
-  Kalman error covariance convergence  P_t → P∞
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  P_t ▲
-  1.0 │●
-  0.8 │ ╲
-  0.6 │  ╲
-  0.4 │   ╲──╮
-  0.2 │       ╰─────────╌╌╌╌╌╌╌╌╌╌╌╌  P∞ ≈ 0.17
-  0.0 └────────────────────────────────▶ t
-       0    5    10   15   20   ∞
-
-  Fast decay (exponential rate ∝ spectral gap of Riccati)
-  R/Q = 100 → heavy smoothing, Kalman gain ≈ 0.15
-```
-
 **Implication:** With $R/Q = 100$ (much noisier obs than process), the filter heavily
 smooths observations — useful for noisy financial signals like tick prices.
 ::::
@@ -1336,40 +1054,16 @@ ensures $\pi$ is the unique stationary distribution.
 
 **Energy landscape and accept/reject:**
 
-```
-  Energy landscape  U(x) = −log π(x)  (bimodal example)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  U ▲
-    │   ●               ●    ← local maxima (low π)
-    │  ╱ ╲             ╱ ╲
-    │ ╱   ╲           ╱   ╲
-    │╱     ╲         ╱     ╲
-    │       ╲──○────╱        ╲  ← saddle
-    │        mode A  mode B      ╲───
-    └──────────────────────────────────▶ x
-
-  Proposal x’ = x + h·ξ,  ξ∼𝒩(0,1):
-    U(x’) < U(x)  → accept always  (step downhill)
-    U(x’) > U(x)  → accept with exp(−ΔU)  (sometimes climb)
-  ↳ prevents permanent trapping in one mode
+```{figure} ../_static/diagrams/fig_mcmc_energy.svg
+:align: center
+:alt: MCMC energy landscape — bimodal potential function
 ```
 
 **Trace plot of a well-mixed chain:**
 
-```
-  MCMC trace plot — well-mixed chain (bimodal π)
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  x_t ▲
-  +2  │  · · ·   ·   · ·    ← upper mode
-      │  ·  · · ·  · ·
-   0  ┼─···─────────────···──────────────▶ t
-      │          · · ·  ·  ·
-  -2  │           ·  ·   ··   ← lower mode
-
-  ✓ frequent crossings → good mixing (both modes visited)
-  ✗ stuck in one band  → poor mixing (reduce h or use MALA)
+```{figure} ../_static/diagrams/fig_mcmc_trace.svg
+:align: center
+:alt: MCMC trace plot — chain samples and marginal distribution
 ```
 
 ### 7.2 Langevin Dynamics (MALA)
@@ -1529,42 +1223,9 @@ P(Bull)   1.0|XXXXXXXXXX        XXXXXXXXXX        XXXXX
                   dot-com bust  GFC  COVID crash
 ```
 
-**Use in Optimiz-rs:** Regime beliefs $\gamma_t$ feed as features into
-`differential_evolution` to switch risk-aversion $\alpha$ dynamically.
-::::
-
----
-
-## 9 · Information Theory
-
-### 9.1 Entropy and KL Divergence
-
-::::{admonition} Definition — KL Divergence
-:class: definition
-
-For densities $p, q$:
-
-$$D_{\mathrm{KL}}(p\,\|\,q) = \int p(x)\log\frac{p(x)}{q(x)}\,dx \;\ge\; 0,$$
-
-with equality iff $p=q$ a.e. (Gibbs inequality).  Non-symmetric.
-::::
-
-**KL asymmetry — a critical practical distinction:**
-
-```
-p = N(0,1)  (narrow Gaussian)      q = N(0,4)  (wide Gaussian)
-
-  D_KL(p||q):  integrate under p.
-    p lives mostly in [-2,2] where q is large -> small penalty.
-    D_KL(p||q) is small.  (q "covers" p)
-
-  D_KL(q||p):  integrate under q.
-    q places mass in [-6,6]; in tails p is tiny but q is not -> large penalty.
-    D_KL(q||p) is large.  (p does NOT cover q)
-
-  Rule of thumb:
-    D_KL(p||q): fitting q to match p  (mean-seeking, mode-averaging)
-    D_KL(q||p): q must cover p        (mode-seeking, mode-fitting)
+```{figure} ../_static/diagrams/fig_kl_asymmetry.svg
+:align: center
+:alt: KL divergence asymmetry — D(P||Q) vs D(Q||P) illustration
 ```
 
 **Connection to model selection:** AIC $= 2k - 2\ln\hat{\mathcal{L}}$ and
@@ -1584,99 +1245,19 @@ $$\mathcal{I}(\theta)_{ij}
 
 **Fisher information as curvature of the log-likelihood:**
 
-```
-  Fisher information = curvature of log-likelihood
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-
-  log ℒ ▲
-            │         ╭──╮
-            │       ╭─╯  ╰─╮   High ℐ: sharp peak
-  sharp →   │      ╱        ╲   tight C-R bound
-            ┼─────────────────────▶ θ
-           wide peak examples:│
-  flat →    │  ╭───────────╮  Low  ℐ: flat peak
-            │╱              ╲   loose C-R bound
-            └─────────────────────▶ θ
-                           θ★
-
-  ℐ(θ★) = −∂²θθ log ℒ  at the peak
-  Cramér-Rao:  Var(θ̂) ≥ 1/ℐ(θ)  ∀ unbiased θ̂
+```{figure} ../_static/diagrams/fig_fisher_curvature.svg
+:align: center
+:alt: Fisher information curvature — log-likelihood and information matrix
 ```
 
-**Cramer-Rao bound:** Any unbiased estimator $\hat\theta$ satisfies
-$\operatorname{Cov}(\hat\theta) \succeq \mathcal{I}(\theta)^{-1}$.
-MLE achieves equality asymptotically.
-
-**Example:** For $B_k = \mathcal{N}(\mu_k,\sigma_k^2)$:
-$\mathcal{I}(\mu_k)=\sigma_k^{-2}$, $\mathcal{I}(\sigma_k^2)=(2\sigma_k^4)^{-1}$.
-Higher emission variance -> smaller Fisher info -> less certain parameter estimates.
-
-### 9.3 Mutual Information and Feature Relevance
-
-$$I(X;Y) = D_{\mathrm{KL}}\bigl(p(X,Y)\,\|\,p(X)p(Y)\bigr) = H(X) - H(X\mid Y) \ge 0.$$
-
-**Interpretation:** $I(X;Y)$ = how much knowing $Y$ reduces uncertainty about $X$.
-$X \perp Y \Rightarrow I=0$.  $Y$ determines $X$ fully $\Rightarrow I = H(X)$.
-
-**mRMR criterion** (minimum redundancy, maximum relevance) for the sparse module:
-
-$$\max_{Y_i} \Bigl[I(Y_i;\text{target}) - \frac{1}{|S|}\sum_{Y_j\in S}I(Y_i;Y_j)\Bigr].$$
-
-::::{admonition} Example — Entropy of HMM Regime Probabilities
-:class: note
-
-Define discrete regime distribution at time $t$:
-
-$$\mathbf{p}_t = (\gamma_t(1), \gamma_t(2), \gamma_t(3)).$$
-
-**Regime entropy** $H_t = -\sum_k \gamma_t(k)\log \gamma_t(k) \in [0, \log 3]$:
-
-| Date | P(Bull) | P(Neutral) | P(Bear) | $H_t$ | Certainty |
-|------|---------|-----------|---------|-------|-----------|
-| 2019-12 | 0.92 | 0.07 | 0.01 | 0.36 | High (Bull clear) |
-| 2020-03 | 0.01 | 0.12 | 0.87 | 0.54 | Medium (Bear likely) |
-| 2020-06 | 0.42 | 0.45 | 0.13 | 1.05 | Low (mixed) |
-
-Max entropy $\log 3 \approx 1.10$ = fully uncertain.
-**Trading filter:** Only trade when $H_t < 0.7$ (certain regime).
-::::
-
-### 9.4 Natural Gradient (Preview)
-
-Classical gradient descent ignores parameter-space geometry.  The *natural gradient*
-replaces $\nabla_\theta\mathcal{L}$ with $\mathcal{I}(\theta)^{-1}\nabla_\theta\mathcal{L}$,
-giving a reparametrisation-invariant update — see §10.2 for the full geometric development.
-
----
-
-## 10 · Differential Geometry
-
-### 10.1 Riemannian Manifolds
-
-::::{admonition} Definition — Riemannian Manifold
-:class: definition
-
-A *Riemannian manifold* $(M, g)$ is a smooth manifold $M$ with a
-*metric tensor* $g_p$: a symmetric, positive-definite bilinear form on each
-tangent space $T_p M$.
-::::
-
-**Three canonical curvatures:**
-
+```{figure} ../_static/diagrams/fig_natural_gradient.svg
+:align: center
+:alt: Natural gradient descent — steepest descent in information geometry
 ```
-  Three canonical curvatures
-  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 
-  K > 0 (sphere S²)    K = 0 (flat ℝ²)    K < 0 (hyperbolic H²)
-
-     ▲N                     │                ╱   ╲
-    ╱│╲                    │               ╱       ╲
-   ╱ │ ╲  geodesics      ──┼──  parallel   ╱         ╲  exponential
-  ╱  │  ╲ reconverge      │   lines       ╱           ╲ divergence
-                                           ╱             ╲
-
-  exponential families → K=0 → Newton / natural gradient exact
-  portfolio sphere → K>0 → geodesics curve back (compact orbits)
+```{figure} ../_static/diagrams/fig_curvatures.svg
+:align: center
+:alt: Curvature comparison — positive, zero, and negative curvature geodesics
 ```
 
 **Tangent space — linear approximation at $p$:**
