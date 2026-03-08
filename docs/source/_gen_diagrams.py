@@ -157,7 +157,7 @@ def fig_bm_fan():
     ax.fill_between(ts, lo, hi, alpha=0.13, color=C0, label=r"$\pm 2\sqrt{t}$ (95% band)")
     ax.plot(ts, hi, color=C0, lw=1.2, ls="--", alpha=0.55)
     ax.plot(ts, lo, color=C0, lw=1.2, ls="--", alpha=0.55)
-    colors_cycle = plt.cm.tab10(np.linspace(0, 0.9, npaths))
+    colors_cycle = plt.colormaps["tab10"](np.linspace(0, 0.9, npaths))
     for i, p in enumerate(paths):
         ax.plot(ts, p, lw=0.9, alpha=0.75, color=colors_cycle[i])
     ax.axhline(0, color=GRAY, lw=0.8, ls=":")
@@ -178,7 +178,7 @@ def fig_gbm():
             label=r"$\mathbb{E}[S_t] = S_0 e^{\mu t}$")
     ax.plot(ts, S0 * np.exp((mu - 0.5*sigma**2) * ts), color=C2, lw=1.5, ls=":",
             label=r"median $\approx S_0 e^{(\mu-\sigma^2/2)t}$")
-    colors_cycle = plt.cm.Blues(np.linspace(0.4, 0.85, 7))
+    colors_cycle = plt.colormaps["Blues"](np.linspace(0.4, 0.85, 7))
     for i in range(7):
         W = np.cumsum(rng.normal(0, np.sqrt(dt), n))
         S = S0 * np.exp((mu - 0.5*sigma**2) * ts + sigma * W)
@@ -846,10 +846,10 @@ def fig_lie_group_hierarchy():
 
     nodes = {
         "GL":  (4.5, 4.1,  r"$\mathrm{GL}(n,\mathbb{R})$" + "\nall invertible $n\times n$", C0),
-        "SL":  (1.8, 2.85, r"$\mathrm{SL}(n,\mathbb{R})$" + "\n$\det=1$",                   C2),
+        "SL":  (1.8, 2.85, r"$\mathrm{SL}(n,\mathbb{R})$" + "\n" + r"$\det=1$",              C2),
         "On":  (4.5, 2.85, r"$O(n)$" + "\n$R^\top R=I$",                                    C1),
-        "Sp":  (7.2, 2.85, r"$\mathrm{Sp}(2n,\mathbb{R})$" + "\npreserves $\omega$",         C2),
-        "SO":  (4.5, 1.55, r"$\mathrm{SO}(n)$" + "\n$\det=+1$ (rotations)",                  C2),
+        "Sp":  (7.2, 2.85, r"$\mathrm{Sp}(2n,\mathbb{R})$" + "\npreserves " + r"$\omega$", C2),
+        "SO":  (4.5, 1.55, r"$\mathrm{SO}(n)$" + "\n" + r"$\det=+1$ (rotations)",           C2),
         "Hn":  (1.8, 1.55, r"$H(n)$ Heisenberg" + "\nupper triangular",                      C3),
     }
     notes = {

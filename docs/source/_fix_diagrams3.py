@@ -59,7 +59,7 @@ old2 = '''\
   Traceback: z_4★ ← z_3★ ← z_2★ ← z_1★  via ψ
 ```'''
 
-new2 = '''\
+new2 = r'''\
 ```{figure} ../_static/diagrams/fig_viterbi_trellis.svg
 :align: center
 :width: 82%
@@ -119,7 +119,7 @@ old4 = '''\
              ↳ path-signature feature maps
 ```'''
 
-new4 = '''\
+new4 = r'''\
 ```{figure} ../_static/diagrams/fig_lie_group_hierarchy.svg
 :align: center
 :width: 90%
