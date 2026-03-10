@@ -23,3 +23,10 @@ Cargo.lock
 *.swo
 *~
 wheels/
+
+# Build artifacts
+docs/source/_static/*.aux
+docs/source/_static/*.log
+docs/source/_static/*.toc
+docs/source/theory/*.html
+docs/source/theory/*.pdf
