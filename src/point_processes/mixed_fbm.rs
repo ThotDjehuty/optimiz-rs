@@ -14,7 +14,6 @@
 
 use rand::prelude::*;
 use rand_distr::Normal;
-use std::f64::consts::PI;
 
 /// Fractional Brownian Motion with Hurst parameter H
 #[derive(Clone, Debug)]

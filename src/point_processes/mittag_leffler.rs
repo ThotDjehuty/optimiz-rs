@@ -149,6 +149,7 @@ pub fn f_alpha_lambda(alpha_0: f64, lambda_0: f64, x: f64) -> f64 {
 /// Integral of f_{α₀,λ₀} from 0 to t
 ///
 /// ∫₀ᵗ f_{α₀,λ₀}(s) ds = t^{α₀} * E_{α₀,α₀+1}(-λ₀ * t^{α₀})
+#[allow(dead_code)]
 pub fn f_alpha_lambda_integral(alpha_0: f64, lambda_0: f64, t: f64) -> f64 {
     if t <= 0.0 {
         return 0.0;
@@ -161,6 +162,7 @@ pub fn f_alpha_lambda_integral(alpha_0: f64, lambda_0: f64, t: f64) -> f64 {
 }
 
 /// Gamma function using Lanczos approximation
+#[allow(dead_code)]
 pub fn gamma(z: f64) -> f64 {
     if z < 0.5 {
         // Reflection formula: Γ(z) * Γ(1-z) = π / sin(πz)
@@ -191,12 +193,14 @@ pub fn gamma(z: f64) -> f64 {
 }
 
 /// Log-gamma function for numerical stability
+#[allow(dead_code)]
 pub fn lgamma(z: f64) -> f64 {
     gamma(z).abs().ln()
 }
 
 /// Incomplete gamma function γ(s, x) = ∫₀ˣ t^{s-1} e^{-t} dt
 /// Used for various probability computations
+#[allow(dead_code)]
 pub fn incomplete_gamma_lower(s: f64, x: f64) -> f64 {
     if x < 0.0 || s <= 0.0 {
         return 0.0;
@@ -224,6 +228,7 @@ pub fn incomplete_gamma_lower(s: f64, x: f64) -> f64 {
 }
 
 /// Upper incomplete gamma Γ(s, x) = ∫ₓ^∞ t^{s-1} e^{-t} dt
+#[allow(dead_code)]
 pub fn incomplete_gamma_upper(s: f64, x: f64) -> f64 {
     if x < 0.0 {
         return gamma(s);

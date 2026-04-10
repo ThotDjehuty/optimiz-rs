@@ -3,8 +3,6 @@
 //!
 //! Estimate parameters of OU process: dX_t = κ(θ - X_t)dt + σdW_t
 
-use ndarray::Array1;
-use statrs::distribution::{Normal, ContinuousCDF};
 use crate::optimal_control::{OptimalControlError, Result};
 
 /// OU process parameters
@@ -119,7 +117,7 @@ pub fn estimate_ou_params_mle(spread: &[f64], dt: f64) -> Result<OUParams> {
     let tol = 1e-6;
     
     for _iter in 0..max_iter {
-        let mut log_likelihood = 0.0;
+        let mut _log_likelihood = 0.0;
         let mut d_kappa = 0.0;
         let mut d_theta = 0.0;
         let mut d_sigma = 0.0;
@@ -143,7 +141,7 @@ pub fn estimate_ou_params_mle(spread: &[f64], dt: f64) -> Result<OUParams> {
             let z = (x_next - mu_t) / std_t;
             
             // Log-likelihood contribution
-            log_likelihood -= 0.5 * z.powi(2) + std_t.ln();
+            _log_likelihood -= 0.5 * z.powi(2) + std_t.ln();
             
             // Gradients (simplified)
             d_kappa += z * (x_t - theta) * dt * exp_neg_kappa_dt / std_t;

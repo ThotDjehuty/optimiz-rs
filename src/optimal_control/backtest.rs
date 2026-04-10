@@ -125,8 +125,8 @@ pub fn backtest_optimal_switching(
     if position != 0 {
         let final_price = spread[spread.len() - 1];
         let tc = transaction_cost * position.signum() as f64;
-        cash += position as f64 * final_price * (1.0 - tc);
-        position = 0;
+        let _ = cash + position as f64 * final_price * (1.0 - tc);
+        // position closed
     }
     
     // Calculate metrics
@@ -262,7 +262,7 @@ pub fn backtest_mean_reversion(
     
     // Calculate rolling mean and std
     let window = 20;
-    let mut positions = vec![0i32; spread.len()];
+    let _positions = vec![0i32; spread.len()];
     let mut signals = Vec::new();
     
     for i in window..spread.len() {

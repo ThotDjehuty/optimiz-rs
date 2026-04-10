@@ -5,8 +5,7 @@
 
 use super::kernels::ExcitationKernel;
 use rand::prelude::*;
-use rand_distr::{Exp, Uniform};
-use std::collections::VecDeque;
+use rand_distr::Exp;
 
 /// Configuration for a Hawkes process
 #[derive(Clone, Debug)]

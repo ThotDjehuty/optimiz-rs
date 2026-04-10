@@ -102,6 +102,7 @@ pub struct PowerLawKernel {
     /// Scaling constant K₀ > 0
     pub k_0: f64,
     /// Normalization factor to achieve unit L¹ norm
+    #[allow(dead_code)]
     norm_factor: f64,
 }
 
@@ -175,6 +176,7 @@ impl ExcitationKernel for PowerLawKernel {
 /// This satisfies the complete monotonicity requirement for the scaling limit
 /// theorems. φ(t) = K₀ * t^{-α₀} * E_{1-α₀}(-λ * t^{1-α₀})
 /// where E is the Mittag-Leffler function.
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct CompletelyMonotoneKernel {
     pub alpha_0: f64,
@@ -183,6 +185,7 @@ pub struct CompletelyMonotoneKernel {
 }
 
 impl CompletelyMonotoneKernel {
+    #[allow(dead_code)]
     pub fn new(alpha_0: f64, k_0: f64, lambda: f64) -> Self {
         assert!(alpha_0 > 0.0 && alpha_0 < 1.0);
         assert!(k_0 > 0.0);
@@ -236,6 +239,7 @@ impl ExcitationKernel for CompletelyMonotoneKernel {
 }
 
 /// Gamma function approximation (Lanczos approximation)
+#[allow(dead_code)]
 fn gamma_fn(z: f64) -> f64 {
     // Use Lanczos approximation for Γ(z)
     if z < 0.5 {
@@ -291,7 +295,7 @@ mod tests {
         // Check power-law decay
         let v1 = kernel.evaluate(1.0);
         let v10 = kernel.evaluate(10.0);
-        let v100 = kernel.evaluate(100.0);
+        let _v100 = kernel.evaluate(100.0);
         
         // φ(t) ~ t^{-1-α₀}, so φ(10)/φ(1) ≈ 10^{-1-α₀}
         let expected_ratio = 10.0_f64.powf(-1.375);
