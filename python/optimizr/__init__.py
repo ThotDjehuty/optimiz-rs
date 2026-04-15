@@ -50,6 +50,20 @@ except (ImportError, AttributeError):
     MFGConfig = None
     solve_mfg_1d_rust = None
 
+# Portfolio Optimization (CARA, Mean-Variance, ERC)
+try:
+    from optimizr._core import (
+        cara_optimal_weights,
+        mean_variance_optimal_weights,
+        min_variance_weights,
+        erc_weights,
+    )
+except (ImportError, AttributeError):
+    cara_optimal_weights = None
+    mean_variance_optimal_weights = None
+    min_variance_weights = None
+    erc_weights = None
+
 __version__ = "0.2.0"
 __all__ = [
     "HMM",
@@ -83,4 +97,9 @@ __all__ = [
     # Mean Field Games
     "MFGConfig",
     "solve_mfg_1d_rust",
+    # Portfolio Optimization
+    "cara_optimal_weights",
+    "mean_variance_optimal_weights",
+    "min_variance_weights",
+    "erc_weights",
 ]

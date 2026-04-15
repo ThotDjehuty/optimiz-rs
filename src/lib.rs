@@ -46,6 +46,7 @@ pub mod risk_metrics;
 pub mod sparse_optimization;
 pub mod mean_field; // Mean Field Games and Mean Field Type Control
 pub mod point_processes; // Point processes for order flow modeling (Hawkes, fBM)
+pub mod portfolio_optimization; // CARA, convex duality, mean-variance, ERC
 
 // Python bindings for legacy compatibility
 #[cfg(feature = "python-bindings")]
@@ -121,6 +122,9 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Optimal Control functions (includes Kalman Filter)
     optimal_control::py_bindings::register_py_module(m)?;
+
+    // Portfolio Optimization functions (CARA, Mean-Variance, ERC)
+    portfolio_optimization::python_bindings::register_python_functions(m)?;
 
     Ok(())
 }
