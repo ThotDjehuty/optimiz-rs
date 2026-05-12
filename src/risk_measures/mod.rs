@@ -15,6 +15,9 @@ pub mod cvar;
 pub use cvar::{cvar_value, minimize_cvar, CVaRConfig, CVaRResult};
 pub use var::{historical_var, parametric_var};
 
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
+
 #[inline]
 pub(crate) fn check_alpha(alpha: f64) -> Result<()> {
     if !(0.0 < alpha && alpha < 1.0) {

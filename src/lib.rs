@@ -133,5 +133,12 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Portfolio Optimization functions (CARA, Mean-Variance, ERC)
     portfolio_optimization::python_bindings::register_python_functions(m)?;
 
+    // ===== v1.1.0 additive bindings =====
+    graph::python_bindings::register_python_functions(m)?;
+    risk_measures::python_bindings::register_python_functions(m)?;
+    topology::python_bindings::register_python_functions(m)?;
+    volterra::python_bindings::register_python_functions(m)?;
+    signatures::python_bindings::register_python_functions(m)?;
+
     Ok(())
 }

@@ -14,3 +14,6 @@ pub use bottleneck::bottleneck_distance;
 pub use persistent_homology::{
     persistent_homology, vietoris_rips_filtration, PersistenceDiagram, PersistencePair,
 };
+
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;

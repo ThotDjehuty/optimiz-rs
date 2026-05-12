@@ -14,3 +14,6 @@ pub mod random_signature;
 pub mod signature_kernel;
 pub mod utils;
 
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
+

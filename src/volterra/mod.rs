@@ -14,3 +14,6 @@ pub mod fractional_riccati;
 pub mod markovian_lift;
 pub mod volterra_solver;
 
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
+
