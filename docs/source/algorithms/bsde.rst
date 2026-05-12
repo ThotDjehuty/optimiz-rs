@@ -1,10 +1,96 @@
 BSDE — θ-scheme and deep-BSDE bridge
 ====================================
 
-This notebook exercises `optimizr.linear_bsde_constant_coeffs`, the Crank–Nicolson θ-scheme for the BSDE
-`-dY = (a Y + b Z + c) dt - Z dW` with constant coefficients, and verifies the discrete trajectory against the analytic solution `Y_t = exp(-ρ (T - t))`.
+A **backward stochastic differential equation** (BSDE) on $[0, T]$ is the inverse-time problem
 
-.. note:: Companion executed notebook: `10_bsde.ipynb <../../examples/notebooks/10_bsde.ipynb>`_
+.. math::
+
+   Y_t \;=\; \xi \;+\; \int_t^T f(s, Y_s, Z_s)\, ds \;-\; \int_t^T Z_s\, dW_s,
+   \qquad Y_T = \xi,
+
+where $\xi \in L^2(\mathcal{F}_T)$ is the *terminal condition*, $f$ is the *driver* and the
+unknowns are an adapted pair $(Y, Z) \in \mathcal{S}^2 \times \mathcal{H}^2$.  The auxiliary
+process $Z$ is a *non-anticipative hedge*: it makes the equation adapted despite the terminal
+constraint.
+
+The primitive `linear_bsde_constant_coeffs` solves the constant-coefficient linear case
+
+.. math::
+
+   -dY_t \;=\; (a\, Y_t + b\, Z_t + c)\, dt \;-\; Z_t\, dW_t,
+   \qquad Y_T = \xi,
+
+by a **Crank–Nicolson θ-scheme** (θ = 0.5 → second-order in $\Delta t$).
+
+Mathematical background
+-----------------------
+
+**Pardoux–Peng theorem (1990).**  If $f$ is uniformly Lipschitz in $(y, z)$ and
+$\mathbb{E}\!\int_0^T f(s, 0, 0)^2\, ds < \infty$, then the BSDE admits a unique solution
+$(Y, Z) \in \mathcal{S}^2 \times \mathcal{H}^2$.  The proof is a Banach–Picard fixed point on
+$\Phi : (Y, Z) \mapsto (Y', Z')$ with
+$Y'_t = \mathbb{E}\bigl[\xi + \int_t^T f(s, Y_s, Z_s)\, ds \bigm| \mathcal{F}_t\bigr]$ and $Z'$
+obtained by the martingale representation theorem.
+
+**Closed-form for the linear case.**  For $a, b, c$ deterministic the solution is the
+conditional expectation under a Girsanov-shifted measure:
+
+.. math::
+
+   Y_t \;=\; \mathbb{E}\!\left[\, \xi\, e^{\int_t^T a(s)\, ds}
+              \;+\; \int_t^T c(s)\, e^{\int_t^s a(r)\, dr}\, ds
+              \,\Big|\, \mathcal{F}_t \right],
+
+with the Girsanov density $\frac{d\mathbb{Q}}{d\mathbb{P}} = \mathcal{E}\bigl(\int_0^\cdot b(s)\,dW_s\bigr)$.
+When $b = c = 0$, $a \equiv -\rho$ and $\xi = 1$ this collapses to the analytic ground truth
+$Y_t = e^{-\rho(T-t)}$ used by the convergence test.
+
+**Feynman–Kac bridge.**  Setting $f(s, y, z) = -r y$ and $\xi = g(X_T)$ for a forward SDE $X$
+recovers the discounted-payoff PDE: $Y_t = e^{-r(T-t)} \mathbb{E}[g(X_T) \mid \mathcal{F}_t]$.
+More generally, the markovian BSDE
+
+.. math::
+
+   Y_t = g(X_T) + \int_t^T f(s, X_s, Y_s, Z_s)\, ds - \int_t^T Z_s\, dW_s,
+
+is the probabilistic representation of the semilinear PDE
+$\partial_t u + \mathcal{L}u + f(t, x, u, \sigma^\top \nabla u) = 0$, $u(T, x) = g(x)$, with
+$Y_t = u(t, X_t)$ and $Z_t = \sigma^\top(t, X_t)\nabla u(t, X_t)$.
+
+**Crank–Nicolson θ-scheme.**  On a uniform grid $0 = t_0 < \cdots < t_N = T$ the scheme reads
+
+.. math::
+
+   Y^N_{t_i} \;=\; \mathbb{E}\!\bigl[\, Y^N_{t_{i+1}} \,\big|\, \mathcal{F}_{t_i}\bigr]
+              \;+\; \Delta t\,\bigl(\theta\, f(t_i, Y^N_{t_i}, Z^N_{t_i})
+                                     + (1-\theta)\, f(t_{i+1}, Y^N_{t_{i+1}}, Z^N_{t_{i+1}})\bigr),
+
+with $Z^N_{t_i} = \Delta t^{-1}\,\mathbb{E}\bigl[Y^N_{t_{i+1}}(W_{t_{i+1}} - W_{t_i})\bigm|\mathcal{F}_{t_i}\bigr]$
+(discrete Clark–Ocone identity).  For $\theta = 1/2$ the global truncation error is
+$\sup_i \mathbb{E}|Y_{t_i} - Y^N_{t_i}|^2 = O(\Delta t^2)$ — the second-order rate verified
+empirically by the convergence cell of the companion notebook.
+
+**Deep-BSDE bridge (E–Han–Jentzen, 2017).**  In high dimension the conditional expectation
+is intractable; one parametrises $Z_{t_i} = \zeta^i_\theta(X_{t_i})$ by a neural network and
+minimises $\mathbb{E}\bigl[(Y^\theta_T - \xi)^2\bigr]$ over $(Y_0, \theta)$.  The trait
+`ConditionalExpectation` and the struct `DeepBsdeBridge` expose the same θ-scheme step so the
+user can plug in any regression / neural-network conditional-expectation oracle.
+
+Why it matters
+--------------
+
+* **Pricing & hedging in incomplete markets.**  $Y_t$ is the super-replication price of the
+  contingent claim $\xi$ and $Z_t$ is the instantaneous hedge ratio.  Constraints (transaction
+  costs, portfolio caps, recursive utilities) are absorbed into the driver $f$.
+* **Stochastic control.**  Forward–backward SDEs are the probabilistic counterpart of the
+  Hamilton–Jacobi–Bellman PDE; deep-BSDE solves HJB up to $d \sim 100$ state variables, well
+  beyond grid-based PDE solvers.
+* **Risk-sensitive optimisation.**  Quadratic-driver BSDE
+  $-dY = \tfrac1{2\eta}|Z|^2 dt - Z\, dW$ encodes exponential utility hedging (Kramkov–Schachermayer 1999).
+
+.. note::
+   📓 **Companion notebook** — `view on GitHub <https://github.com/ThotDjehuty/optimiz-rs/blob/main/examples/notebooks/10_bsde.ipynb>`_
+   · `download .ipynb <https://raw.githubusercontent.com/ThotDjehuty/optimiz-rs/main/examples/notebooks/10_bsde.ipynb>`_
 
 10 — BSDE θ-scheme
 ==================

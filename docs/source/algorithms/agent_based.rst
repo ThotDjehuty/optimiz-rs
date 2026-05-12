@@ -1,9 +1,78 @@
 Agent-based — bounded-confidence consensus
 ==========================================
 
-Generic interacting-agent simulator (`consensus_dynamics`) — linear bounded-confidence rule $s_i^{k+1} = (1-α) s_i^k + α \bar s^k + ξ_i$.
+Generic symmetric *interacting-agent* simulator implementing the linear bounded-confidence
+update rule
 
-.. note:: Companion executed notebook: `15_agent_based.ipynb <../../examples/notebooks/15_agent_based.ipynb>`_
+.. math::
+
+   s^{k+1}_i \;=\; (1 - \alpha)\, s^k_i \;+\; \alpha\, \bar s^k \;+\; \xi^k_i,
+   \qquad \bar s^k \;=\; \frac1N \sum_{j=1}^N s^k_j,
+   \qquad \xi^k_i \sim \mathcal{N}(0, \sigma^2),
+
+with $\alpha \in (0, 1]$ the *averaging weight* and $\sigma$ the noise scale.  This is the
+DeGroot–Friedkin–Johnsen baseline of opinion dynamics, and the *complete-graph* limit of the
+Hegselmann–Krause and Vicsek flocking models.
+
+Mathematical background
+-----------------------
+
+**Mean conservation.**  Averaging the update over $i$ gives
+$\bar s^{k+1} = \bar s^k + \bar\xi^k$ with $\mathbb{E}[\bar\xi^k] = 0$, so the empirical mean
+is a *martingale* and is exactly preserved in expectation:
+
+.. math::
+
+   \mathbb{E}[\bar s^k] \;=\; \bar s^0 \quad \text{for all } k \ge 0.
+
+In the noiseless case $\sigma = 0$ the mean is preserved *path-by-path*.
+
+**Geometric contraction of the spread.**  Define the deviation $d^k_i := s^k_i - \bar s^k$.
+The update implies
+
+.. math::
+
+   d^{k+1}_i \;=\; (1 - \alpha)\, d^k_i \;+\; \bigl(\xi^k_i - \bar\xi^k\bigr) ,
+
+so in the absence of noise $\| d^k \|_\infty \le (1 - \alpha)^k \| d^0 \|_\infty$ — the spread
+*contracts geometrically* with rate $1 - \alpha$.  The companion notebook plots
+$\max_i s^k_i - \min_i s^k_i$ on a log scale across $\alpha \in \{0.05, \dots, 1\}$ and
+recovers exactly this slope.
+
+**Stationary variance with noise.**  Treating the deviation as an AR(1) process with input
+variance $\sigma^2 (1 - 1/N)$, the steady-state variance of any single agent's deviation is
+
+.. math::
+
+   \mathrm{Var}_\infty(d_i) \;=\; \frac{\sigma^2 (1 - 1/N)}{1 - (1 - \alpha)^2}
+     \;\xrightarrow[\alpha \to 0]{}\; \frac{\sigma^2}{2\alpha}\,(1 - 1/N).
+
+**Continuous-time limit (linear Vlasov).**  Sending $\alpha = \theta\, \Delta t$,
+$\xi^k_i = \sigma \sqrt{\Delta t}\, W^i_k$ and $\Delta t \to 0$ recovers the McKean–Vlasov SDE
+$dX^i_t = \theta(\bar X_t - X^i_t)\, dt + \sigma\, dW^i_t$ of :doc:`mckean_vlasov` — the
+discrete consensus update is the prototype of mean-field interaction.
+
+**Spectral interpretation.**  On a general weighted graph the update reads
+$s^{k+1} = (I - \alpha L)\, s^k + \xi^k$, where $L$ is the normalised Laplacian.  The
+complete-graph case shipped here has $L = I - \tfrac1N \mathbf{1}\mathbf{1}^\top$ with
+eigenvalue $1$ on the orthogonal complement of $\mathbf{1}$, hence the contraction rate
+$1 - \alpha$ above.  Replacing $\mathbf{1}\mathbf{1}^\top / N$ by an arbitrary stochastic
+matrix produces the full DeGroot model and is a one-liner extension on the Rust side.
+
+Why it matters
+--------------
+
+* **Opinion dynamics & social learning.**  Calibration of polarisation/consensus models
+  (Bayesian persuasion, social media echo chambers, voting-system stability).
+* **Distributed estimation & federated learning.**  Average-consensus protocols for sensor
+  networks, gossip algorithms, federated averaging — all reduce to the same contraction
+  argument with explicit convergence rate $1 - \alpha$.
+* **Coupled-oscillator physics.**  Linear approximation of the Kuramoto / Vicsek models near
+  the synchronised regime; direct comparison with the McKean–Vlasov continuous limit.
+
+.. note::
+   📓 **Companion notebook** — `view on GitHub <https://github.com/ThotDjehuty/optimiz-rs/blob/main/examples/notebooks/15_agent_based.ipynb>`_
+   · `download .ipynb <https://raw.githubusercontent.com/ThotDjehuty/optimiz-rs/main/examples/notebooks/15_agent_based.ipynb>`_
 
 15 — Agent-based dynamics
 =========================

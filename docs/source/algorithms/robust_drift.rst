@@ -1,9 +1,92 @@
-Inference — Huber-IRLS drift estimator
-======================================
+Inference — Huber-IRLS robust drift estimator
+=============================================
 
-Robust drift estimator (`robust_drift`) for $x_{k+1} = x_k + (a + b x_k) Δt + σ ε_k$ via Huber IRLS — resists 5 % heavy-tailed innovations.
+Heavy-tail-resistant maximum-likelihood estimator for the discrete Ornstein–Uhlenbeck-type model
 
-.. note:: Companion executed notebook: `16_robust_drift.ipynb <../../examples/notebooks/16_robust_drift.ipynb>`_
+.. math::
+
+   x_{k+1} \;=\; x_k \;+\; (a + b\, x_k)\, \Delta t \;+\; \sigma\, \sqrt{\Delta t}\, \varepsilon_k,
+   \qquad \varepsilon_k \sim_{\text{i.i.d.}} P_\varepsilon ,
+
+where $P_\varepsilon$ is *contaminated*: a fraction $1 - \eta$ of standard Gaussian innovations
+plus a fraction $\eta$ of large outliers (jumps, fat tails, recording errors).
+
+Mathematical background
+-----------------------
+
+**Naive OLS.**  Setting $y_k := (x_{k+1} - x_k)/\Delta t$, the model is the linear regression
+$y_k = a + b\, x_k + \sigma\, \Delta t^{-1/2}\, \varepsilon_k$.  Ordinary least-squares
+minimises $\sum_k (y_k - a - b x_k)^2$ but its breakdown point is $0$: a single outlier with
+$|\varepsilon_k| \gg 1$ moves the estimate arbitrarily far.
+
+**Huber loss & IRLS.**  Huber (1964) replaces the quadratic loss by the *piecewise* loss
+
+.. math::
+
+   \rho_\delta(r) \;=\;
+   \begin{cases}
+     \tfrac12\, r^2, & |r| \le \delta, \\[2pt]
+     \delta\,\bigl(|r| - \tfrac\delta2\bigr), & |r| > \delta,
+   \end{cases}
+
+which is *quadratic in the bulk* and *linear in the tails*.  The first-order condition
+$\sum_k \psi_\delta(r_k)\, \nabla_{a,b}\, r_k = 0$ with $\psi_\delta = \rho_\delta'$ rewrites
+as a weighted least-squares problem with weights
+
+.. math::
+
+   w_k \;=\; \min\!\Bigl(1,\; \frac{\delta}{|r_k|}\Bigr) ,
+
+so the **Iteratively Reweighted Least-Squares** algorithm reads
+
+.. math::
+
+   \widehat{(a, b)}^{(t+1)} \;=\; \arg\min_{a, b}\; \sum_k w^{(t)}_k\, (y_k - a - b\, x_k)^2,
+   \qquad w^{(t+1)}_k = \min\!\bigl(1, \delta / |r^{(t+1)}_k|\bigr).
+
+The sequence converges geometrically when the design matrix is well-conditioned
+(Holland–Welsch 1977).  `robust_drift` returns the limit pair $(\widehat a, \widehat b)$ and
+the number of iterations.
+
+**Choice of the cut-off.**  The default $\delta = 1.345 \cdot \hat\sigma$ delivers $95\%$
+asymptotic efficiency under Gaussian innovations while keeping the influence function bounded;
+it is the Huber–Hampel value used as the standard reference in robust statistics.
+
+**Closed-form one-step (debiased OLS).**  When the contamination is symmetric and the
+innovations have finite variance $\sigma^2_\varepsilon$, the *consistent* one-step estimate at
+the ordinary least-squares solution $(\hat a^0, \hat b^0)$ reads
+
+.. math::
+
+   \binom{\widehat a}{\widehat b}
+   \;=\;
+   \binom{\hat a^0}{\hat b^0}
+   \;+\; \bigl(X^\top W X\bigr)^{-1}\, X^\top \psi_\delta(r^0),
+
+where $X$ is the $(N - 1) \times 2$ design matrix and $W = \mathrm{diag}(w_k)$.  Bahadur
+linearisation shows $\widehat\theta - \theta^\star = O_P(N^{-1/2})$ even in the contaminated
+model, with asymptotic variance $\sigma^2_\psi / I^2_\psi$ (Huber, *Robust Statistics*, 2004,
+Thm. 7.7).
+
+**Connection with Malliavin calculus.**  The driver $a + b\, x$ is exactly the linearised
+drift of the Ornstein–Uhlenbeck process used in the Greeks formulae of
+:doc:`stochastic_control` and the Vasicek interest-rate model; robust calibration is the
+pre-requisite for any Monte-Carlo Greeks computation under noisy historical data.
+
+Why it matters
+--------------
+
+* **Heavy-tailed historical data.**  Crypto returns, electricity prices, plasma confinement
+  signals, and bio-medical recordings all contain spikes that destroy OLS but leave Huber
+  estimates within statistical noise.
+* **Online & streaming estimation.**  IRLS with $\sim 10$ iterations is real-time on streaming
+  windows and exposes a stable derivative for downstream control loops.
+* **Robust risk management.**  Replacing raw OLS by IRLS in any volatility / mean-reversion
+  estimator dramatically reduces *parameter risk* in stress periods.
+
+.. note::
+   📓 **Companion notebook** — `view on GitHub <https://github.com/ThotDjehuty/optimiz-rs/blob/main/examples/notebooks/16_robust_drift.ipynb>`_
+   · `download .ipynb <https://raw.githubusercontent.com/ThotDjehuty/optimiz-rs/main/examples/notebooks/16_robust_drift.ipynb>`_
 
 16 — Robust drift estimation
 ============================

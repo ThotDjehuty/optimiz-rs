@@ -1,9 +1,83 @@
 Quadratic-impact control — closed-form Riccati
 ==============================================
 
-Closed-form Riccati feedback for a controlled 1-D SDE with quadratic running cost (`quadratic_impact_control_py`).
+Closed-form Riccati feedback for the canonical *single-state, quadratic-cost* linear control
+problem with running quadratic *impact* penalty.
 
-.. note:: Companion executed notebook: `13_quadratic_impact.ipynb <../../examples/notebooks/13_quadratic_impact.ipynb>`_
+Mathematical background
+-----------------------
+
+Let $A_t$ be a controlled scalar state driven by an additive control $u_t$ and Gaussian noise.
+The controller minimises the *finite-horizon quadratic objective*
+
+.. math::
+
+   J(u) \;=\; \mathbb{E}\!\left[\,\int_0^T \bigl(\,\tfrac{\gamma}{2}\, u_t^2
+     \;+\; \tfrac{\phi}{2}\, A_t^2 \,\bigr)\, dt
+     \;+\; \tfrac{A_T}{2}\, A_T^2 \,\right] ,
+
+where $\gamma > 0$ is the **impact / control cost**, $\phi \ge 0$ the **running risk weight**
+and $A_T$ the **terminal penalty** (over-loaded notation: $A_T$ here is the *coefficient*).
+
+**Hamilton–Jacobi–Bellman.**  With value function $v(t, A) = \tfrac12 h(t)\, A^2 + c(t)$, the
+HJB equation collapses to a scalar Riccati ODE on $h$:
+
+.. math::
+
+   h'(t) \;=\; \frac{h(t)^2}{\gamma} \;-\; \phi,
+   \qquad
+   h(T) \;=\; A_T .
+
+The optimal feedback is the linear law
+
+.. math::
+
+   u^*(t, A) \;=\; -\, \frac{h(t)}{\gamma}\, A \;\equiv\; -\, k(t)\, A,
+
+with *feedback gain* $k(t) = h(t) / \gamma$.  This is the structure returned by the primitive.
+
+**Closed-form solutions.**
+
+* **Symmetric fixed point** $\gamma = \phi = A_T = 1$: $h(t) \equiv 1$ is the unique solution
+  (RHS vanishes), so the feedback gain is constant $k \equiv 1$.  The notebook checks this
+  to machine precision.
+* **Generic $\phi > 0$.**  Writing $\bar h = \sqrt{\gamma \phi}$ for the steady-state and
+  $\rho = \sqrt{\phi / \gamma}$, the Riccati ODE has the closed-form (separation of variables /
+  Bernoulli substitution)
+
+  .. math::
+
+     h(t) \;=\; \bar h\, \frac{(\bar h + A_T)\, e^{2\rho(T-t)} \;-\; (\bar h - A_T)}
+                              {(\bar h + A_T)\, e^{2\rho(T-t)} \;+\; (\bar h - A_T)} .
+
+  In the limit $T - t \to \infty$ the trajectory relaxes to the stationary value $\bar h = \sqrt{\gamma\phi}$.
+* **Free of running risk** $\phi = 0$.  Then $h'(t) = h(t)^2/\gamma$ integrates explicitly to
+
+  .. math::
+
+     h(t) \;=\; \frac{A_T}{1 + (A_T / \gamma)(T - t)} ,
+
+  recovering the Pontryagin LQR closed form $P(0) = 1/2$ of :doc:`stochastic_control`.
+
+**Connection with mean-field games.**  Coupling this single-agent control with an interacting
+population — the running cost depending on the *average* control $\bar u_t$ — yields the
+Almgren–Chriss MFG (Lasry–Lions 2007); at the Nash equilibrium the optimal trajectory is the
+uniform schedule $\dot A^*_t = -A_0 / T$ (cf. Sec. 3 of Carmona–Delarue 2018, Vol. I).
+
+Why it matters
+--------------
+
+* **Optimal execution.**  Almgren–Chriss and its mean-field variants reduce to exactly this
+  Riccati ODE; the closed form means *real-time* feedback re-computation.
+* **Stochastic regulators.**  Temperature stabilisation, attitude control, queueing-network
+  smoothing all map to a quadratic-impact problem with a single state.
+* **Building block for higher-dimensional MPC.**  Vector generalisations of $h(t)$ are matrix
+  Riccati ODEs; this scalar primitive is the verification kernel against which the matrix
+  solver in :doc:`matrix_riccati` is tested.
+
+.. note::
+   📓 **Companion notebook** — `view on GitHub <https://github.com/ThotDjehuty/optimiz-rs/blob/main/examples/notebooks/13_quadratic_impact.ipynb>`_
+   · `download .ipynb <https://raw.githubusercontent.com/ThotDjehuty/optimiz-rs/main/examples/notebooks/13_quadratic_impact.ipynb>`_
 
 13 — Quadratic-impact controlled SDE
 ====================================

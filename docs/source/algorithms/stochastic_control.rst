@@ -1,9 +1,84 @@
 Stochastic control — switching, Pontryagin, two-sided intensities
 =================================================================
 
-Three primitives: discrete-time optimal switching (`optimal_switching_dp`), 1-D Pontryagin LQR shooting (`pontryagin_lqr`) and the bilateral intensity controller (`two_sided_intensities`).
+Three complementary primitives covering the discrete and continuous worlds of stochastic
+control: dynamic-programming **optimal switching** (Snell envelope), the continuous-time
+**Pontryagin–Bismut maximum principle** for the linear-quadratic regulator, and a **two-sided
+intensity controller** for jump processes.
 
-.. note:: Companion executed notebook: `12_stochastic_control.ipynb <../../examples/notebooks/12_stochastic_control.ipynb>`_
+Mathematical background
+-----------------------
+
+**1. Optimal switching as a Snell envelope.**  Let $(Y^i_k)_{k, i}$ be the running rewards in
+mode $i \in \{1, \dots, M\}$ and $c_{ij}$ the cost of switching from $i$ to $j$.  The value
+function $V_k(i)$ satisfies the backward dynamic-programming recursion
+
+.. math::
+
+   V_N(i) = g(i),
+   \qquad
+   V_k(i) \;=\; Y^i_k \;+\; \max_{j}\!\bigl( V_{k+1}(j) - c_{ij}\bigr).
+
+This is the *multi-mode Snell envelope* of El Karoui–Quenez (1995).  When switching is free
+($c_{ij} = 0$) and only mode 1 pays a unit reward at every period, $V_k(i) = N - k$ for
+$i \neq 1$ and $V_k(1) = N - k + 1$ — reproduced exactly by `optimal_switching_dp`.
+
+**2. Pontryagin–Bismut maximum principle (LQR).**  For the controlled SDE
+$dX_t = (a X_t + b u_t)\, dt + \sigma\, dW_t$ with quadratic cost
+$J(u) = \mathbb{E}\!\bigl[\int_0^T (q X_t^2 + r u_t^2)\, dt + s_T X_T^2\bigr]$, the
+adjoint variable $P_t$ solves the **matrix Riccati ODE**
+
+.. math::
+
+   \dot P_t \;+\; 2 a\, P_t \;-\; \frac{b^2}{r}\, P_t^2 \;+\; q \;=\; 0,
+   \qquad P_T = s_T,
+
+and the optimal feedback is $u^*_t = -(b/r)\, P_t\, X_t$.  In the canonical case
+$a = q = 0$, $b = r = s_T = 1$, $T = 1$ the ODE simplifies to
+$\dot P_t = P_t^2$, whose closed-form solution is
+
+.. math::
+
+   P_t \;=\; \frac{1}{1 + (T - t)} ,
+   \qquad
+   P(0) = \tfrac12 .
+
+The primitive `pontryagin_lqr` reproduces this with relative error below $10^{-3}$ for
+$N = 2000$ steps (the symmetric Strang splitting is second-order in $\Delta t$).
+
+**3. Two-sided intensity control.**  For a jump-controller the agent picks the rates
+:math:`\lambda_\pm \ge 0` at which up/down events fire.  With *affine premia*
+:math:`\delta_\pm(\lambda) = \alpha_\pm + \kappa_\pm \lambda` and value-function jumps
+:math:`\Delta V_\pm`, the instantaneous Hamiltonian is
+
+.. math::
+
+   \sup_{\lambda_\pm \ge 0}\!\Bigl[\,\lambda_+\bigl(\delta_+(\lambda_+) - \Delta V_+\bigr)
+     \;+\; \lambda_-\bigl(\delta_-(\lambda_-) - \Delta V_-\bigr)\Bigr],
+
+and the first-order condition gives the closed-form maximiser
+
+.. math::
+
+   \lambda^*_\pm \;=\; \max\!\Bigl(0,\; \frac{\alpha_\pm - \Delta V_\pm}{2\, \kappa_\pm}\Bigr).
+
+The quantity :math:`\Delta V_\pm` is the (estimated) marginal value of an additional event;
+`two_sided_intensities` returns :math:`(\lambda^*_+, \lambda^*_-)` in closed form, which is what
+lets the broader optimal-execution loop run in real time.
+
+Why it matters
+--------------
+
+* **Optimal switching** powers production-mode selection (start/stop a power plant), regime
+  changes in algorithmic strategies, and American-style option pricing (Carmona–Touzi 2008).
+* **Pontryagin LQR** is the linearised core of every continuous-control problem: target
+  tracking, Kalman-LQG, ground-up RL, robust $H_\infty$ design.
+* **Two-sided intensity control** is the closed-form heart of optimal market making
+  (Avellaneda–Stoikov 2008, Cartea–Jaimungal–Penalva 2015) and limit-order placement.
+
+.. note::
+   📓 **Companion notebook** — `view on GitHub <https://github.com/ThotDjehuty/optimiz-rs/blob/main/examples/notebooks/12_stochastic_control.ipynb>`_
+   · `download .ipynb <https://raw.githubusercontent.com/ThotDjehuty/optimiz-rs/main/examples/notebooks/12_stochastic_control.ipynb>`_
 
 12 — Stochastic control
 =======================
@@ -102,7 +177,7 @@ Closed-form Riccati for $a=q=0$, $b=r=s_T=1$, $T=1$ is $P(t) = 1/(1 + (T - t))$,
 Two-sided intensity control
 ---------------------------
 
-Affine premium $δ_±(λ) = α_± + κ_± λ$.  First-order condition: $\lambda^*_\pm = \max(0, (α_\pm - ΔV_\pm) / (2 κ_\pm))$.
+Affine premium :math:`\delta_\pm(\lambda) = \alpha_\pm + \kappa_\pm \lambda`.  First-order condition: :math:`\lambda^*_\pm = \max(0, (\alpha_\pm - \Delta V_\pm) / (2 \kappa_\pm))`.
 
 .. code-block:: python
 
