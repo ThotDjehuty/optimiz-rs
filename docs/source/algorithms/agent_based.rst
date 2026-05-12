@@ -44,6 +44,8 @@ Generic interacting-agent simulator (`consensus_dynamics`) — linear bounded-co
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__agent_based/block_03_fig_01.png
    :align: center
@@ -65,6 +67,8 @@ Generic interacting-agent simulator (`consensus_dynamics`) — linear bounded-co
    ax.set_xlabel('step k'); ax.set_ylabel('max_i s − min_i s')
    ax.set_title('Convergence rate vs averaging weight α'); ax.legend(); ax.grid(alpha=0.3)
    fig.tight_layout(); plt.show()
+
+
 
 
 

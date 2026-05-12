@@ -51,6 +51,8 @@ $\partial_t m = \tfrac12 \partial_{xx} m$ with Gaussian initial density should r
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__pde/block_03_fig_01.png
    :align: center
@@ -92,6 +94,8 @@ $-\Delta u = 2\pi^2 \sin(\pi x)\sin(\pi y)$ on the unit square with zero Dirichl
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__pde/block_05_fig_01.png
    :align: center
@@ -123,6 +127,8 @@ Heat-only relaxation ($H = 0$, σ² > 0) preserves a constant value, while a qua
    ax.set_title('HJB value V(0, x, y) — quadratic terminal')
    plt.colorbar(im, ax=ax)
    fig.tight_layout(); plt.show()
+
+
 
 
 

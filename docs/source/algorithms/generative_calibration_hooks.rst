@@ -36,6 +36,8 @@ Maximum-Mean-Discrepancy distance with Gaussian kernel (`mmd_gaussian`).  Self-d
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__generative_calibration_hooks/block_03_fig_01.png
    :align: center
@@ -58,6 +60,8 @@ Bandwidth dependence
    ax.set_xlabel('translation Δ'); ax.set_ylabel('MMD'); ax.legend(); ax.grid(alpha=0.3)
    ax.set_title('MMD as a function of kernel bandwidth')
    fig.tight_layout(); plt.show()
+
+
 
 
 

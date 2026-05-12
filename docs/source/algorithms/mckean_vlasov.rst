@@ -45,6 +45,8 @@ Interacting-particle Euler scheme for $dX_t = θ(\bar X_t - X_t) dt + σ dW_t$ (
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__mckean_vlasov/block_03_fig_01.png
    :align: center
@@ -63,6 +65,8 @@ Interacting-particle Euler scheme for $dX_t = θ(\bar X_t - X_t) dt + σ dW_t$ (
    ax.set_xlabel('x'); ax.set_ylabel('empirical density'); ax.legend(); ax.grid(alpha=0.3)
    ax.set_title('Marginal density at t = 0 and t = T')
    fig.tight_layout(); plt.show()
+
+
 
 
 

@@ -46,6 +46,8 @@ Two modes; only mode 1 pays a unit reward.  Free switching should give `V_0(0) =
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__stochastic_control/block_03_fig_01.png
    :align: center
@@ -85,6 +87,8 @@ Closed-form Riccati for $a=q=0$, $b=r=s_T=1$, $T=1$ is $P(t) = 1/(1 + (T - t))$,
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__stochastic_control/block_05_fig_01.png
    :align: center
@@ -113,6 +117,8 @@ Affine premium $δ_±(λ) = α_± + κ_± λ$.  First-order condition: $\lambda^
    ax.set_xlabel('ΔV_+'); ax.set_ylabel('λ*_+')
    ax.set_title('Optimal upward intensity vs value-function gradient')
    ax.grid(alpha=0.3); fig.tight_layout(); plt.show()
+
+
 
 
 

@@ -47,6 +47,8 @@ Synthetic stationary process with 5 % outliers
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__robust_drift/block_03_fig_01.png
    :align: center
@@ -80,6 +82,8 @@ Synthetic stationary process with 5 % outliers
    ax.set_xticks(range(3)); ax.set_xticklabels(labels)
    ax.legend(); ax.grid(alpha=0.3); ax.set_title('Robust vs OLS drift estimate')
    fig.tight_layout(); plt.show()
+
+
 
 
 

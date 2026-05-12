@@ -45,6 +45,8 @@ $h'(t) = h(t)^2/γ - φ$ with $h(T) = A$.  When $γ = φ = A = 1$ the right-hand
 
 
 
+
+
 .. AUTO-PLOT-BEGIN
 .. image:: ../_static/auto/algorithms__quadratic_impact_control/block_03_fig_01.png
    :align: center
@@ -69,6 +71,8 @@ Vary $A$, fix $γ = 1$, $φ = 0.25$, $T = 1$.
    ax.set_xlabel('t'); ax.set_ylabel('h(t)'); ax.legend(); ax.grid(alpha=0.3)
    ax.set_title('Riccati sensitivity to terminal weight')
    fig.tight_layout(); plt.show()
+
+
 
 
 
