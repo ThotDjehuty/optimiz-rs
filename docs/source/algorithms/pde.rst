@@ -10,7 +10,7 @@ Mathematical background
 -----------------------
 
 **Fokker–Planck (Kolmogorov forward).**  For a 1-D Itô diffusion
-$dX_t = \mu(t, x)\, dt + \sigma(t, x)\, dW_t$, the marginal density $\rho(t, x)$ of $X_t$
+:math:`dX_t = \mu(t, x)\, dt + \sigma(t, x)\, dW_t`, the marginal density :math:`\rho(t, x)` of :math:`X_t`
 satisfies the parabolic PDE
 
 .. math::
@@ -19,15 +19,15 @@ satisfies the parabolic PDE
    \;=\; \tfrac12\, \partial^2_{xx}\!\bigl(\sigma^2(t,x)\, \rho\bigr),
    \qquad \rho(0, \cdot) = \rho_0 .
 
-For the *pure-diffusion* test ($\mu \equiv 0$, $\sigma^2 \equiv 1$, $\rho_0 = \mathcal{N}(0, 1)$)
-the analytic Gaussian heat kernel gives $\rho(t, x) = \frac{1}{\sqrt{2\pi(1+t)}}\exp\!\bigl(-\frac{x^2}{2(1+t)}\bigr)$,
-so the variance grows linearly: $\mathrm{Var}(X_t) = 1 + t$.  The conservative
+For the *pure-diffusion* test (:math:`\mu \equiv 0`, :math:`\sigma^2 \equiv 1`, :math:`\rho_0 = \mathcal{N}(0, 1)`)
+the analytic Gaussian heat kernel gives :math:`\rho(t, x) = \frac{1}{\sqrt{2\pi(1+t)}}\exp\!\bigl(-\frac{x^2}{2(1+t)}\bigr)`,
+so the variance grows linearly: :math:`\mathrm{Var}(X_t) = 1 + t`.  The conservative
 Lax–Wendroff / centred-flux scheme implemented by `fokker_planck_constant` preserves total mass
 (checked in the notebook to machine precision).
 
 **Hamilton–Jacobi–Bellman.**  Consider the controlled diffusion
-$dX_t = \mu(X_t, \alpha_t)\, dt + \sigma(X_t)\, dW_t$ and the value function
-$v(t, x) = \sup_\alpha \mathbb{E}_{t,x}\!\bigl[\int_t^T r(X_s, \alpha_s)\, ds + g(X_T)\bigr]$.
+:math:`dX_t = \mu(X_t, \alpha_t)\, dt + \sigma(X_t)\, dW_t` and the value function
+:math:`v(t, x) = \sup_\alpha \mathbb{E}_{t,x}\!\bigl[\int_t^T r(X_s, \alpha_s)\, ds + g(X_T)\bigr]`.
 Dynamic programming produces
 
 .. math::
@@ -41,24 +41,24 @@ Dynamic programming produces
 heat-only relaxation case (:math:`H \equiv 0`, :math:`\sigma^2 > 0`) preserves a constant value while a
 quadratic terminal :math:`g(x) = \tfrac12 \lVert x \rVert^2` smooths into a Gaussian-shaped value surface.
 
-**Elliptic Poisson with zero Dirichlet boundary.**  On the unit square $\Omega = (0,1)^2$,
+**Elliptic Poisson with zero Dirichlet boundary.**  On the unit square :math:`\Omega = (0,1)^2`,
 
 .. math::
 
    -\Delta u(x, y) = f(x, y) \text{ in } \Omega, \qquad u\!\restriction_{\partial\Omega} = 0 .
 
-The Laplace eigenfunctions $\phi_{m,n}(x, y) = \sin(m\pi x)\sin(n\pi y)$ form an
-orthonormal basis with eigenvalues $\lambda_{m,n} = (m^2 + n^2)\pi^2$, so for
-$f = 2\pi^2 \sin(\pi x)\sin(\pi y)$ the *exact* solution is
-$u(x, y) = \sin(\pi x)\sin(\pi y)$.  `poisson_2d_zero_boundary` solves the 5-point stencil by
+The Laplace eigenfunctions :math:`\phi_{m,n}(x, y) = \sin(m\pi x)\sin(n\pi y)` form an
+orthonormal basis with eigenvalues :math:`\lambda_{m,n} = (m^2 + n^2)\pi^2`, so for
+:math:`f = 2\pi^2 \sin(\pi x)\sin(\pi y)` the *exact* solution is
+:math:`u(x, y) = \sin(\pi x)\sin(\pi y)`.  `poisson_2d_zero_boundary` solves the 5-point stencil by
 **Successive Over-Relaxation** with optimal relaxation parameter
-$\omega^* = 2 / (1 + \sin(\pi h))$ for grid spacing $h = 1/(N-1)$, achieving spectral radius
-$\rho \sim 1 - 2\pi h$ — i.e. $O(h^{-1})$ iterations to reach a fixed tolerance, against
-$O(h^{-2})$ for plain Gauss–Seidel.
+:math:`\omega^* = 2 / (1 + \sin(\pi h))` for grid spacing :math:`h = 1/(N-1)`, achieving spectral radius
+:math:`\rho \sim 1 - 2\pi h` — i.e. :math:`O(h^{-1})` iterations to reach a fixed tolerance, against
+:math:`O(h^{-2})` for plain Gauss–Seidel.
 
 **Probabilistic representation (Feynman–Kac).**  Both the parabolic HJB and the elliptic
-Poisson PDE admit stochastic representations: $u(x) = \mathbb{E}_x\!\bigl[\int_0^{\tau_\Omega} f(X_s)\, ds\bigr]$
-for the latter, where $\tau_\Omega$ is the first exit time of the diffusion from $\Omega$.
+Poisson PDE admit stochastic representations: :math:`u(x) = \mathbb{E}_x\!\bigl[\int_0^{\tau_\Omega} f(X_s)\, ds\bigr]`
+for the latter, where :math:`\tau_\Omega` is the first exit time of the diffusion from :math:`\Omega`.
 This links the PDE solvers above to the BSDE primitives of :doc:`bsde`.
 
 Why it matters
@@ -95,7 +95,7 @@ Fokker–Planck, HJB, Poisson.
 Pure-diffusion Fokker–Planck
 ----------------------------
 
-$\partial_t m = \tfrac12 \partial_{xx} m$ with Gaussian initial density should remain centred and approximately Gaussian.
+:math:`\partial_t m = \tfrac12 \partial_{xx} m` with Gaussian initial density should remain centred and approximately Gaussian.
 
 .. code-block:: python
 
@@ -140,7 +140,7 @@ $\partial_t m = \tfrac12 \partial_{xx} m$ with Gaussian initial density should r
 2-D Poisson eigenfunction
 -------------------------
 
-$-\Delta u = 2\pi^2 \sin(\pi x)\sin(\pi y)$ on the unit square with zero Dirichlet boundary admits the exact solution $u(x,y) = \sin(\pi x)\sin(\pi y)$.
+:math:`-\Delta u = 2\pi^2 \sin(\pi x)\sin(\pi y)` on the unit square with zero Dirichlet boundary admits the exact solution :math:`u(x,y) = \sin(\pi x)\sin(\pi y)`.
 
 .. code-block:: python
 
@@ -183,7 +183,7 @@ $-\Delta u = 2\pi^2 \sin(\pi x)\sin(\pi y)$ on the unit square with zero Dirichl
 2-D HJB with quadratic terminal
 -------------------------------
 
-Heat-only relaxation ($H = 0$, σ² > 0) preserves a constant value, while a quadratic terminal $g(x) = ½(x²+y²)$ smooths.
+Heat-only relaxation (:math:`H = 0`, σ² > 0) preserves a constant value, while a quadratic terminal :math:`g(x) = ½(x²+y²)` smooths.
 
 .. code-block:: python
 

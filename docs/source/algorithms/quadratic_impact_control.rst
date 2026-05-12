@@ -7,7 +7,7 @@ problem with running quadratic *impact* penalty.
 Mathematical background
 -----------------------
 
-Let $A_t$ be a controlled scalar state driven by an additive control $u_t$ and Gaussian noise.
+Let :math:`A_t` be a controlled scalar state driven by an additive control :math:`u_t` and Gaussian noise.
 The controller minimises the *finite-horizon quadratic objective*
 
 .. math::
@@ -16,11 +16,11 @@ The controller minimises the *finite-horizon quadratic objective*
      \;+\; \tfrac{\phi}{2}\, A_t^2 \,\bigr)\, dt
      \;+\; \tfrac{A_T}{2}\, A_T^2 \,\right] ,
 
-where $\gamma > 0$ is the **impact / control cost**, $\phi \ge 0$ the **running risk weight**
-and $A_T$ the **terminal penalty** (over-loaded notation: $A_T$ here is the *coefficient*).
+where :math:`\gamma > 0` is the **impact / control cost**, :math:`\phi \ge 0` the **running risk weight**
+and :math:`A_T` the **terminal penalty** (over-loaded notation: :math:`A_T` here is the *coefficient*).
 
-**Hamilton–Jacobi–Bellman.**  With value function $v(t, A) = \tfrac12 h(t)\, A^2 + c(t)$, the
-HJB equation collapses to a scalar Riccati ODE on $h$:
+**Hamilton–Jacobi–Bellman.**  With value function :math:`v(t, A) = \tfrac12 h(t)\, A^2 + c(t)`, the
+HJB equation collapses to a scalar Riccati ODE on :math:`h`:
 
 .. math::
 
@@ -34,15 +34,15 @@ The optimal feedback is the linear law
 
    u^*(t, A) \;=\; -\, \frac{h(t)}{\gamma}\, A \;\equiv\; -\, k(t)\, A,
 
-with *feedback gain* $k(t) = h(t) / \gamma$.  This is the structure returned by the primitive.
+with *feedback gain* :math:`k(t) = h(t) / \gamma`.  This is the structure returned by the primitive.
 
 **Closed-form solutions.**
 
-* **Symmetric fixed point** $\gamma = \phi = A_T = 1$: $h(t) \equiv 1$ is the unique solution
-  (RHS vanishes), so the feedback gain is constant $k \equiv 1$.  The notebook checks this
+* **Symmetric fixed point** :math:`\gamma = \phi = A_T = 1`: :math:`h(t) \equiv 1` is the unique solution
+  (RHS vanishes), so the feedback gain is constant :math:`k \equiv 1`.  The notebook checks this
   to machine precision.
-* **Generic $\phi > 0$.**  Writing $\bar h = \sqrt{\gamma \phi}$ for the steady-state and
-  $\rho = \sqrt{\phi / \gamma}$, the Riccati ODE has the closed-form (separation of variables /
+* **Generic :math:`\phi > 0`.**  Writing :math:`\bar h = \sqrt{\gamma \phi}` for the steady-state and
+  :math:`\rho = \sqrt{\phi / \gamma}`, the Riccati ODE has the closed-form (separation of variables /
   Bernoulli substitution)
 
   .. math::
@@ -50,19 +50,19 @@ with *feedback gain* $k(t) = h(t) / \gamma$.  This is the structure returned by 
      h(t) \;=\; \bar h\, \frac{(\bar h + A_T)\, e^{2\rho(T-t)} \;-\; (\bar h - A_T)}
                               {(\bar h + A_T)\, e^{2\rho(T-t)} \;+\; (\bar h - A_T)} .
 
-  In the limit $T - t \to \infty$ the trajectory relaxes to the stationary value $\bar h = \sqrt{\gamma\phi}$.
-* **Free of running risk** $\phi = 0$.  Then $h'(t) = h(t)^2/\gamma$ integrates explicitly to
+  In the limit :math:`T - t \to \infty` the trajectory relaxes to the stationary value :math:`\bar h = \sqrt{\gamma\phi}`.
+* **Free of running risk** :math:`\phi = 0`.  Then :math:`h'(t) = h(t)^2/\gamma` integrates explicitly to
 
   .. math::
 
      h(t) \;=\; \frac{A_T}{1 + (A_T / \gamma)(T - t)} ,
 
-  recovering the Pontryagin LQR closed form $P(0) = 1/2$ of :doc:`stochastic_control`.
+  recovering the Pontryagin LQR closed form :math:`P(0) = 1/2` of :doc:`stochastic_control`.
 
 **Connection with mean-field games.**  Coupling this single-agent control with an interacting
-population — the running cost depending on the *average* control $\bar u_t$ — yields the
+population — the running cost depending on the *average* control :math:`\bar u_t` — yields the
 Almgren–Chriss MFG (Lasry–Lions 2007); at the Nash equilibrium the optimal trajectory is the
-uniform schedule $\dot A^*_t = -A_0 / T$ (cf. Sec. 3 of Carmona–Delarue 2018, Vol. I).
+uniform schedule :math:`\dot A^*_t = -A_0 / T` (cf. Sec. 3 of Carmona–Delarue 2018, Vol. I).
 
 Why it matters
 --------------
@@ -71,7 +71,7 @@ Why it matters
   Riccati ODE; the closed form means *real-time* feedback re-computation.
 * **Stochastic regulators.**  Temperature stabilisation, attitude control, queueing-network
   smoothing all map to a quadratic-impact problem with a single state.
-* **Building block for higher-dimensional MPC.**  Vector generalisations of $h(t)$ are matrix
+* **Building block for higher-dimensional MPC.**  Vector generalisations of :math:`h(t)` are matrix
   Riccati ODEs; this scalar primitive is the verification kernel against which the matrix
   solver in :doc:`matrix_riccati` is tested.
 
@@ -93,7 +93,7 @@ Why it matters
 Riccati fixed-point check
 -------------------------
 
-$h'(t) = h(t)^2/γ - φ$ with $h(T) = A$.  When $γ = φ = A = 1$ the right-hand side is $h^2 - 1 = 0$ at $h = 1$, so `h ≡ 1`.
+:math:`h'(t) = h(t)^2/γ - φ` with :math:`h(T) = A`.  When :math:`γ = φ = A = 1` the right-hand side is :math:`h^2 - 1 = 0` at :math:`h = 1`, so `h ≡ 1`.
 
 .. code-block:: python
 
@@ -134,7 +134,7 @@ $h'(t) = h(t)^2/γ - φ$ with $h(T) = A$.  When $γ = φ = A = 1$ the right-hand
 Sensitivity to the terminal weight
 ----------------------------------
 
-Vary $A$, fix $γ = 1$, $φ = 0.25$, $T = 1$.
+Vary :math:`A`, fix :math:`γ = 1`, :math:`φ = 0.25`, :math:`T = 1`.
 
 .. code-block:: python
 

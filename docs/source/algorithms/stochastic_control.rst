@@ -9,9 +9,9 @@ intensity controller** for jump processes.
 Mathematical background
 -----------------------
 
-**1. Optimal switching as a Snell envelope.**  Let $(Y^i_k)_{k, i}$ be the running rewards in
-mode $i \in \{1, \dots, M\}$ and $c_{ij}$ the cost of switching from $i$ to $j$.  The value
-function $V_k(i)$ satisfies the backward dynamic-programming recursion
+**1. Optimal switching as a Snell envelope.**  Let :math:`(Y^i_k)_{k, i}` be the running rewards in
+mode :math:`i \in \{1, \dots, M\}` and :math:`c_{ij}` the cost of switching from :math:`i` to :math:`j`.  The value
+function :math:`V_k(i)` satisfies the backward dynamic-programming recursion
 
 .. math::
 
@@ -20,22 +20,22 @@ function $V_k(i)$ satisfies the backward dynamic-programming recursion
    V_k(i) \;=\; Y^i_k \;+\; \max_{j}\!\bigl( V_{k+1}(j) - c_{ij}\bigr).
 
 This is the *multi-mode Snell envelope* of El Karoui–Quenez (1995).  When switching is free
-($c_{ij} = 0$) and only mode 1 pays a unit reward at every period, $V_k(i) = N - k$ for
-$i \neq 1$ and $V_k(1) = N - k + 1$ — reproduced exactly by `optimal_switching_dp`.
+(:math:`c_{ij} = 0`) and only mode 1 pays a unit reward at every period, :math:`V_k(i) = N - k` for
+:math:`i \neq 1` and :math:`V_k(1) = N - k + 1` — reproduced exactly by `optimal_switching_dp`.
 
 **2. Pontryagin–Bismut maximum principle (LQR).**  For the controlled SDE
-$dX_t = (a X_t + b u_t)\, dt + \sigma\, dW_t$ with quadratic cost
-$J(u) = \mathbb{E}\!\bigl[\int_0^T (q X_t^2 + r u_t^2)\, dt + s_T X_T^2\bigr]$, the
-adjoint variable $P_t$ solves the **matrix Riccati ODE**
+:math:`dX_t = (a X_t + b u_t)\, dt + \sigma\, dW_t` with quadratic cost
+:math:`J(u) = \mathbb{E}\!\bigl[\int_0^T (q X_t^2 + r u_t^2)\, dt + s_T X_T^2\bigr]`, the
+adjoint variable :math:`P_t` solves the **matrix Riccati ODE**
 
 .. math::
 
    \dot P_t \;+\; 2 a\, P_t \;-\; \frac{b^2}{r}\, P_t^2 \;+\; q \;=\; 0,
    \qquad P_T = s_T,
 
-and the optimal feedback is $u^*_t = -(b/r)\, P_t\, X_t$.  In the canonical case
-$a = q = 0$, $b = r = s_T = 1$, $T = 1$ the ODE simplifies to
-$\dot P_t = P_t^2$, whose closed-form solution is
+and the optimal feedback is :math:`u^*_t = -(b/r)\, P_t\, X_t`.  In the canonical case
+:math:`a = q = 0`, :math:`b = r = s_T = 1`, :math:`T = 1` the ODE simplifies to
+:math:`\dot P_t = P_t^2`, whose closed-form solution is
 
 .. math::
 
@@ -43,8 +43,8 @@ $\dot P_t = P_t^2$, whose closed-form solution is
    \qquad
    P(0) = \tfrac12 .
 
-The primitive `pontryagin_lqr` reproduces this with relative error below $10^{-3}$ for
-$N = 2000$ steps (the symmetric Strang splitting is second-order in $\Delta t$).
+The primitive `pontryagin_lqr` reproduces this with relative error below :math:`10^{-3}` for
+:math:`N = 2000` steps (the symmetric Strang splitting is second-order in :math:`\Delta t`).
 
 **3. Two-sided intensity control.**  For a jump-controller the agent picks the rates
 :math:`\lambda_\pm \ge 0` at which up/down events fire.  With *affine premia*
@@ -72,7 +72,7 @@ Why it matters
 * **Optimal switching** powers production-mode selection (start/stop a power plant), regime
   changes in algorithmic strategies, and American-style option pricing (Carmona–Touzi 2008).
 * **Pontryagin LQR** is the linearised core of every continuous-control problem: target
-  tracking, Kalman-LQG, ground-up RL, robust $H_\infty$ design.
+  tracking, Kalman-LQG, ground-up RL, robust :math:`H_\infty` design.
 * **Two-sided intensity control** is the closed-form heart of optimal market making
   (Avellaneda–Stoikov 2008, Cartea–Jaimungal–Penalva 2015) and limit-order placement.
 
@@ -136,7 +136,7 @@ Two modes; only mode 1 pays a unit reward.  Free switching should give `V_0(0) =
 Pontryagin 1-D LQR
 ------------------
 
-Closed-form Riccati for $a=q=0$, $b=r=s_T=1$, $T=1$ is $P(t) = 1/(1 + (T - t))$, hence $P(0) = 0.5$.
+Closed-form Riccati for :math:`a=q=0`, :math:`b=r=s_T=1`, :math:`T=1` is :math:`P(t) = 1/(1 + (T - t))`, hence :math:`P(0) = 0.5`.
 
 .. code-block:: python
 
