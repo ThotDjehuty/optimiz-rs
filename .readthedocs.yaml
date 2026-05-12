@@ -7,8 +7,6 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  apt_packages:
-    - libopenblas-dev
 
 sphinx:
   configuration: docs/source/conf.py
@@ -20,5 +18,9 @@ formats:
 python:
   install:
     - requirements: docs/requirements.txt
-    - method: pip
-      path: .
+# Note: we intentionally do NOT `pip install .` on RTD.
+# The Sphinx build only renders RST/MD pages and pre-generated PNG plots
+# committed under docs/source/_static/. Building the Rust extension on RTD
+# requires OpenBLAS + maturin and routinely breaks because of upstream
+# `openblas-build` / `ureq` feature changes. All inline plots are pre-rendered
+# locally via scripts/inject_doc_plots.py and committed to the repo.
