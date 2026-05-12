@@ -53,6 +53,19 @@ Optimiz-rs provides blazingly fast, production-ready implementations of advanced
 
 .. toctree::
    :maxdepth: 2
+   :caption: v2.0 Generic Stochastic Control & PDE
+
+   algorithms/bsde
+   algorithms/pde
+   algorithms/stochastic_control
+   algorithms/quadratic_impact_control
+   algorithms/mckean_vlasov
+   algorithms/agent_based
+   algorithms/robust_drift
+   algorithms/generative_calibration_hooks
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
    
    api/differential_evolution

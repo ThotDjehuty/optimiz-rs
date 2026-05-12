@@ -16,6 +16,9 @@
 
 use crate::core::{OptimizrError, Result};
 use ndarray::{Array1, Array2};
+
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal};

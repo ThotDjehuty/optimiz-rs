@@ -13,6 +13,8 @@
 pub mod optimal_switching;
 pub mod pontryagin;
 pub mod two_sided_intensity_control;
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
 
 pub use optimal_switching::{SwitchingConfig, SwitchingResult, solve_optimal_switching};
 pub use pontryagin::{PontryaginConfig, PontryaginResult, solve_pontryagin_lqr};

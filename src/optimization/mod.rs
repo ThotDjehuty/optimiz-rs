@@ -7,6 +7,8 @@
 //! vocabulary.
 
 pub mod generative_calibration_hooks;
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
 
 pub use generative_calibration_hooks::{
     GenerativeSampler, MmdLoss, mmd_distance, calibration_step,

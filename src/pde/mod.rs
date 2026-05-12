@@ -13,6 +13,8 @@
 pub mod fokker_planck;
 pub mod hjb_multid;
 pub mod elliptic_fd;
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
 
 pub use fokker_planck::{FokkerPlanckConfig, FokkerPlanckResult, solve_fokker_planck_1d};
 pub use hjb_multid::{HjbMultidConfig, HjbMultidResult, solve_hjb_multid};

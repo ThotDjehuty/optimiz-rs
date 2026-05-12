@@ -6,5 +6,7 @@
 //!   1-D OU process observed on a uniform grid.
 
 pub mod robust_drift;
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
 
 pub use robust_drift::{RobustDriftConfig, RobustDriftResult, estimate_robust_drift};

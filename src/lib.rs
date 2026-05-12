@@ -150,5 +150,15 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     volterra::python_bindings::register_python_functions(m)?;
     signatures::python_bindings::register_python_functions(m)?;
 
+    // ===== v2.0.0 additive bindings =====
+    bsde::python_bindings::register_python_functions(m)?;
+    pde::python_bindings::register_python_functions(m)?;
+    stochastic_control::python_bindings::register_python_functions(m)?;
+    optimal_control::quadratic_impact_python_bindings::register_python_functions(m)?;
+    mean_field::mckean_vlasov_python_bindings::register_python_functions(m)?;
+    agent_based::python_bindings::register_python_functions(m)?;
+    inference::python_bindings::register_python_functions(m)?;
+    optimization::python_bindings::register_python_functions(m)?;
+
     Ok(())
 }

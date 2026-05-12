@@ -47,6 +47,8 @@ pub mod regime_switching;
 pub mod viscosity;
 // v2.0.0 additive: generic quadratic-impact controlled SDE.
 pub mod quadratic_impact_control;
+#[cfg(feature = "python-bindings")]
+pub mod quadratic_impact_python_bindings;
 
 pub use hjb_solver::{HJBConfig, HJBResult, HJBSolver};
 pub use matrix_riccati::{solve_matrix_riccati, RiccatiConfig, RiccatiResult};

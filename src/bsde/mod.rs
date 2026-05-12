@@ -20,6 +20,8 @@
 
 pub mod theta_scheme;
 pub mod deep_bsde_bridge;
+#[cfg(feature = "python-bindings")]
+pub mod python_bindings;
 
 pub use theta_scheme::{ThetaSchemeConfig, ThetaSchemeResult, solve_linear_bsde};
 pub use deep_bsde_bridge::{ConditionalExpectation, DeepBsdeBridge, DeepBsdeStep};

@@ -53,6 +53,8 @@ pub mod nash_equilibrium;
 pub mod optimal_transport;
 // v2.0.0: McKean--Vlasov interacting-particle simulator.
 pub mod mckean_vlasov;
+#[cfg(feature = "python-bindings")]
+pub mod mckean_vlasov_python_bindings;
 
 #[cfg(feature = "python-bindings")]
 pub mod python_bindings;
