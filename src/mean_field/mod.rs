@@ -51,6 +51,8 @@ pub mod pde_solvers;
 pub mod forward_backward;
 pub mod nash_equilibrium;
 pub mod optimal_transport;
+// v2.0.0: McKean--Vlasov interacting-particle simulator.
+pub mod mckean_vlasov;
 
 #[cfg(feature = "python-bindings")]
 pub mod python_bindings;

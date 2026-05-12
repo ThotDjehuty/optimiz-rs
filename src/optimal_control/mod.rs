@@ -45,6 +45,8 @@ pub mod ou_estimator;
 pub mod py_bindings;
 pub mod regime_switching;
 pub mod viscosity;
+// v2.0.0 additive: generic quadratic-impact controlled SDE.
+pub mod quadratic_impact_control;
 
 pub use hjb_solver::{HJBConfig, HJBResult, HJBSolver};
 pub use matrix_riccati::{solve_matrix_riccati, RiccatiConfig, RiccatiResult};

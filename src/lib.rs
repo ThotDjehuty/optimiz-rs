@@ -55,6 +55,16 @@ pub mod signatures;     // Path signatures, log-signatures, signature kernels
 pub mod topology;       // Vietoris--Rips persistent homology and bottleneck distance
 pub mod volterra;       // Fractional / Volterra integral equation solvers
 
+// ===== v2.0.0 top-level groups (CPU-only, generic) =====
+pub mod bsde;                // Backward stochastic differential equations
+pub mod pde;                 // Generic PDE solvers (Fokker--Planck, HJB, elliptic)
+pub mod stochastic_control;  // Switching, Pontryagin, two-sided intensity control
+pub mod agent_based;         // Generic interacting-agent dynamics
+pub mod inference;           // Robust statistical inference primitives
+pub mod optimization;        // Generative calibration hooks
+// matrix_riccati promoted from optimal_control to a top-level alias
+pub use optimal_control::matrix_riccati;
+
 // Python bindings for legacy compatibility
 #[cfg(feature = "python-bindings")]
 mod differential_evolution;
