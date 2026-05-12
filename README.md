@@ -6,12 +6,27 @@
 
 **High-performance optimization algorithms in Rust with Python bindings**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ThotDjehuty/optimiz-r/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/ThotDjehuty/optimiz-r/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 
 Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers 50-100× speedup over pure Python implementations.
+
+## ✨ What's New in v1.1.0
+
+This release adds a broad collection of **CPU-only generic numerical primitives**, all purely additive:
+
+- **`optimal_control::matrix_riccati`** — backward RK4 solver for the matrix Riccati ODE.
+- **`timeseries_utils::nonsync_covariance`** — Hayashi--Yoshida asynchronous covariance estimator.
+- **`timeseries_utils::wavelet`** — DWT and MODWT (Haar, Daubechies 2--10).
+- **`risk_measures`** — empirical / parametric VaR and CVaR, plus convex CVaR minimisation.
+- **`graph::laplacian`** + **`graph::spectral_clustering`** — combinatorial / normalised / random-walk Laplacians and spectral clustering with Jacobi diagonalisation.
+- **`topology`** — Vietoris--Rips persistent homology and bottleneck distance.
+- **`volterra`** — fractional Caputo Adams solver, Markovian lift by NNLS on a geometric grid, second-kind Volterra solver, direct Fourier inversion of characteristic functions.
+- **`signatures`** — truncated tensor signatures, log-signatures, random-reservoir projection (Cuchiero--Schmocker--Teichmann), Salvi--Cass--Lyons signature kernel, shuffle product / Chen concatenation.
+
+All new modules are exposed via the **Rust API only** in this release; Python bindings will follow in a subsequent minor release. The previously stable Python API is unchanged.
 
 ## ✨ What's New in v1.0.0
 

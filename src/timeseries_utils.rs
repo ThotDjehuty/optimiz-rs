@@ -31,6 +31,9 @@ use ndarray::Array1;
 #[cfg(feature = "python-bindings")]
 pub mod python_bindings;
 
+pub mod nonsync_covariance;
+pub mod wavelet;
+
 /// Prepare time-series price data for HMM regime detection
 ///
 /// Creates features from price series including:

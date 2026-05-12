@@ -40,6 +40,19 @@ Optimiz-rs provides blazingly fast, production-ready implementations of advanced
 
 .. toctree::
    :maxdepth: 2
+   :caption: v1.1 Numerical Primitives
+
+   algorithms/matrix_riccati
+   algorithms/nonsync_covariance
+   algorithms/wavelet
+   algorithms/risk_measures
+   algorithms/graph_spectral
+   algorithms/topology
+   algorithms/volterra
+   algorithms/signatures
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
    
    api/differential_evolution

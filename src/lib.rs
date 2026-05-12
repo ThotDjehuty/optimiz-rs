@@ -48,6 +48,13 @@ pub mod mean_field; // Mean Field Games and Mean Field Type Control
 pub mod point_processes; // Point processes for order flow modeling (Hawkes, fBM)
 pub mod portfolio_optimization; // CARA, convex duality, mean-variance, ERC
 
+// ===== v1.1.0 additive modules (CPU-only generic numerical primitives) =====
+pub mod graph;          // Graph Laplacians and spectral clustering
+pub mod risk_measures;  // Generic VaR / CVaR estimators and convex CVaR minimisation
+pub mod signatures;     // Path signatures, log-signatures, signature kernels
+pub mod topology;       // Vietoris--Rips persistent homology and bottleneck distance
+pub mod volterra;       // Fractional / Volterra integral equation solvers
+
 // Python bindings for legacy compatibility
 #[cfg(feature = "python-bindings")]
 mod differential_evolution;

@@ -38,6 +38,7 @@ pub mod jump_diffusion;
 pub mod kalman_filter;
 #[cfg(feature = "python-bindings")]
 pub mod kalman_py_bindings;
+pub mod matrix_riccati;
 pub mod mrsjd;
 pub mod ou_estimator;
 #[cfg(feature = "python-bindings")]
@@ -46,6 +47,7 @@ pub mod regime_switching;
 pub mod viscosity;
 
 pub use hjb_solver::{HJBConfig, HJBResult, HJBSolver};
+pub use matrix_riccati::{solve_matrix_riccati, RiccatiConfig, RiccatiResult};
 pub use jump_diffusion::{
     JumpDiffusionConfig, JumpDiffusionResult, JumpDiffusionSolver, JumpDistribution,
 };
