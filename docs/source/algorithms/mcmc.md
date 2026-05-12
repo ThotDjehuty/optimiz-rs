@@ -295,6 +295,13 @@ axes[1, 1].set_title('Posterior: σ')
 plt.tight_layout()
 plt.savefig('mcmc_posterior.png', dpi=150)
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__mcmc/block_03_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
+
+
+
 
 ---
 

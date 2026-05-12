@@ -47,6 +47,16 @@ $\partial_t m = \tfrac12 \partial_{xx} m$ with Gaussian initial density should r
    ax.set_title('Pure-diffusion Fokker–Planck'); ax.grid(alpha=0.3); ax.legend()
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__pde/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/pde/plot_01.png
    :align: center
    :width: 80%
@@ -78,6 +88,16 @@ $-\Delta u = 2\pi^2 \sin(\pi x)\sin(\pi y)$ on the unit square with zero Dirichl
    axes[1].set_title('error vs analytic'); plt.colorbar(im1, ax=axes[1])
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__pde/block_05_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/pde/plot_02.png
    :align: center
    :width: 80%
@@ -104,6 +124,16 @@ Heat-only relaxation ($H = 0$, σ² > 0) preserves a constant value, while a qua
    plt.colorbar(im, ax=ax)
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__pde/block_07_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/pde/plot_03.png
    :align: center
    :width: 80%

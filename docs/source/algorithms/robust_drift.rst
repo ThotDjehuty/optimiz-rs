@@ -43,6 +43,16 @@ Synthetic stationary process with 5 % outliers
    ax.set_title('Synthetic series with heavy-tailed innovations')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__robust_drift/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/robust_drift/plot_01.png
    :align: center
    :width: 80%
@@ -71,6 +81,16 @@ Synthetic stationary process with 5 % outliers
    ax.legend(); ax.grid(alpha=0.3); ax.set_title('Robust vs OLS drift estimate')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__robust_drift/block_05_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/robust_drift/plot_02.png
    :align: center
    :width: 80%

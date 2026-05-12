@@ -451,6 +451,10 @@ plt.suptitle("Fractional Brownian Motion Paths")
 plt.tight_layout()
 plt.show()
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__point_processes/block_03_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
 
 ### Mixed fBM for Aggregate Order Flow
 
@@ -518,6 +522,10 @@ plt.title('Power-law decay in scaling limit')
 plt.tight_layout()
 plt.show()
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__point_processes/block_05_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
 
 ---
 

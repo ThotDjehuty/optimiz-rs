@@ -32,6 +32,16 @@ Maximum-Mean-Discrepancy distance with Gaussian kernel (`mmd_gaussian`).  Self-d
    ax.set_title('Gaussian-kernel MMD vs translation (σ = 1)')
    ax.grid(alpha=0.3); fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__generative_calibration_hooks/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/generative_calibration_hooks/plot_01.png
    :align: center
    :width: 80%
@@ -49,6 +59,16 @@ Bandwidth dependence
    ax.set_title('MMD as a function of kernel bandwidth')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__generative_calibration_hooks/block_04_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/generative_calibration_hooks/plot_02.png
    :align: center
    :width: 80%

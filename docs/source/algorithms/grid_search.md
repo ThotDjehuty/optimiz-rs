@@ -305,6 +305,13 @@ plt.ylabel('Learning Rate')
 plt.title('Grid Search: Loss Surface')
 plt.savefig('grid_search_heatmap.png', dpi=150)
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__grid_search/block_08_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
+
+
+
 
 **Output:**
 

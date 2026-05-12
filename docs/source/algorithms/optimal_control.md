@@ -261,15 +261,17 @@ Estimates Ornstein-Uhlenbeck process parameters from time series data.
 ```python
 from optimizr import estimate_ou_params_py
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Simulate OU process (for testing)
 dt = 1/252  # Daily data
 T = 1000
 kappa_true, theta_true, sigma_true = 3.0, 0.0, 0.2
+rng = np.random.default_rng(0)
 spread = [0.0]
 for _ in range(T-1):
     dx = kappa_true * (theta_true - spread[-1]) * dt + \
-         sigma_true * np.sqrt(dt) * np.random.randn()
+         sigma_true * np.sqrt(dt) * rng.standard_normal()
     spread.append(spread[-1] + dx)
 
 spread = np.array(spread)
@@ -280,7 +282,36 @@ kappa, theta, sigma, half_life = estimate_ou_params_py(spread, dt=dt)
 print(f"True:      κ={kappa_true:.2f}, θ={theta_true:.3f}, σ={sigma_true:.3f}")
 print(f"Estimated: κ={kappa:.2f}, θ={theta:.3f}, σ={sigma:.3f}")
 print(f"Half-life: {half_life:.1f} periods ({half_life*252:.1f} days)")
+
+# Visualise the simulated path together with the estimated mean-reversion
+# level and the decay envelope implied by the fitted half-life.
+t_axis = np.arange(len(spread)) * dt * 252  # in days
+fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+axes[0].plot(t_axis, spread, lw=0.7, label="simulated path")
+axes[0].axhline(theta_true, color="k", ls=":", label="true θ")
+axes[0].axhline(theta, color="red", ls="--", label="estimated θ")
+axes[0].set_xlabel("days"); axes[0].set_ylabel("spread")
+axes[0].set_title("OU simulation vs estimated long-run mean")
+axes[0].legend(); axes[0].grid(alpha=0.3)
+
+# Empirical autocorrelation vs theoretical exp(-κ τ).
+lags = np.arange(0, 60)
+x = spread - spread.mean()
+acf = np.array([
+    (x[: len(x) - k] @ x[k:]) / (x @ x) for k in lags
+])
+axes[1].plot(lags, acf, "o-", label="empirical ACF")
+axes[1].plot(lags, np.exp(-kappa * lags * dt), "--",
+             label=r"theoretical $e^{-\kappa\,\tau}$")
+axes[1].set_xlabel("lag (days)"); axes[1].set_ylabel("autocorrelation")
+axes[1].set_title("Mean-reversion fingerprint")
+axes[1].legend(); axes[1].grid(alpha=0.3)
+fig.tight_layout(); plt.show()
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__optimal_control/block_03_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
 
 **Method**: Maximum likelihood estimation (MLE) using analytical formulas for discrete-time OU process.
 
@@ -431,6 +462,10 @@ plt.plot(pnl_path, label='P&L')
 plt.legend()
 plt.tight_layout()
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__optimal_control/block_06_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
 
 **Metrics interpretation**:
 - `total_return`: Should be positive with low transaction costs

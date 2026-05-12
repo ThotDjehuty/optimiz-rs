@@ -103,3 +103,20 @@ __all__ = [
     "min_variance_weights",
     "erc_weights",
 ]
+
+
+def __getattr__(name):
+    """Transparent fallback: forward any unresolved top-level attribute access
+    to the compiled `_core` extension.  This keeps `from optimizr import X`
+    working for every Rust-backed function (v1.x and v2.0 primitives) without
+    having to enumerate the full list above."""
+    try:
+        from optimizr import _core as _ext
+    except ImportError as exc:  # pragma: no cover
+        raise AttributeError(
+            f"module 'optimizr' has no attribute {name!r} "
+            f"(_core extension is not built: {exc})"
+        ) from exc
+    if hasattr(_ext, name):
+        return getattr(_ext, name)
+    raise AttributeError(f"module 'optimizr' has no attribute {name!r}")

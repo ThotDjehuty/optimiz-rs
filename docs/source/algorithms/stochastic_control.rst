@@ -43,6 +43,15 @@ Two modes; only mode 1 pays a unit reward.  Free switching should give `V_0(0) =
    ax.set_title('Snell envelope — free switching')
    fig.tight_layout(); plt.show()
 
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__stochastic_control/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/stochastic_control/plot_01.png
    :align: center
    :width: 80%
@@ -73,6 +82,15 @@ Closed-form Riccati for $a=q=0$, $b=r=s_T=1$, $T=1$ is $P(t) = 1/(1 + (T - t))$,
    axes[2].plot(tg[:-1], u); axes[2].set_title('feedback u(t) = -(b/r) P(t) x(t)'); axes[2].set_xlabel('t'); axes[2].grid(alpha=0.3)
    fig.tight_layout(); plt.show()
 
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__stochastic_control/block_05_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/stochastic_control/plot_02.png
    :align: center
    :width: 80%
@@ -96,6 +114,15 @@ Affine premium $δ_±(λ) = α_± + κ_± λ$.  First-order condition: $\lambda^
    ax.set_title('Optimal upward intensity vs value-function gradient')
    ax.grid(alpha=0.3); fig.tight_layout(); plt.show()
 
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__stochastic_control/block_06_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/stochastic_control/plot_03.png
    :align: center
    :width: 80%

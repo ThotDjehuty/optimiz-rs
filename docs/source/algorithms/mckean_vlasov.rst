@@ -41,6 +41,16 @@ Interacting-particle Euler scheme for $dX_t = θ(\bar X_t - X_t) dt + σ dW_t$ (
    ax.set_title('Mean-reverting McKean–Vlasov — 200 particles')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__mckean_vlasov/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/mckean_vlasov/plot_01.png
    :align: center
    :width: 80%
@@ -54,6 +64,16 @@ Interacting-particle Euler scheme for $dX_t = θ(\bar X_t - X_t) dt + σ dW_t$ (
    ax.set_title('Marginal density at t = 0 and t = T')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__mckean_vlasov/block_04_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/mckean_vlasov/plot_02.png
    :align: center
    :width: 80%

@@ -207,6 +207,10 @@ plt.suptitle("Fractional Brownian Motion: Three Regimes")
 plt.tight_layout()
 plt.show()
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/api__point_processes/block_04_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
 
 ---
 
@@ -401,6 +405,10 @@ plt.title('Scaling Function (Theorem 3.1)')
 plt.grid(True, alpha=0.3)
 plt.show()
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/api__point_processes/block_09_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
 
 ---
 

@@ -447,6 +447,13 @@ axes[1].set_yticklabels(['Bull', 'Bear'])
 plt.tight_layout()
 plt.savefig('hmm_states.png', dpi=150)
 ```
+<!-- AUTO-PLOT-BEGIN -->
+![Generated plot](../_static/auto/algorithms__hmm/block_05_fig_01.png)
+<!-- AUTO-PLOT-END -->
+
+
+
+
 
 **Output:**
 

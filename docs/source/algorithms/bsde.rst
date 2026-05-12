@@ -48,6 +48,16 @@ With $a(t) \equiv -\rho$, $b = c = 0$ and $Y_T = 1$ the analytic deterministic s
    ax.legend(); ax.grid(alpha=0.3)
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__bsde/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/bsde/plot_01.png
    :align: center
    :width: 80%
@@ -76,6 +86,16 @@ Crank–Nicolson is second-order in `Δt`.
    ax.set_title('Crank–Nicolson convergence'); ax.grid(which='both', alpha=0.3); ax.legend()
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__bsde/block_05_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/bsde/plot_02.png
    :align: center
    :width: 80%

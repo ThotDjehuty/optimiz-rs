@@ -41,6 +41,16 @@ $h'(t) = h(t)^2/γ - φ$ with $h(T) = A$.  When $γ = φ = A = 1$ the right-hand
    ax.set_title('Riccati fixed point  γ=φ=A=1')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__quadratic_impact_control/block_03_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/quadratic_impact_control/plot_01.png
    :align: center
    :width: 80%
@@ -60,6 +70,16 @@ Vary $A$, fix $γ = 1$, $φ = 0.25$, $T = 1$.
    ax.set_title('Riccati sensitivity to terminal weight')
    fig.tight_layout(); plt.show()
 
+
+
+
+
+.. AUTO-PLOT-BEGIN
+.. image:: ../_static/auto/algorithms__quadratic_impact_control/block_04_fig_01.png
+   :align: center
+   :width: 80%
+
+.. AUTO-PLOT-END
 .. image:: ../_static/v2/quadratic_impact_control/plot_02.png
    :align: center
    :width: 80%
