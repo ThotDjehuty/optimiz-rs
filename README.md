@@ -6,12 +6,32 @@
 
 **High-performance optimization algorithms in Rust with Python bindings**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/ThotDjehuty/optimiz-r/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/ThotDjehuty/optimiz-r/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 
 Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers 50-100× speedup over pure Python implementations.
+
+## ✨ What's New in v2.0.0
+
+This release adds **Python bindings for the v1.1 generic numerical primitives** and ships **eight brand-new CPU-only modules** covering rough volatility, mean-field control, BSDEs and robust inference. All v1.x APIs remain available — `import optimizr as opt` is unchanged.
+
+New Python primitives (all importable directly from `optimizr`):
+
+- **`solve_fractional_ode(h0, alpha, t_horizon, n_steps, rhs)`** — Caputo fractional ODE Adams scheme.
+- **`solve_volterra(g, kernel, t_horizon, n_steps)`** — second-kind Volterra integral equation.
+- **`linear_bsde_constant_coeffs(a, b, c, terminal, n_steps, t_horizon, theta=0.5)`** — backward SDE θ-scheme.
+- **`mean_reverting_mckean_vlasov(initial, theta, sigma, n_steps, t_horizon, seed)`** — N-particle McKean–Vlasov simulator (returns `paths_flat`, `n_particles`, `n_steps`, `time_grid`).
+- **`historical_var_py(losses, alpha)`** — empirical Value-at-Risk estimator.
+- Plus: `path_signature`, `random_signature`, `signature_kernel`, `persistent_homology`, `bottleneck_distance`, `spectral_cluster_py`, `mmd_gaussian`, `quadratic_impact_control_py`, and more.
+
+A full non-regression suite for the v2 public API lives in `tests/test_v2_api.py` (analytic ground-truth checks for every advertised primitive).
+
+```bash
+pip install --upgrade optimizr
+python -c "import optimizr; print(optimizr.solve_fractional_ode(1.0, 0.5, 1.0, 100, lambda t,h: 0.0)['h'][-1])"
+```
 
 ## ✨ What's New in v1.1.0
 
@@ -33,7 +53,7 @@ All new modules are exposed via the **Rust API only** in this release; Python bi
 🎉 **Production Ready** - First stable release with comprehensive documentation  
 📚 **ReadTheDocs** - Full documentation at https://optimiz-r.readthedocs.io  
 🏗️ **Published to crates.io** - Install with `cargo add optimiz-rs`  
-🐍 **Published to PyPI** - Install with `pip install optimiz-rs`  
+🐍 **Published to PyPI** - Install with `pip install optimizr`  
 🔒 **Stable API** - Semantic versioning from v1.0.0 forward
 
 ## Features
@@ -67,14 +87,18 @@ All new modules are exposed via the **Rust API only** in this release; Python bi
 ### From PyPI (Python)
 
 ```bash
-pip install optimiz-rs
+pip install optimizr
 ```
+
+> **Note**: the historical PyPI distribution name is `optimizr` (no dash). The Python import name is also `optimizr`: `import optimizr as opt`.
 
 ### From crates.io (Rust)
 
 ```bash
 cargo add optimiz-rs
 ```
+
+> The Rust crate is `optimiz-rs` (with dash); its library name is `optimizr` (no dash) — matching the Python module.
 
 ### From Source
 

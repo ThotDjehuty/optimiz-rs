@@ -3,8 +3,8 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "optimiz-rs"
-version = "2.0.0a1"
+name = "optimizr"
+version = "2.0.0"
 description = "High-performance optimization algorithms in Rust with Python bindings"
 authors = [
     {name = "HFThot Research Lab", email = "contact@hfthot-lab.eu"}
