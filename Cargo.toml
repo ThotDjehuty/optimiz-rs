@@ -9,6 +9,18 @@ repository = "https://github.com/ThotDjehuty/optimiz-r"
 keywords = ["optimization", "machine-learning", "statistics", "numerical", "scientific"]
 categories = ["algorithms", "science", "mathematics"]
 readme = "README.md"
+exclude = [
+    "examples/notebooks/*",
+    "examples/*.gif",
+    "examples/*.png",
+    "examples/*.jpg",
+    "docs/*",
+    "tests/*",
+    "wheels/*",
+    "target/*",
+    ".github/*",
+    "*.ipynb",
+]
 
 [lib]
 name = "optimizr"
