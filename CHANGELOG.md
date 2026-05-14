@@ -4,6 +4,29 @@ All notable changes to **optimiz-rs** are documented in this file. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-05-14
+
+### Added — public release of the v2 API
+
+- Promoted `2.0.0-alpha.1` to the stable `2.0.0` release.
+- PyPI distribution name remains `optimiz-rs` (continuity with v1.0.x);
+  the Rust crate is also `optimiz-rs`. Both expose the Python module
+  `optimizr`.
+- New non-regression suite `tests/test_v2_api.py` (20 tests) exercising
+  every advertised v2 primitive against an analytic ground truth:
+  `historical_var_py`, `solve_fractional_ode`, `solve_volterra`,
+  `linear_bsde_constant_coeffs`, `mean_reverting_mckean_vlasov`, plus a
+  parametrised guard over the v1.x public surface.
+- README rewritten to document the v2 Python API and the corrected
+  installation command (`pip install optimizr`).
+
+### Notes
+
+- No source-level breaking change relative to `2.0.0-alpha.1`.
+- All v1.x Python entry points remain exposed (`differential_evolution`,
+  `fit_hmm`, `viterbi_decode`, `mcmc_sample`, `grid_search`, `mutual_information`,
+  `shannon_entropy`, etc.) — verified by `test_public_symbol_exposed`.
+
 ## [2.0.0-alpha.1] - 2026-05-12
 
 ### Added — top-level reorganisation and new generic primitives
