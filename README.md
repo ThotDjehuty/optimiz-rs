@@ -54,6 +54,38 @@ v2 ships **eight brand-new CPU-only generic numerical primitive groups** with fu
 - **`consensus_dynamics(...)`** — synchronous opinion-dynamics consensus on a graph.
 - **`solve_mfg_1d_rust(MFGConfig)`** — 1-D mean-field game (HJB ↔ Fokker–Planck fixed-point).
 
+#### Propagation of chaos
+
+<p align="center">
+    <img src="examples/propagation_of_chaos.gif" alt="Propagation of chaos" width="680" />
+</p>
+
+For an interacting N-particle system
+
+$$
+dX^{i,N}_t \;=\; b\!\bigl(X^{i,N}_t,\; \mu^N_t\bigr)\, dt \;+\; \sigma\, dW^i_t,
+\qquad
+\mu^N_t \;=\; \frac{1}{N}\sum_{j=1}^{N}\delta_{X^{j,N}_t},
+$$
+
+Sznitman's theorem (1991) states that whenever $b$ is Lipschitz in both arguments,
+the empirical measure $\mu^N_t$ converges in Wasserstein-2 to the law $\mu_t$
+of the McKean–Vlasov limit at rate $\mathcal{O}(1/\sqrt{N})$, and any finite
+$k$-tuple of particles becomes asymptotically independent — *chaos propagates*
+from $t=0$ to all later times:
+
+$$
+\operatorname{Law}\!\bigl(X^{1,N}_t,\dots,X^{k,N}_t\bigr) \;\xrightarrow[N\to\infty]{w}\; \mu_t^{\otimes k}.
+$$
+
+The animation above runs four parallel simulations with $N\in\{20,100,500,4000\}$
+sharing the *same* bimodal initial law, the *same* drift $-\theta(x-\bar{x})$ and
+the *same* noise $\sigma\, dW$. The bottom panel tracks the Wasserstein-2 distance
+$W_2(\mu^N_t, \mu_t)$ to a high-resolution reference and visibly decays as
+$1/\sqrt{N}$. Source: [`examples/animate_propagation_of_chaos.py`](examples/animate_propagation_of_chaos.py).
+Companion notebook: [`examples/notebooks/14_mckean_vlasov.ipynb`](examples/notebooks/14_mckean_vlasov.ipynb).
+
+
 ### Topology, graphs & path signatures
 
 - **`vietoris_rips_filtration`**, **`persistent_homology`**, **`bottleneck_distance`** — TDA primitives.
