@@ -11,27 +11,90 @@
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 
-Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers 50-100× speedup over pure Python implementations.
+Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers up to **86× speedup** over pure-Python references on intrinsically loopy / sequential workloads.
+
+<p align="center">
+    <img src="examples/mckean_vlasov.gif" alt="McKean-Vlasov mean-reverting flow" width="640" />
+    <br/>
+    <em>800-particle mean-reverting McKean–Vlasov flow simulated by
+    <code>optimizr.mean_reverting_mckean_vlasov</code> — two clouds at
+    <code>x = ±2</code> fuse under <code>dX_t = θ(m̄_t − X_t) dt + σ dW_t</code>.
+    Source: <a href="examples/animate_mckean_vlasov.py"><code>examples/animate_mckean_vlasov.py</code></a>.</em>
+</p>
 
 ## ✨ What's New in v2.0.0
 
-This release adds **Python bindings for the v1.1 generic numerical primitives** and ships **eight brand-new CPU-only modules** covering rough volatility, mean-field control, BSDEs and robust inference. All v1.x APIs remain available — `import optimizr as opt` is unchanged.
+v2 ships **eight brand-new CPU-only generic numerical primitive groups** with full Python bindings, on top of every v1.x algorithm (which remain available). The Python module name is unchanged: `import optimizr as opt`.
 
-New Python primitives (all importable directly from `optimizr`):
+### Rough volatility & integral equations
 
 - **`solve_fractional_ode(h0, alpha, t_horizon, n_steps, rhs)`** — Caputo fractional ODE Adams scheme.
-- **`solve_volterra(g, kernel, t_horizon, n_steps)`** — second-kind Volterra integral equation.
-- **`linear_bsde_constant_coeffs(a, b, c, terminal, n_steps, t_horizon, theta=0.5)`** — backward SDE θ-scheme.
-- **`mean_reverting_mckean_vlasov(initial, theta, sigma, n_steps, t_horizon, seed)`** — N-particle McKean–Vlasov simulator (returns `paths_flat`, `n_particles`, `n_steps`, `time_grid`).
-- **`historical_var_py(losses, alpha)`** — empirical Value-at-Risk estimator.
-- Plus: `path_signature`, `random_signature`, `signature_kernel`, `persistent_homology`, `bottleneck_distance`, `spectral_cluster_py`, `mmd_gaussian`, `quadratic_impact_control_py`, and more.
+- **`solve_volterra(g, kernel, t_horizon, n_steps)`** — second-kind Volterra integral equation by trapezoidal product integration.
+- **`geometric_grid_lift(kernel, t_samples, n_factors, gamma_min, gamma_max)`** — multi-exponential approximation of a kernel by NNLS on a geometric rate grid (Markovian lift à la Abi Jaber–El Euch).
+- **`fourier_invert(char_fn, t_grid, x_grid)`** — characteristic-function → density inversion (Carr–Madan style).
+- **`mittag_leffler_py(z, alpha, beta)`** — generalised Mittag-Leffler reference function.
 
-A full non-regression suite for the v2 public API lives in `tests/test_v2_api.py` (analytic ground-truth checks for every advertised primitive).
+### Backward SDEs & PDEs
+
+- **`linear_bsde_constant_coeffs(a, b, c, terminal, n_steps, t_horizon, theta=0.5)`** — backward SDE θ-scheme (closed-form analytic test against `dY = -ρ Y dt`).
+- **`fokker_planck_constant(...)`** — 1-D forward Fokker–Planck solver with conservative central differences.
+- **`hjb_quadratic_2d(...)`** — explicit upwind solver for 2-D HJB on a Cartesian grid.
+- **`poisson_2d_zero_boundary(...)`** — 2-D Poisson `−Δu = f` SOR solver.
+
+### Stochastic & quadratic-impact control
+
+- **`optimal_switching_dp(...)`** — discrete-time optimal switching by dynamic programming.
+- **`pontryagin_lqr(...)`** — Pontryagin maximum principle for LQ control.
+- **`two_sided_intensities(...)`** — bilateral intensity-controlled jump process.
+- **`quadratic_impact_control_py(...)`** — convex quadratic-cost control on a controlled SDE.
+
+### Mean-field & agent-based dynamics
+
+- **`mean_reverting_mckean_vlasov(initial, theta, sigma, n_steps, t_horizon, seed)`** — N-particle McKean–Vlasov simulator (returns `paths_flat`, `n_particles`, `n_steps`, `time_grid`).
+- **`consensus_dynamics(...)`** — synchronous opinion-dynamics consensus on a graph.
+- **`solve_mfg_1d_rust(MFGConfig)`** — 1-D mean-field game (HJB ↔ Fokker–Planck fixed-point).
+
+### Topology, graphs & path signatures
+
+- **`vietoris_rips_filtration`**, **`persistent_homology`**, **`bottleneck_distance`** — TDA primitives.
+- **`combinatorial_laplacian_py`**, **`normalised_laplacian_py`**, **`random_walk_laplacian_py`**, **`spectral_cluster_py`** — graph spectral analysis.
+- **`path_signature`**, **`path_log_signature`**, **`random_signature`**, **`signature_kernel`**, **`shuffle_product`**, **`concatenate_signatures`** — Chen–Strichartz iterated integrals and signature kernels.
+
+### Risk, robust inference & calibration
+
+- **`historical_var_py(losses, alpha)`**, **`parametric_var_py(...)`**, **`cvar_value_py(...)`**, **`minimize_cvar_py(...)`** — coherent risk measures.
+- **`robust_drift(...)`**, **`estimate_hurst(...)`**, **`scale_dependent_hurst(...)`** — robust drift / Hurst estimation.
+- **`mmd_gaussian(...)`**, **`f_alpha_lambda_py(...)`** — generative-calibration hooks (MMD, fractional kernels).
+
+### Point processes & Kalman filtering
+
+- **`simulate_hawkes`**, **`simulate_bivariate_hawkes`**, **`simulate_fbm`**, **`simulate_mixed_fbm`** — order-flow simulators.
+- **`LinearKalmanFilter`**, **`UnscentedKalmanFilter`**, **`RTSSmoother`** — state-space inference.
+
+### Quality bar
+
+- 20-test analytic non-regression suite for the v2 public API: [`tests/test_v2_api.py`](tests/test_v2_api.py).
+- ABI3 wheels, Python ≥ 3.8.
+- Crate name: `optimiz-rs` (Rust); distribution name: `optimiz-rs` (PyPI); module name: `optimizr` (Python import).
 
 ```bash
-pip install --upgrade optimizr
-python -c "import optimizr; print(optimizr.solve_fractional_ode(1.0, 0.5, 1.0, 100, lambda t,h: 0.0)['h'][-1])"
+pip install --upgrade optimiz-rs
+python -c "import optimizr; print(optimizr.__version__)"   # 2.0.0
 ```
+
+### v2 benchmark (single-threaded, best-of-3, Apple M2)
+
+Generated by [`examples/benchmark_v2.py`](examples/benchmark_v2.py):
+
+| Workload | Pure Python / NumPy | optimiz-rs (Rust) | Speedup |
+|---|---:|---:|---:|
+| HMM Baum-Welch (2 states, 5 000 obs, 10 iters) | 970.94 ms | 14.34 ms | **67.7×** |
+| Differential evolution (Rastrigin d=5, 50 iters × 20 pop) | 417.45 ms | 30.03 ms | **13.9×** |
+| Path signature (T=300, d=3, depth=3) | 11.07 ms | 0.99 ms | **11.2×** |
+| Hawkes process (T=100, μ=1, α=0.6, β=1.2) | 2.75 ms | 0.83 ms | **3.3×** |
+| MCMC random-walk MH (5 000 samples, d=2) | 35.41 ms | 20.24 ms | **1.7×** |
+
+> Workloads that are fully vectorisable in NumPy (e.g. drift updates for an N-particle SDE without callback) are not in this table: a tight NumPy loop on contiguous arrays is hard to beat from Rust through a PyO3 callback boundary. Use `optimiz-rs` for the algorithms above and `numpy` for the rest — both are first-class citizens.
 
 ## ✨ What's New in v1.1.0
 
@@ -53,7 +116,7 @@ All new modules are exposed via the **Rust API only** in this release; Python bi
 🎉 **Production Ready** - First stable release with comprehensive documentation  
 📚 **ReadTheDocs** - Full documentation at https://optimiz-r.readthedocs.io  
 🏗️ **Published to crates.io** - Install with `cargo add optimiz-rs`  
-🐍 **Published to PyPI** - Install with `pip install optimizr`  
+🐍 **Published to PyPI** - Install with `pip install optimiz-rs`  
 🔒 **Stable API** - Semantic versioning from v1.0.0 forward
 
 ## Features
@@ -87,10 +150,10 @@ All new modules are exposed via the **Rust API only** in this release; Python bi
 ### From PyPI (Python)
 
 ```bash
-pip install optimizr
+pip install optimiz-rs
 ```
 
-> **Note**: the historical PyPI distribution name is `optimizr` (no dash). The Python import name is also `optimizr`: `import optimizr as opt`.
+> The PyPI distribution name is `optimiz-rs` (with dash). The Python import name is `optimizr` (no dash): `import optimizr as opt`.
 
 ### From crates.io (Rust)
 
@@ -98,7 +161,7 @@ pip install optimizr
 cargo add optimiz-rs
 ```
 
-> The Rust crate is `optimiz-rs` (with dash); its library name is `optimizr` (no dash) — matching the Python module.
+> The Rust crate is also `optimiz-rs`; its library name is `optimizr` (no dash) — matching the Python module.
 
 ### From Source
 

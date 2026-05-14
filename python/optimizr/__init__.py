@@ -64,7 +64,73 @@ except (ImportError, AttributeError):
     min_variance_weights = None
     erc_weights = None
 
-__version__ = "0.2.0"
+# ===== v2.0 primitives (lazy via __getattr__, but eagerly bound when possible) =====
+try:
+    from optimizr._core import (
+        # Volterra / fractional
+        solve_fractional_ode,
+        solve_volterra,
+        geometric_grid_lift,
+        fourier_invert,
+        mittag_leffler_py,
+        # BSDE
+        linear_bsde_constant_coeffs,
+        # Mean-field / agent-based
+        mean_reverting_mckean_vlasov,
+        consensus_dynamics,
+        # Risk measures
+        historical_var_py,
+        parametric_var_py,
+        cvar_value_py,
+        minimize_cvar_py,
+        # PDE
+        fokker_planck_constant,
+        hjb_quadratic_2d,
+        poisson_2d_zero_boundary,
+        # Stochastic control
+        optimal_switching_dp,
+        pontryagin_lqr,
+        two_sided_intensities,
+        quadratic_impact_control_py,
+        # Topology
+        vietoris_rips_filtration,
+        persistent_homology,
+        bottleneck_distance,
+        # Graph
+        combinatorial_laplacian_py,
+        normalised_laplacian_py,
+        random_walk_laplacian_py,
+        spectral_cluster_py,
+        # Signatures
+        path_signature,
+        path_log_signature,
+        random_signature,
+        signature_kernel,
+        shuffle_product,
+        concatenate_signatures,
+        # Inference / optimisation
+        robust_drift,
+        estimate_hurst,
+        scale_dependent_hurst,
+        f_alpha_lambda_py,
+        mmd_gaussian,
+        # Point processes
+        simulate_hawkes,
+        simulate_bivariate_hawkes,
+        simulate_fbm,
+        simulate_mixed_fbm,
+        # Kalman / smoothing
+        LinearKalmanFilter,
+        UnscentedKalmanFilter,
+        RTSSmoother,
+        FilterResult,
+        SmootherResult,
+        KalmanState,
+    )
+except (ImportError, AttributeError):
+    pass
+
+__version__ = "2.0.0"
 __all__ = [
     "HMM",
     "mcmc_sample",
@@ -102,6 +168,51 @@ __all__ = [
     "mean_variance_optimal_weights",
     "min_variance_weights",
     "erc_weights",
+    # ===== v2.0 primitives =====
+    "solve_fractional_ode",
+    "solve_volterra",
+    "geometric_grid_lift",
+    "fourier_invert",
+    "mittag_leffler_py",
+    "linear_bsde_constant_coeffs",
+    "mean_reverting_mckean_vlasov",
+    "consensus_dynamics",
+    "historical_var_py",
+    "parametric_var_py",
+    "cvar_value_py",
+    "minimize_cvar_py",
+    "fokker_planck_constant",
+    "hjb_quadratic_2d",
+    "poisson_2d_zero_boundary",
+    "optimal_switching_dp",
+    "pontryagin_lqr",
+    "two_sided_intensities",
+    "quadratic_impact_control_py",
+    "vietoris_rips_filtration",
+    "persistent_homology",
+    "bottleneck_distance",
+    "combinatorial_laplacian_py",
+    "normalised_laplacian_py",
+    "random_walk_laplacian_py",
+    "spectral_cluster_py",
+    "path_signature",
+    "path_log_signature",
+    "random_signature",
+    "signature_kernel",
+    "shuffle_product",
+    "concatenate_signatures",
+    "robust_drift",
+    "estimate_hurst",
+    "scale_dependent_hurst",
+    "f_alpha_lambda_py",
+    "mmd_gaussian",
+    "simulate_hawkes",
+    "simulate_bivariate_hawkes",
+    "simulate_fbm",
+    "simulate_mixed_fbm",
+    "LinearKalmanFilter",
+    "UnscentedKalmanFilter",
+    "RTSSmoother",
 ]
 
 

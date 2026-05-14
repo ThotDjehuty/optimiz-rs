@@ -9,9 +9,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added — public release of the v2 API
 
 - Promoted `2.0.0-alpha.1` to the stable `2.0.0` release.
-- **PyPI distribution name re-aligned to `optimizr`** (continuity with the
-  v1.4.x line). The Rust crate stays `optimiz-rs`; both expose the same
-  Python module name `optimizr`.
+- PyPI distribution name remains `optimiz-rs` (continuity with v1.0.x);
+  the Rust crate is also `optimiz-rs`. Both expose the Python module
+  `optimizr`.
 - New non-regression suite `tests/test_v2_api.py` (20 tests) exercising
   every advertised v2 primitive against an analytic ground truth:
   `historical_var_py`, `solve_fractional_ode`, `solve_volterra`,
