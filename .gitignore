@@ -30,3 +30,9 @@ docs/source/_static/*.log
 docs/source/_static/*.toc
 docs/source/theory/*.html
 docs/source/theory/*.pdf
+
+# Generated plot byproducts (docs snippets + notebook animations)
+/grid_search_heatmap.png
+/hmm_states.png
+/mcmc_posterior.png
+examples/*.png
