@@ -5,7 +5,6 @@
 
 use crate::optimal_control::{OptimalControlError, Result};
 use ndarray::Array1;
-use rayon::prelude::*;
 
 /// Configuration for HJB solver
 #[derive(Debug, Clone)]
@@ -119,52 +118,77 @@ impl HJBSolver {
         let mut v = Array1::<f64>::zeros(cfg.n_points);
         let mut v_old = Array1::<f64>::zeros(cfg.n_points);
 
-        // Coefficients for finite differences
-        let drift_coeff = cfg.kappa / (2.0 * dx);
-        let diffusion_coeff = 0.5 * cfg.sigma.powi(2) / dx.powi(2);
+        // Running reward: quadratic tracking penalty around θ (maximisation of
+        // -(x-θ)²). Without a source term the stationary equation ρV = LV has
+        // only the trivial solution V ≡ 0, which made gradients — and hence
+        // the V' = ±1 switching boundaries — meaningless.
+        let f: Vec<f64> = x.iter().map(|&xi| -(xi - cfg.theta).powi(2)).collect();
 
-        // Iterative solver
+        let sig2 = cfg.sigma * cfg.sigma;
+        let dx2 = dx * dx;
+
+        // Iterative solver: implicit (Thomas) solve of the linear part
+        // ρV = κ(θ-x)V' + ½σ²V'' + f  (Kushner–Dupuis upwind rates), followed
+        // by projection on the singular-control obstacles
+        //   V(x) ≥ V(x±dx) - dx   (unit proportional control cost),
+        // repeated until the fixed point. A pointwise Jacobi update diverges
+        // here (σ²/dx² ≫ ρ) and plain value iteration contracts too slowly.
+        let n = cfg.n_points;
         let mut iterations = 0;
         let mut residual = f64::INFINITY;
+
+        let mut sub = vec![0.0_f64; n];
+        let mut diag = vec![0.0_f64; n];
+        let mut sup = vec![0.0_f64; n];
+        let mut rhs = vec![0.0_f64; n];
 
         for iter in 0..cfg.max_iter {
             v_old.assign(&v);
 
-            // Interior points (parallel computation)
-            let _v_slice = v.as_slice().unwrap();
-            let x_slice = x.as_slice().unwrap();
-            let v_old_slice = v_old.as_slice().unwrap();
+            // Assemble tridiagonal system (upwind, unconditionally stable)
+            for i in 1..n - 1 {
+                let mu = cfg.kappa * (cfg.theta - x[i]);
+                let p_up = 0.5 * sig2 / dx2 + mu.max(0.0) / dx;
+                let p_dn = 0.5 * sig2 / dx2 + (-mu).max(0.0) / dx;
+                sub[i] = -p_dn;
+                diag[i] = cfg.rho + p_up + p_dn;
+                sup[i] = -p_up;
+                rhs[i] = f[i];
+            }
+            // Neumann boundaries: V'(x_min) = V'(x_max) = 0
+            diag[0] = 1.0;
+            sup[0] = -1.0;
+            rhs[0] = 0.0;
+            sub[n - 1] = -1.0;
+            diag[n - 1] = 1.0;
+            rhs[n - 1] = 0.0;
 
-            let interior_values: Vec<f64> = (1..cfg.n_points - 1)
-                .into_par_iter()
-                .map(|i| {
-                    let xi = x_slice[i];
-
-                    // Drift term: κ(θ - x) * dV/dx
-                    let drift = cfg.kappa
-                        * (cfg.theta - xi)
-                        * (v_old_slice[i + 1] - v_old_slice[i - 1])
-                        * drift_coeff
-                        / cfg.kappa;
-
-                    // Diffusion term: (σ²/2) * d²V/dx²
-                    let diffusion = (v_old_slice[i + 1] - 2.0 * v_old_slice[i]
-                        + v_old_slice[i - 1])
-                        * diffusion_coeff;
-
-                    // Update: ρV = drift + diffusion
-                    (drift + diffusion) / cfg.rho
-                })
-                .collect();
-
-            // Update interior points
-            for (i, &val) in interior_values.iter().enumerate() {
-                v[i + 1] = val;
+            // Thomas algorithm
+            let mut d = diag.clone();
+            let mut r = rhs.clone();
+            for i in 1..n {
+                let w = sub[i] / d[i - 1];
+                d[i] -= w * sup[i - 1];
+                r[i] -= w * r[i - 1];
+            }
+            v[n - 1] = r[n - 1] / d[n - 1];
+            for i in (0..n - 1).rev() {
+                v[i] = (r[i] - sup[i] * v[i + 1]) / d[i];
             }
 
-            // Boundary conditions (Neumann: dV/dx = 0 at boundaries)
-            v[0] = v[1];
-            v[cfg.n_points - 1] = v[cfg.n_points - 2];
+            // Obstacle projection: acting costs 1 per unit of displacement
+            for i in 1..n {
+                let candidate = v[i - 1] - dx;
+                if candidate > v[i] {
+                    v[i] = candidate;
+                }
+            }
+            for i in (0..n - 1).rev() {
+                let candidate = v[i + 1] - dx;
+                if candidate > v[i] {
+                    v[i] = candidate;
+                }
+            }
 
             // Check convergence
             residual = (&v - &v_old)
@@ -179,7 +203,8 @@ impl HJBSolver {
             }
         }
 
-        if residual >= cfg.tolerance {
+        // `!(a < b)` also catches NaN residuals
+        if !(residual < cfg.tolerance) {
             return Err(OptimalControlError::ConvergenceError(format!(
                 "Failed to converge after {} iterations (residual: {:.2e})",
                 iterations, residual

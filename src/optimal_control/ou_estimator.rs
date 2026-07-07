@@ -185,34 +185,40 @@ pub fn estimate_ou_params_mle(spread: &[f64], dt: f64) -> Result<OUParams> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{thread_rng, Rng};
+    use rand::Rng;
     use rand_distr::Normal;
     
     #[test]
     fn test_ou_estimation_simulated_data() {
-        // Simulate OU process
+        // Simulate OU process.
+        //
+        // Statistical design: stderr(κ̂) ≈ √(2κ/T). The previous version used
+        // n = 500 daily steps (T ≈ 2 y) → stderr ≈ 0.7 = 140 % of κ, so the
+        // 30 % tolerance failed for most draws of an UNSEEDED rng. Use a
+        // fixed seed (determinism) and T ≈ 80 y so stderr ≈ 0.11 (22 %).
         let true_kappa = 0.5;
         let true_theta = 0.0;
         let true_sigma = 0.2;
         let dt: f64 = 1.0 / 252.0;
-        let n = 500;
-        
-        let mut rng = thread_rng();
+        let n = 20_000;
+
+        use rand::SeedableRng;
+        let mut rng = rand::rngs::StdRng::seed_from_u64(42);
         let normal = Normal::new(0.0, 1.0).unwrap();
-        
+
         let mut spread = vec![0.0; n];
         spread[0] = true_theta;
-        
+
         for i in 1..n {
             let dw = rng.sample(normal) * dt.sqrt();
             spread[i] = spread[i - 1] + true_kappa * (true_theta - spread[i - 1]) * dt
                 + true_sigma * dw;
         }
-        
+
         // Estimate parameters
         let params = estimate_ou_params(&spread, dt).unwrap();
-        
-        // Check accuracy (within 30% for stochastic simulation)
+
+        // Check accuracy (2σ-level tolerances for the seeded draw)
         assert!((params.kappa - true_kappa).abs() / true_kappa < 0.3);
         assert!((params.theta - true_theta).abs() < 0.1);
         assert!((params.sigma - true_sigma).abs() / true_sigma < 0.3);

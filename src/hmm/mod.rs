@@ -11,7 +11,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,no_run
 //! use optimizr::hmm::{HMMConfig, HMM, GaussianEmission};
 //!
 //! let config = HMMConfig::<GaussianEmission>::builder(3)

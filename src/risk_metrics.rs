@@ -548,18 +548,26 @@ mod tests {
 
     #[test]
     fn test_hurst_random_walk() {
-        // Random walk should have H ≈ 0.5
-        let n = 1000;
-        let mut series = vec![0.0];
-        for i in 1..n {
-            series.push(series[i - 1] + if i % 2 == 0 { 1.0 } else { -1.0 });
-        }
+        // R/S analysis takes the INCREMENT series as input (it cumulates
+        // internally); iid increments of a random walk give H ≈ 0.5.
+        // The previous fixture passed deterministic alternating ±1 LEVELS —
+        // wrong convention and wrong process, failing by construction.
+        use rand::{Rng, SeedableRng};
+        let mut rng = rand::rngs::StdRng::seed_from_u64(7);
+        let n = 4096;
+        let increments: Vec<f64> = (0..n)
+            .map(|_| if rng.gen::<bool>() { 1.0 } else { -1.0 })
+            .collect();
 
-        let series = Array1::from_vec(series);
-        let result = hurst_exponent(&series, &[8, 16, 32, 64]).unwrap();
+        let series = Array1::from_vec(increments);
+        let result = hurst_exponent(&series, &[8, 16, 32, 64, 128]).unwrap();
 
         // Should be close to 0.5
-        assert!((result.hurst_exponent - 0.5).abs() < 0.2);
+        assert!(
+            (result.hurst_exponent - 0.5).abs() < 0.2,
+            "H = {}",
+            result.hurst_exponent
+        );
     }
 
     #[test]

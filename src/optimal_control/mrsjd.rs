@@ -32,7 +32,6 @@ use crate::optimal_control::{
     OptimalControlError, Result,
 };
 use ndarray::{Array1, Array2};
-use rayon::prelude::*;
 
 /// Regime-specific jump parameters
 pub struct RegimeJumpParameters {
@@ -207,13 +206,14 @@ impl MRSJDSolver {
             if residual < cfg.tolerance {
                 break;
             }
-
-            // Relaxation
-            let omega = 0.5; // More conservative for stability
-            v = &v * omega + &v_old * (1.0 - omega);
+            // No under-relaxation: the implicit-in-space solve is
+            // unconditionally stable, damping only slows convergence.
         }
 
-        if residual >= cfg.tolerance {
+        // NOTE: `!(residual < tolerance)` (rather than `residual >= tolerance`)
+        // also catches NaN residuals, which otherwise slip through both
+        // comparisons and produce a silently-invalid Ok result.
+        if !(residual < cfg.tolerance) {
             return Err(OptimalControlError::ConvergenceError(format!(
                 "Failed to converge after {} iterations, residual = {:.2e}",
                 iterations, residual
@@ -253,80 +253,90 @@ impl MRSJDSolver {
     ) -> Result<()> {
         let cfg = &self.config;
         let params = &self.regime_params[regime];
+        let n = cfg.n_points;
 
-        // Compute jump integral for this regime
+        // Jump inflow λ·Σ_j k_ij v_old_j and outflow mass λ·Σ_j k_ij per node.
+        // The kernel row sum can be < 1 (jumps leaving the grid are dropped),
+        // so track it explicitly to keep the scheme conservative.
         let lambda = params.jump_intensity;
-        for i in 0..cfg.n_points {
-            let mut integral = 0.0;
-            for j in 0..cfg.n_points {
-                integral += jump_kernel[[i, j]] * (v_old[[regime, j]] - v_old[[regime, i]]);
+        let mut jump_mass = vec![0.0_f64; n];
+        for i in 0..n {
+            let mut inflow = 0.0;
+            let mut mass = 0.0;
+            for j in 0..n {
+                inflow += jump_kernel[[i, j]] * v_old[[regime, j]];
+                mass += jump_kernel[[i, j]];
             }
-            jump_int[[regime, i]] = lambda * integral;
+            jump_int[[regime, i]] = lambda * (inflow - mass * v_old[[regime, i]]);
+            jump_mass[i] = lambda * mass;
         }
 
-        // Solve at interior points (parallel)
-        let updates: Vec<(usize, f64, f64)> = (1..cfg.n_points - 1)
-            .into_par_iter()
-            .map(|i| {
-                let xi = x[i];
+        // Implicit-in-space solve (Kushner–Dupuis upwind discretisation).
+        // The stationary HJB  ρv = μ v' + ½σ² v'' + jump + switching + cost
+        // is rearranged into a diagonally dominant tridiagonal system per
+        // regime (jumps and regime coupling explicit via v_old), which is
+        // unconditionally stable — a pointwise Jacobi update diverges here
+        // because σ²/dx² ≫ ρ.
+        let mut sub = vec![0.0_f64; n]; // a_i · v_{i-1}
+        let mut diag = vec![0.0_f64; n]; // b_i · v_i
+        let mut sup = vec![0.0_f64; n]; // c_i · v_{i+1}
+        let mut rhs = vec![0.0_f64; n];
 
-                // Get values
-                let v_c = v_old[[regime, i]];
-                let v_f = v_old[[regime, i + 1]];
-                let v_b = v_old[[regime, i - 1]];
+        for i in 1..n - 1 {
+            let xi = x[i];
+            let mu = (params.drift)(xi);
+            let sigma = (params.diffusion)(xi);
+            let sig2 = sigma * sigma;
+            let mu_p = mu.max(0.0);
+            let mu_m = mu.min(0.0);
 
-                // Derivatives
-                let dv_forward = (v_f - v_c) / dx;
-                let dv_backward = (v_c - v_b) / dx;
-                let d2v = (v_f - 2.0 * v_c + v_b) / (dx * dx);
-
-                // Regime-specific parameters
-                let mu = (params.drift)(xi);
-                let sigma = (params.diffusion)(xi);
-
-                // Upwind scheme
-                let drift_term = if mu >= 0.0 {
-                    mu * dv_backward
-                } else {
-                    mu * dv_forward
-                };
-
-                // Diffusion
-                let diffusion_term = 0.5 * sigma * sigma * d2v;
-
-                // Jump integral
-                let jump_term = jump_int[[regime, i]];
-
-                // Regime switching term
-                let switching_term: f64 = (0..cfg.n_regimes)
-                    .filter(|&j| j != regime)
-                    .map(|j| q[[regime, j]] * (v_old[[j, i]] - v_c))
-                    .sum();
-
-                // Optimal control (placeholder - can be optimized)
-                let optimal_control =
-                    self.optimize_control_mrsjd(xi, dv_forward, dv_backward, params);
-
-                // Running cost
-                let cost = (params.cost)(xi, optimal_control);
-
-                // HJB update
-                let new_value =
-                    (drift_term + diffusion_term + jump_term + switching_term + cost) / cfg.rho;
-
-                (i, new_value, optimal_control)
-            })
-            .collect();
-
-        // Apply updates
-        for (i, new_value, optimal_control) in updates {
-            v[[regime, i]] = new_value;
+            // Control from the current value gradient (policy-iteration style)
+            let dv_forward = (v_old[[regime, i + 1]] - v_old[[regime, i]]) / dx;
+            let dv_backward = (v_old[[regime, i]] - v_old[[regime, i - 1]]) / dx;
+            let optimal_control = self.optimize_control_mrsjd(xi, dv_forward, dv_backward, params);
             u[[regime, i]] = optimal_control;
+            let cost = (params.cost)(xi, optimal_control);
+
+            // Total outflow rate to other regimes
+            let q_out: f64 = (0..cfg.n_regimes)
+                .filter(|&j| j != regime)
+                .map(|j| q[[regime, j]])
+                .sum();
+
+            sub[i] = -(mu_p / dx + 0.5 * sig2 / (dx * dx));
+            sup[i] = mu_m / dx - 0.5 * sig2 / (dx * dx);
+            diag[i] = cfg.rho + mu_p / dx - mu_m / dx + sig2 / (dx * dx) + jump_mass[i] + q_out;
+
+            // Explicit couplings: jump inflow + other-regime values
+            let switching_in: f64 = (0..cfg.n_regimes)
+                .filter(|&j| j != regime)
+                .map(|j| q[[regime, j]] * v_old[[j, i]])
+                .sum();
+            let jump_inflow = jump_int[[regime, i]] + jump_mass[i] * v_old[[regime, i]];
+            rhs[i] = cost + jump_inflow + switching_in;
         }
 
-        // Boundaries
-        v[[regime, 0]] = v[[regime, 1]];
-        v[[regime, cfg.n_points - 1]] = v[[regime, cfg.n_points - 2]];
+        // Neumann boundaries: v_0 = v_1, v_{n-1} = v_{n-2}
+        diag[0] = 1.0;
+        sup[0] = -1.0;
+        rhs[0] = 0.0;
+        sub[n - 1] = -1.0;
+        diag[n - 1] = 1.0;
+        rhs[n - 1] = 0.0;
+
+        // Thomas algorithm (forward sweep + back substitution)
+        for i in 1..n {
+            let w = sub[i] / diag[i - 1];
+            diag[i] -= w * sup[i - 1];
+            rhs[i] -= w * rhs[i - 1];
+        }
+        v[[regime, n - 1]] = rhs[n - 1] / diag[n - 1];
+        for i in (0..n - 1).rev() {
+            v[[regime, i]] = (rhs[i] - sup[i] * v[[regime, i + 1]]) / diag[i];
+        }
+
+        u[[regime, 0]] = u[[regime, 1]];
+        u[[regime, n - 1]] = u[[regime, n - 2]];
 
         Ok(())
     }
@@ -465,7 +475,7 @@ mod tests {
             n_regimes: 2,
             transition_rates: q,
             state_bounds: (-1.0, 3.0),
-            n_points: 100,
+            n_points: 200,
             rho: 0.05,
             transaction_cost: 0.0,
             max_iter: 200,

@@ -24,7 +24,6 @@
 
 use crate::optimal_control::{OptimalControlError, Result};
 use ndarray::{Array1, Array2};
-use rayon::prelude::*;
 // use statrs::distribution::{ContinuousCDF, Normal};
 
 /// Regime-specific parameters
@@ -191,13 +190,12 @@ impl RegimeSwitchingSolver {
             if residual < cfg.tolerance {
                 break;
             }
-
-            // Relaxation for stability
-            let omega = 0.7;
-            v = &v * omega + &v_old * (1.0 - omega);
+            // No under-relaxation: the implicit-in-space solve is
+            // unconditionally stable, damping only slows convergence.
         }
 
-        if residual >= cfg.tolerance {
+        // `!(a < b)` also catches NaN residuals
+        if !(residual < cfg.tolerance) {
             return Err(OptimalControlError::ConvergenceError(format!(
                 "Failed to converge after {} iterations, residual = {}",
                 iterations, residual
@@ -234,68 +232,69 @@ impl RegimeSwitchingSolver {
     ) -> Result<()> {
         let cfg = &self.config;
         let params = &self.regime_params[regime];
+        let n = cfg.n_points;
 
-        // Interior points (parallel)
-        let updates: Vec<(usize, f64, f64)> = (1..cfg.n_points - 1)
-            .into_par_iter()
-            .map(|i| {
-                let xi = x[i];
+        // Implicit-in-space solve (Kushner–Dupuis upwind discretisation).
+        // The stationary HJB  ρv = μ v' + ½σ² v'' + running + switching  is
+        // assembled into a diagonally dominant tridiagonal system per regime
+        // (regime coupling explicit via v_old) and solved with the Thomas
+        // algorithm — a pointwise Jacobi update diverges because σ²/dx² ≫ ρ.
+        let mut sub = vec![0.0_f64; n];
+        let mut diag = vec![0.0_f64; n];
+        let mut sup = vec![0.0_f64; n];
+        let mut rhs = vec![0.0_f64; n];
 
-                // Current value and neighbors
-                let v_center = v_old[[regime, i]];
-                let v_forward = v_old[[regime, i + 1]];
-                let v_backward = v_old[[regime, i - 1]];
+        for i in 1..n - 1 {
+            let xi = x[i];
+            let mu = (params.drift)(xi);
+            let sigma = (params.diffusion)(xi);
+            let sig2 = sigma * sigma;
 
-                // Gradients (finite differences)
-                let dv_forward = (v_forward - v_center) / dx;
-                let dv_backward = (v_center - v_backward) / dx;
-                let d2v = (v_forward - 2.0 * v_center + v_backward) / (dx * dx);
-
-                // Regime-specific drift and diffusion
-                let _mu_xi = (params.drift)(xi);
-                let _sigma_xi = (params.diffusion)(xi);
-
-                // Optimal control via pointwise optimization
-                // For portfolio: u* = argmax_u [μ(x,u)·dV/dx + L(x,u)]
-                let optimal_control = self.optimize_control(xi, dv_forward, dv_backward, &params);
-
-                // HJB operator with optimal control
-                let mu_optimal = (params.drift)(xi); // Could depend on control
-                let sigma_optimal = (params.diffusion)(xi);
-                let cost = (params.cost)(xi, optimal_control);
-
-                // Upwind scheme for drift
-                let drift_term = if mu_optimal >= 0.0 {
-                    mu_optimal * dv_backward
-                } else {
-                    mu_optimal * dv_forward
-                };
-
-                // Diffusion term
-                let diffusion_term = 0.5 * sigma_optimal * sigma_optimal * d2v;
-
-                // Regime switching term: Σ_{j≠i} q_ij(V^j(x) - V^i(x))
-                let switching_term: f64 = (0..cfg.n_regimes)
-                    .filter(|&j| j != regime)
-                    .map(|j| q[[regime, j]] * (v_old[[j, i]] - v_center))
-                    .sum();
-
-                // Update: ρV = drift + diffusion + cost + switching
-                let new_value = (drift_term + diffusion_term + cost + switching_term) / cfg.rho;
-
-                (i, new_value, optimal_control)
-            })
-            .collect();
-
-        // Apply updates
-        for (i, new_value, optimal_control) in updates {
-            v[[regime, i]] = new_value;
+            // Control from the current value gradient (policy-iteration style)
+            let dv_forward = (v_old[[regime, i + 1]] - v_old[[regime, i]]) / dx;
+            let dv_backward = (v_old[[regime, i]] - v_old[[regime, i - 1]]) / dx;
+            let optimal_control = self.optimize_control(xi, dv_forward, dv_backward, params);
             u[[regime, i]] = optimal_control;
+            let running = (params.cost)(xi, optimal_control);
+
+            let q_out: f64 = (0..cfg.n_regimes)
+                .filter(|&j| j != regime)
+                .map(|j| q[[regime, j]])
+                .sum();
+            let switching_in: f64 = (0..cfg.n_regimes)
+                .filter(|&j| j != regime)
+                .map(|j| q[[regime, j]] * v_old[[j, i]])
+                .sum();
+
+            let p_up = 0.5 * sig2 / (dx * dx) + mu.max(0.0) / dx;
+            let p_dn = 0.5 * sig2 / (dx * dx) + (-mu).max(0.0) / dx;
+            sub[i] = -p_dn;
+            sup[i] = -p_up;
+            diag[i] = cfg.rho + p_up + p_dn + q_out;
+            rhs[i] = running + switching_in;
         }
 
-        // Boundary conditions (reflecting or absorbing)
-        v[[regime, 0]] = v[[regime, 1]];
-        v[[regime, cfg.n_points - 1]] = v[[regime, cfg.n_points - 2]];
+        // Neumann boundaries: v_0 = v_1, v_{n-1} = v_{n-2}
+        diag[0] = 1.0;
+        sup[0] = -1.0;
+        rhs[0] = 0.0;
+        sub[n - 1] = -1.0;
+        diag[n - 1] = 1.0;
+        rhs[n - 1] = 0.0;
+
+        // Thomas algorithm (forward sweep + back substitution)
+        for i in 1..n {
+            let w = sub[i] / diag[i - 1];
+            diag[i] -= w * sup[i - 1];
+            rhs[i] -= w * rhs[i - 1];
+        }
+        v[[regime, n - 1]] = rhs[n - 1] / diag[n - 1];
+        for i in (0..n - 1).rev() {
+            v[[regime, i]] = (rhs[i] - sup[i] * v[[regime, i + 1]]) / diag[i];
+        }
+
+        u[[regime, 0]] = u[[regime, 1]];
+        u[[regime, n - 1]] = u[[regime, n - 2]];
 
         Ok(())
     }
@@ -398,18 +397,22 @@ impl RegimeSwitchingSolver {
             ..Default::default()
         };
 
-        // Bull regime parameters
+        // Regime 0 parameters (higher drift, lower volatility).
+        // Running payoff f(x) = x: the value of the state stream. With a
+        // zero running term the stationary equation only admits V ≡ 0 and
+        // regime comparisons are meaningless; with f(x) = x the higher-drift
+        // regime has a strictly larger value at every interior point.
         let params_bull = RegimeParameters {
             drift: Box::new(move |_x| mu_bull),
             diffusion: Box::new(move |_x| sigma_bull),
-            cost: Box::new(|_x, _u| 0.0), // No running cost
+            cost: Box::new(|x, _u| x),
         };
 
-        // Bear regime parameters
+        // Regime 1 parameters (lower drift, higher volatility)
         let params_bear = RegimeParameters {
             drift: Box::new(move |_x| mu_bear),
             diffusion: Box::new(move |_x| sigma_bear),
-            cost: Box::new(|_x, _u| 0.0),
+            cost: Box::new(|x, _u| x),
         };
 
         Self::new(config, vec![params_bull, params_bear])
