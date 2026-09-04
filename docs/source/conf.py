@@ -34,35 +34,40 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output -------------------------------------------------
-html_theme = 'furo'  # Modern, clean theme
+html_theme = 'furo'
 html_static_path = ['_static']
 html_title = 'Optimiz-rs Documentation'
 html_short_title = 'Optimiz-rs'
 html_logo = 'logo_optimizrs_transparent.png'
 html_favicon = 'logo_optimizrs_transparent.png'
 
+# Announcement bar (top panel) - Furo supports this via html_theme_options
 html_theme_options = {
     "light_css_variables": {
-        "color-brand-primary": "#ea580c",
-        "color-brand-content": "#ea580c",
-        "color-api-pre-background": "#f8fafc",
-        "color-background-primary": "#ffffff",
-        "color-background-secondary": "#f8fafc",
-        "color-foreground-primary": "#0f172a",
-        "color-foreground-secondary": "#475569",
-        "color-foreground-muted": "#94a3b8",
-        "color-border": "#e2e8f0",
+        "color-brand-primary": "#c2410c",
+        "color-brand-content": "#c2410c",
+        "color-api-pre-background": "#fef3e2",
+        "color-background-primary": "#fefefe",
+        "color-background-secondary": "#fef3e2",
+        "color-foreground-primary": "#2d2d3a",
+        "color-foreground-secondary": "#6b6b7a",
+        "color-foreground-muted": "#9a9ab0",
+        "color-border": "#fde68a",
+        "color-announcement-background": "#c2410c",
+        "color-announcement-text": "#ffffff",
     },
     "dark_css_variables": {
         "color-brand-primary": "#fb923c",
         "color-brand-content": "#fb923c",
-        "color-api-pre-background": "#1e293b",
-        "color-background-primary": "#0f172a",
-        "color-background-secondary": "#1e293b",
-        "color-foreground-primary": "#f8fafc",
-        "color-foreground-secondary": "#cbd5e1",
-        "color-foreground-muted": "#64748b",
-        "color-border": "#334155",
+        "color-api-pre-background": "#1a1a2e",
+        "color-background-primary": "#141424",
+        "color-background-secondary": "#1a1a2e",
+        "color-foreground-primary": "#e8e8f0",
+        "color-foreground-secondary": "#a0a0b8",
+        "color-foreground-muted": "#707088",
+        "color-border": "#3a250a",
+        "color-announcement-background": "#fb923c",
+        "color-announcement-text": "#ffffff",
     },
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
@@ -70,6 +75,7 @@ html_theme_options = {
     "source_repository": "https://github.com/ThotDjehuty/optimiz-r",
     "source_branch": "main",
     "source_directory": "docs/source/",
+    "announcement": "🚀 <strong>Optimiz-rs v1.0.0</strong> — First stable release • 50-100× speedup • <a href=\"changelog.html\">View Changelog</a> • <a href=\"https://polarway.readthedocs.io/\">Polarway Docs</a> • <a href=\"https://hfthot-lab.eu/thotbook-amenti.html\">HFThot Research Lab</a>",
     "footer_icons": [
         {
             "name": "GitHub",
@@ -97,6 +103,16 @@ html_theme_options = {
             "html": """
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24">
                     <path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h16V4H4zm8 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+            """,
+            "class": "",
+        },
+        {
+            "name": "Polarway",
+            "url": "https://polarway.readthedocs.io/",
+            "html": """
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                 </svg>
             """,
             "class": "",
@@ -149,7 +165,7 @@ html_css_files = ["custom.css"]
 
 # Mermaid configuration
 mermaid_version = "10.9.0"
-mermaid_init_js = "mermaid.initialize({startOnLoad:true, theme:'dark', themeVariables:{primaryColor:'#ea580c',primaryTextColor:'#fff',primaryBorderColor:'#c2410c',lineColor:'#fb923c',secondaryColor:'#1e293b',tertiaryColor:'#0f172a'}});"
+mermaid_init_js = "mermaid.initialize({startOnLoad:true, theme:'dark', themeVariables:{primaryColor:'#c2410c',primaryTextColor:'#fff',primaryBorderColor:'#9a3412',lineColor:'#fb923c',secondaryColor:'#1a1a2e',tertiaryColor:'#0f0f1a'}});"
 
 # Copy button configuration
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
