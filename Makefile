@@ -122,3 +122,60 @@ ci:  ## Run CI checks locally
 	@make typecheck
 	@make test-all
 	@echo "✓ All CI checks passed!"
+
+# ============================================================================
+# Documentation Commands
+# ============================================================================
+
+.PHONY: docs-install
+docs-install:  ## Install documentation dependencies
+	@echo "📚 Installing documentation dependencies..."
+	@pip install -q -r docs/requirements.txt
+	@pip install -q sphinx-copybutton sphinxcontrib-mermaid furo
+	@echo "✅ Documentation dependencies installed!"
+
+.PHONY: docs-serve
+docs-serve: docs-install  ## Serve documentation locally with live reload
+	@echo "🚀 Starting documentation server at http://localhost:8000"
+	@cd docs && sphinx-autobuild source build/html --host 0.0.0.0 --port 8000 --watch ../python --open-browser
+
+.PHONY: docs-build
+docs-build: docs-install  ## Build documentation for production
+	@echo "🔨 Building documentation..."
+	@cd docs && sphinx-build -b html source build/html --keep-going
+	@echo "✅ Documentation built in docs/build/html"
+
+.PHONY: docs-build-pdf
+docs-build-pdf: docs-install  ## Build PDF documentation
+	@echo "🔨 Building PDF documentation..."
+	@cd docs && sphinx-build -b latex source build/latex
+	@cd docs/build/latex && make
+	@echo "✅ PDF built in docs/build/latex/optimiz-rs.pdf"
+
+.PHONY: docs-deploy
+docs-deploy: docs-build  ## Deploy documentation to ReadTheDocs (triggered via webhook)
+	@echo "📤 Documentation ready for ReadTheDocs deployment"
+	@echo "   Push to main branch to trigger automatic build on ReadTheDocs"
+
+.PHONY: docs-validate
+docs-validate: docs-install  ## Validate documentation (check for warnings/errors)
+	@echo "🔍 Validating documentation..."
+	@cd docs && sphinx-build -b html source build/html -W --keep-going -q
+	@echo "✅ Documentation validation passed!"
+
+.PHONY: docs-check-links
+docs-check-links: docs-build  ## Check for broken links in documentation
+	@echo "🔗 Checking for broken links..."
+	@cd docs && sphinx-build -b linkcheck source build/html
+	@echo "✅ Link check complete (see docs/build/html/output.txt)"
+
+.PHONY: docs-preview
+docs-preview: docs-build  ## Open built documentation in browser
+	@echo "🌐 Opening documentation preview..."
+	@open docs/build/html/index.html 2>/dev/null || xdg-open docs/build/html/index.html 2>/dev/null || echo "Open docs/build/html/index.html manually"
+
+.PHONY: docs-clean
+docs-clean:  ## Clean documentation build artifacts
+	@echo "🧹 Cleaning documentation build..."
+	@rm -rf docs/build
+	@echo "✅ Documentation cleaned"

@@ -13,7 +13,38 @@ Optimiz-rs Documentation
    :target: https://github.com/ThotDjehuty/optimiz-r/blob/main/LICENSE
    :alt: License
 
+.. image:: https://img.shields.io/badge/pypi-optimiz--rs-blue.svg
+   :target: https://pypi.org/project/optimiz-rs/
+   :alt: PyPI
+
+.. image:: https://img.shields.io/badge/crates.io-optimiz--rs-orange.svg
+   :target: https://crates.io/crates/optimiz-rs
+   :alt: crates.io
+
 Optimiz-rs provides blazingly fast, production-ready implementations of advanced optimization and statistical inference algorithms. Built with Rust for maximum performance and exposed to Python through PyO3, it delivers **50-100× speedup** over pure Python implementations.
+
+**🚀 Quick Integration with Polarway** — Combine Optimiz-rs algorithms with Polarway's high-performance DataFrame engine for streaming time-series analytics:
+
+.. raw:: html
+
+   <div class="grid cards" style="margin: 1.5rem 0;">
+     <div style="padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff; transition: all 0.2s;">
+       <h3 style="margin-top: 0;">🔄 Time-Series Regime Detection</h3>
+       <p style="color: #64748b; margin: 0;">Polarway streams OHLCV data → Optimiz-rs HMM classifies market regimes</p>
+     </div>
+     <div style="padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff; transition: all 0.2s;">
+       <h3 style="margin-top: 0;">📊 Bayesian Inference at Scale</h3>
+       <p style="color: #64748b; margin: 0;">Polarway distributed storage → Optimiz-rs MCMC for probabilistic modeling</p>
+     </div>
+     <div style="padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff; transition: all 0.2s;">
+       <h3 style="margin-top: 0;">⚡ Strategy Optimization</h3>
+       <p style="color: #64748b; margin: 0;">Polarway hybrid storage → Optimiz-rs Differential Evolution (74-88× speedup)</p>
+     </div>
+     <div style="padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: #fff; transition: all 0.2s;">
+       <h3 style="margin-top: 0;">🧠 Mean Field Games</h3>
+       <p style="color: #64748b; margin: 0;">Polarway time-series → Optimiz-rs MFG for agent population dynamics</p>
+     </div>
+   </div>
 
 .. toctree::
    :maxdepth: 2
@@ -136,11 +167,11 @@ Quick Example
 Installation
 ------------
 
-From PyPI (coming soon):
+From PyPI:
 
 .. code-block:: bash
 
-    pip install optimizr
+    pip install optimiz-rs
 
 From source:
 
