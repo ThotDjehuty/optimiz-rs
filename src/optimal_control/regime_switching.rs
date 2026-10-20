@@ -355,7 +355,7 @@ impl RegimeSwitchingSolver {
         // Solve π^T Q = 0 subject to Σπ_i = 1
         // Convert to (Q^T - I)π = 0 with last equation Σπ_i = 1
 
-        use ndarray_linalg::Solve;
+        use crate::linalg::Solve;
 
         let mut a = q.t().to_owned();
         for i in 0..n {

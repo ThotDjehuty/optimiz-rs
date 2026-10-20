@@ -1,6 +1,6 @@
 [package]
 name = "optimiz-rs"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
 authors = ["HFThot Research Lab <contact@hfthot-lab.eu>"]
 description = "High-performance optimization algorithms in Rust with Python bindings"
@@ -32,7 +32,6 @@ numpy = { version = "0.21", optional = true }
 rand = "0.8"
 rand_distr = "0.4"
 ndarray = "0.15"
-ndarray-linalg = { version = "0.16", features = ["openblas-system"] }
 num-traits = "0.2"
 rayon = "1.8"
 thiserror = "1.0"

@@ -31,10 +31,12 @@ use pyo3::types::PyModule;
 
 // Core modules with trait-based architecture
 pub mod core;
+pub mod linalg; // dependency-free dense LA (replaces ndarray-linalg/LAPACK)
 pub mod functional;
 pub mod maths_toolkit; // Mathematical utilities
 pub mod timeseries_utils; // Time-series integration helpers
 pub mod rust_objectives; // Rust-native objectives for parallel evaluation
+pub mod losses; // Differentiable training losses (cross-entropy, MSE, Huber, ...)
 pub mod shade; // SHADE adaptive DE algorithm
 
 // Modular structure (trait-based, generic)
@@ -83,6 +85,10 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<hmm::HMMParams>()?;
     m.add_function(wrap_pyfunction!(hmm::fit_hmm, m)?)?;
     m.add_function(wrap_pyfunction!(hmm::viterbi_decode, m)?)?;
+
+    // Training objectives: the single source of truth for every loss this
+    // stack minimises (also used by thotbook-ai's llm-train).
+    losses::register_losses(m)?;
 
     // MCMC functions (modular structure)
     m.add_function(wrap_pyfunction!(mcmc::mcmc_sample, m)?)?;

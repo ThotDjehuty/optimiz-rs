@@ -4,6 +4,56 @@ All notable changes to **optimiz-rs** are documented in this file. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-10-20
+
+### Fixed — the crate now builds with no system libraries
+
+- **Removed the hard dependency on a system OpenBLAS.** `ndarray-linalg 0.16`
+  with the `openblas-system` backend made a system BLAS a build requirement of
+  a *published* crate: `cargo add optimiz-rs` failed to link on any machine
+  without one, and on macOS Homebrew's `openblas` is keg-only and pulls in
+  `gcc`, `gmp`, `isl`, `libmpc` and `mpfr`. There is now no `ndarray-linalg`,
+  no `openblas-src`, no `build.rs` and no system library of any kind.
+- `cargo build` on a bare checkout completes in seconds; `cargo tree` shows no
+  BLAS or LAPACK crate at all.
+
+### Added — `linalg`: dependency-free dense linear algebra
+
+- `src/linalg.rs` implements exactly what the crate used from LAPACK, in safe
+  Rust: LU with partial pivoting (`solve`, `inv`, `det`), Cholesky, and a
+  one-sided Jacobi `svd`. Traits mirror `ndarray-linalg`'s names
+  (`Solve`, `Inverse`, `Determinant`, `Cholesky`, `Svd`, `Norm`) so call sites
+  only change an import.
+- **Behaviour change:** `svd` returns the **thin** factorisation (`U` is
+  `m x k`, `Vt` is `k x n`, `k = min(m, n)`) where `ndarray-linalg` returned
+  full square factors. Thin is what `sparse_optimization` needs — it
+  reconstructs `U diag(s) Vt`, which is only dimensionally valid for thin
+  factors on a non-square matrix, so the previous code could not have worked
+  off the diagonal.
+- 12 tests: reconstruction for square/tall/wide, orthonormality of the
+  factors, rank deficiency, known spectra, pivoting, and typed errors instead
+  of panics.
+
+### Added — `losses`: differentiable training objectives
+
+- `src/losses.rs` adds the objectives you *minimise*, alongside the benchmark
+  surfaces already in `rust_objectives`. A `Loss` trait returns both value and
+  gradient: `CrossEntropy` (label smoothing, `ignore_index` masking,
+  overflow-free log-softmax), `BinaryCrossEntropy`, `MeanSquaredError`,
+  `MeanAbsoluteError`, `Huber`.
+- Every gradient is checked against central finite differences, and one test
+  asserts gradient descent on the objective actually reduces it.
+- Python bindings: `mse`, `mae`, `huber`, `binary_cross_entropy`,
+  `cross_entropy` and `weighted_mse_sum` — the last being the composite PINN
+  objective evaluated in one call.
+- `thotbook-ai`'s `llm-train` now delegates its training loss here, so there
+  is one audited definition of cross-entropy in the stack instead of two.
+
+### Notes
+
+- 153 tests pass (129 previously, plus 12 `linalg` and 12 `losses`).
+- No public API was removed. The only behavioural change is the thin `svd`.
+
 ## [2.0.0] - 2026-05-14
 
 ### Added — public release of the v2 API

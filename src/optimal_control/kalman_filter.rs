@@ -78,7 +78,7 @@
 //! UKF has O(n³) complexity but better accuracy than EKF for highly nonlinear systems.
 
 use ndarray::{Array1, Array2};
-use ndarray_linalg::{Determinant, Inverse};
+use crate::linalg::{Determinant, Inverse};
 use std::f64::consts::PI;
 use thiserror::Error;
 
@@ -532,9 +532,9 @@ impl<S: StateTransitionModel, O: ObservationModel> UnscentedKalmanFilter<S, O> {
 
     /// Compute matrix square root using Cholesky decomposition
     fn matrix_sqrt(&self, matrix: &Array2<f64>) -> Result<Array2<f64>> {
-        use ndarray_linalg::Cholesky;
+        use crate::linalg::{Cholesky, UPLO};
 
-        matrix.cholesky(ndarray_linalg::UPLO::Lower).map_err(|e| {
+        matrix.cholesky(UPLO::Lower).map_err(|e| {
             OptimalControlError::MatrixError(format!("Cholesky decomposition failed: {:?}", e))
         })
     }

@@ -13,7 +13,7 @@
 
 use crate::core::{OptimizrError, OptimizrResult};
 use ndarray::{Array1, Array2, Axis};
-use ndarray_linalg::{Norm, SVD};
+use crate::linalg::{Norm, Svd};
 
 /// Soft thresholding operator
 ///

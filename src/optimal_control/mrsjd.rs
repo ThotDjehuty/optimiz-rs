@@ -432,7 +432,7 @@ impl MRSJDSolver {
 
     /// Compute stationary distribution
     fn compute_stationary_distribution(&self, q: &Array2<f64>) -> Result<Array1<f64>> {
-        use ndarray_linalg::Solve;
+        use crate::linalg::Solve;
 
         let n = q.nrows();
         let mut a = q.t().to_owned();
