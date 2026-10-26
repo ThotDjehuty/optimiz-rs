@@ -42,6 +42,7 @@ from optimizr.core import (
 # Try to import maths_toolkit and mean_field from Rust backend
 try:
     from optimizr import _core
+
     maths_toolkit = _core
     MFGConfig = _core.MFGConfigPy
     solve_mfg_1d_rust = _core.solve_mfg_1d_rust
@@ -225,8 +226,7 @@ def __getattr__(name):
         from optimizr import _core as _ext
     except ImportError as exc:  # pragma: no cover
         raise AttributeError(
-            f"module 'optimizr' has no attribute {name!r} "
-            f"(_core extension is not built: {exc})"
+            f"module 'optimizr' has no attribute {name!r} " f"(_core extension is not built: {exc})"
         ) from exc
     if hasattr(_ext, name):
         return getattr(_ext, name)

@@ -36,13 +36,14 @@ try:
         Ackley,
         Griewank,
     )
+
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
     warnings.warn(
         "Rust backend not available. Using pure Python fallbacks. "
         "Install with 'pip install optimizr' to enable Rust acceleration.",
-        RuntimeWarning
+        RuntimeWarning,
     )
 
 
@@ -57,10 +58,10 @@ def mcmc_sample(
 ) -> np.ndarray:
     """
     MCMC Metropolis-Hastings sampler.
-    
+
     Generates samples from a target distribution using the Metropolis-Hastings
     algorithm with Gaussian random walk proposals.
-    
+
     Parameters
     ----------
     log_likelihood_fn : callable
@@ -79,12 +80,12 @@ def mcmc_sample(
         Number of initial samples to discard
     proposal_std : float, default=0.1
         Standard deviation of Gaussian proposals
-        
+
     Returns
     -------
     samples : np.ndarray
         Array of shape (n_samples, n_params) with parameter samples
-        
+
     Examples
     --------
     >>> def log_likelihood(params, data):
@@ -105,8 +106,10 @@ def mcmc_sample(
     if RUST_AVAILABLE:
         # Convert to lists if numpy arrays
         # Note: data is now captured in log_likelihood_fn closure
-        params_list = initial_params.tolist() if hasattr(initial_params, 'tolist') else list(initial_params)
-        
+        params_list = (
+            initial_params.tolist() if hasattr(initial_params, "tolist") else list(initial_params)
+        )
+
         # Rust function uses different parameter names
         samples = _rust_mcmc_sample(
             log_likelihood_fn=log_likelihood_fn,
@@ -119,8 +122,7 @@ def mcmc_sample(
     else:
         # Pure Python fallback
         return _mcmc_sample_python(
-            log_likelihood_fn, data, initial_params, param_bounds,
-            n_samples, burn_in, proposal_std
+            log_likelihood_fn, data, initial_params, param_bounds, n_samples, burn_in, proposal_std
         )
 
 
@@ -142,10 +144,10 @@ def differential_evolution(
 ) -> Tuple[np.ndarray, float]:
     """
     Differential Evolution global optimizer.
-    
+
     Population-based stochastic optimization effective for non-convex,
     multimodal objective functions.
-    
+
     Parameters
     ----------
     objective_fn : callable
@@ -176,18 +178,18 @@ def differential_evolution(
         Whether to use adaptive jDE parameter control
     constraint_penalty : float, default=1000.0
         Penalty for constraint violations
-        
+
     Returns
     -------
     x : np.ndarray
         Best parameters found
     fun : float
         Best objective value (minimum)
-        
+
     Examples
     --------
     >>> def rosenbrock(x):
-    ...     return sum(100*(x[i+1] - x[i]**2)**2 + (1-x[i])**2 
+    ...     return sum(100*(x[i+1] - x[i]**2)**2 + (1-x[i])**2
     ...                for i in range(len(x)-1))
     >>> result = differential_evolution(
     ...     objective_fn=rosenbrock,
@@ -220,18 +222,19 @@ def differential_evolution(
         # Pure Python fallback (scipy)
         try:
             from scipy.optimize import differential_evolution as scipy_de
+
             mutation = f if f is not None else 0.8
             recombination = cr if cr is not None else 0.7
             result = scipy_de(
-                objective_fn, 
-                bounds=bounds, 
+                objective_fn,
+                bounds=bounds,
                 maxiter=maxiter,
-                popsize=popsize, 
-                mutation=mutation, 
+                popsize=popsize,
+                mutation=mutation,
                 recombination=recombination,
                 seed=seed,
                 tol=tol,
-                atol=atol
+                atol=atol,
             )
             return result.x, result.fun
         except ImportError:
@@ -248,9 +251,9 @@ def grid_search(
 ) -> Tuple[np.ndarray, float]:
     """
     Grid search optimizer.
-    
+
     Exhaustively evaluates objective function at all points on a regular grid.
-    
+
     Parameters
     ----------
     objective_fn : callable
@@ -259,14 +262,14 @@ def grid_search(
         [(min, max), ...] bounds for each parameter
     n_points : int, default=10
         Number of grid points per dimension
-        
+
     Returns
     -------
     x : np.ndarray
         Best parameters found
     fun : float
         Best objective value (maximum)
-        
+
     Examples
     --------
     >>> def objective(x):
@@ -297,11 +300,11 @@ def mutual_information(
 ) -> float:
     """
     Compute mutual information between two variables.
-    
+
     I(X;Y) = H(X) + H(Y) - H(X,Y)
-    
+
     Measures how much knowing one variable reduces uncertainty about the other.
-    
+
     Parameters
     ----------
     x : np.ndarray
@@ -310,12 +313,12 @@ def mutual_information(
         Sample values from second variable (must be same length as x)
     n_bins : int, default=10
         Number of bins for histogram estimation
-        
+
     Returns
     -------
     mi : float
         Mutual information in nats (multiply by 1/ln(2) for bits)
-        
+
     Examples
     --------
     >>> x = np.random.randn(10000)
@@ -336,23 +339,23 @@ def shannon_entropy(
 ) -> float:
     """
     Compute Shannon entropy of a variable.
-    
+
     H(X) = -Σ p(x) log(p(x))
-    
+
     Quantifies the uncertainty/information content of a random variable.
-    
+
     Parameters
     ----------
     x : np.ndarray
         Sample values from the variable
     n_bins : int, default=10
         Number of bins for histogram estimation
-        
+
     Returns
     -------
     entropy : float
         Shannon entropy in nats (multiply by 1/ln(2) for bits)
-        
+
     Examples
     --------
     >>> x_uniform = np.random.uniform(0, 1, 10000)
@@ -369,28 +372,29 @@ def shannon_entropy(
 
 
 # Pure Python fallback implementations
-def _mcmc_sample_python(log_likelihood_fn, data, initial_params, param_bounds,
-                       n_samples, burn_in, proposal_std):
+def _mcmc_sample_python(
+    log_likelihood_fn, data, initial_params, param_bounds, n_samples, burn_in, proposal_std
+):
     """Pure Python MCMC implementation"""
     current_params = initial_params.copy()
     samples = []
     current_ll = log_likelihood_fn(current_params.tolist(), data.tolist())
-    
+
     for _ in range(n_samples + burn_in):
         # Propose
         proposed = current_params + np.random.randn(len(current_params)) * proposal_std
         for i, (low, high) in enumerate(param_bounds):
             proposed[i] = np.clip(proposed[i], low, high)
-        
+
         # Accept/reject
         proposed_ll = log_likelihood_fn(proposed.tolist(), data.tolist())
         if np.log(np.random.rand()) < proposed_ll - current_ll:
             current_params = proposed
             current_ll = proposed_ll
-        
+
         if len(samples) >= burn_in:
             samples.append(current_params.copy())
-    
+
     return np.array(samples)
 
 
@@ -398,34 +402,35 @@ def _grid_search_python(objective_fn, bounds, n_points):
     """Pure Python grid search implementation"""
     n_params = len(bounds)
     grids = [np.linspace(low, high, n_points) for low, high in bounds]
-    
+
     best_params = None
-    best_score = float('-inf')
-    
+    best_score = float("-inf")
+
     import itertools
+
     for point in itertools.product(*grids):
         score = objective_fn(np.array(point))
         if score > best_score:
             best_score = score
             best_params = np.array(point)
-    
+
     return best_params, best_score
 
 
 def _mutual_information_python(x, y, n_bins):
     """Pure Python MI implementation"""
     hist_2d, x_edges, y_edges = np.histogram2d(x, y, bins=n_bins)
-    
+
     pxy = hist_2d / np.sum(hist_2d)
     px = np.sum(pxy, axis=1)
     py = np.sum(pxy, axis=0)
-    
+
     px_py = px[:, None] * py[None, :]
-    
+
     # Only compute where both are nonzero
     nonzero = (pxy > 0) & (px_py > 0)
     mi = np.sum(pxy[nonzero] * np.log(pxy[nonzero] / px_py[nonzero]))
-    
+
     return max(0.0, mi)
 
 
