@@ -18,6 +18,21 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install OpenBLAS on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libopenblas-dev pkg-config
+
+      - name: Install OpenBLAS on macOS
+        if: runner.os == 'macOS'
+        run: brew install openblas libomp
+
+      - name: Install OpenBLAS on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+          & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install openblas:x64-windows
       
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -55,6 +70,21 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install OpenBLAS on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libopenblas-dev pkg-config
+
+      - name: Install OpenBLAS on macOS
+        if: runner.os == 'macOS'
+        run: brew install openblas libomp
+
+      - name: Install OpenBLAS on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+          & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install openblas:x64-windows
       
       - name: Set up Python
         uses: actions/setup-python@v4
