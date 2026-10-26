@@ -1,0 +1,29 @@
+name: Set up OpenBLAS
+description: Install the system BLAS backend and expose its runtime dependencies for wheel repair.
+runs:
+  using: composite
+  steps:
+    - name: Install OpenBLAS on Linux
+      if: runner.os == 'Linux'
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y libopenblas-dev pkg-config patchelf
+
+    - name: Install OpenBLAS on macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install openblas libomp
+        echo "PKG_CONFIG_PATH=$(brew --prefix openblas)/lib/pkgconfig" >> "$GITHUB_ENV"
+        echo "DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix openblas)/lib:$(brew --prefix gcc)/lib/gcc/current:$(brew --prefix libomp)/lib" >> "$GITHUB_ENV"
+
+    - name: Install OpenBLAS on Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+        "VCPKGRS_DYNAMIC=1" >> $env:GITHUB_ENV
+        # vcpkg builds OpenBLAS without LAPACK; ndarray-linalg needs both.
+        & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install openblas:x64-windows lapack-reference:x64-windows
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        "RUSTFLAGS=-l lapack" >> $env:GITHUB_ENV
+        "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin" >> $env:GITHUB_PATH

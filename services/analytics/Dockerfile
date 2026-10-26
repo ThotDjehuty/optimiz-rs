@@ -17,9 +17,6 @@ COPY Cargo.* pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY python ./python
 RUN test -f Cargo.lock || cargo generate-lockfile
-# ndarray-linalg 0.16's system feature predates openblas-src's mandatory TLS selection.
-RUN cargo update -p openblas-src --precise 0.10.13 \
-    && cargo update -p openblas-build --precise 0.10.13
 RUN maturin build --release --locked --features python-bindings --interpreter python3 \
     --out /wheels --compatibility linux
 
