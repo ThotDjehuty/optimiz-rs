@@ -36,7 +36,9 @@ jobs:
           pip install maturin pytest pytest-cov numpy
       
       - name: Build Rust extension
-        run: maturin develop --release
+        run: |
+          maturin build --release --out dist/
+          pip install --no-index --find-links dist optimiz-rs
       
       - name: Run tests
         run: pytest tests/ -v --cov=optimizr --cov-report=xml
