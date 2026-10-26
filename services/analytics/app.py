@@ -195,7 +195,7 @@ def create_app():
             return datasets.load(dataset_id)
         except FileNotFoundError:
             raise HTTPException(404, "Dataset not found") from None
-        except (ValueError, UnicodeError, OSError, csv.Error) as exc:
+        except (ValueError, TypeError, UnicodeError, OSError, csv.Error) as exc:
             raise HTTPException(400, "Invalid or oversized CSV dataset") from exc
 
     @app.get("/api/datasets/{dataset_id}")
@@ -206,7 +206,7 @@ def create_app():
 
     @app.get("/api/risk")
     def risk(
-        symbol: str = Query(min_length=1, max_length=128),
+        symbol: str = Query(min_length=1, max_length=512),
         dataset_id: str = Query(default="live", max_length=84),
         periods_per_year: float = Query(default=252.0, ge=1.0, le=1_000_000.0),
     ):
@@ -214,7 +214,7 @@ def create_app():
         try:
             with telemetry.tracer.start_as_current_span("analytics.optimizer.risk"):
                 return risk_metrics(rows, symbol, periods_per_year)
-        except (ImportError, RuntimeError):
+        except (ImportError, RuntimeError, TypeError):
             raise HTTPException(503, "Compiled OptimizR risk binding unavailable") from None
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from None

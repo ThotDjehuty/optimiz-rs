@@ -2,8 +2,8 @@ FROM node:22-bookworm-slim AS frontend
 WORKDIR /build
 COPY services/analytics/package*.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
-COPY services/analytics/build.mjs services/analytics/frontend.js services/analytics/style.css ./
-RUN npm run check && npm run build
+COPY services/analytics/build.mjs services/analytics/frontend.js services/analytics/frontend.test.mjs services/analytics/style.css ./
+RUN npm test && npm run check && npm run build
 
 FROM rust:1.93-bookworm AS optimizer
 RUN apt-get update && apt-get install -y --no-install-recommends \

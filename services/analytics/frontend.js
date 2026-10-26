@@ -12,6 +12,7 @@ let socket;
 let generation = 0;
 let table;
 let worker;
+let transitions = Promise.resolve();
 
 async function getJson(path) {
     const response = await fetch(path);
@@ -28,22 +29,44 @@ function convert(rows) {
     return rows.map((row) => ({ ...row, event_time: new Date(row.event_time).getTime() }));
 }
 
-async function selectSource() {
+function selectSource() {
     const current = ++generation;
-    if (socket) socket.close();
-    const old = table;
-    table = await worker.table(
-        { event_time: "datetime", symbol: "string", price: "float", source: "string" },
+    const datasetId = source.value;
+    if (socket) {
+        socket.close();
+        socket = undefined;
+    }
+    transitions = transitions.catch(() => {}).then(() => loadSource(current, datasetId));
+    return transitions;
+}
+
+async function loadSource(current, datasetId) {
+    if (current !== generation) return;
+    const currentTable = await worker.table(
+        { event_time: "datetime", symbol: "string", price: "float", source: "string", price_kind: "string" },
         { limit: 10000 },
     );
-    const currentTable = table;
-    await viewer.load(currentTable);
+    if (current !== generation) {
+        await currentTable.delete();
+        return;
+    }
+    const old = table;
+    try {
+        await viewer.load(currentTable);
+    } catch (error) {
+        await currentTable.delete();
+        throw error;
+    }
+    table = currentTable;
     if (old) await old.delete();
-    await viewer.restore({ plugin: "Datagrid", columns: ["event_time", "symbol", "price", "source"], settings: true });
-    if (source.value !== "live") {
-        const data = await getJson(`/api/datasets/${encodeURIComponent(source.value)}`);
+    if (current !== generation) return;
+    await viewer.restore({ plugin: "Datagrid", columns: ["event_time", "symbol", "price", "source", "price_kind"], settings: true });
+    if (current !== generation) return;
+    if (datasetId !== "live") {
+        const data = await getJson(`/api/datasets/${encodeURIComponent(datasetId)}`);
         if (current !== generation) return;
         await currentTable.replace(convert(data.rows));
+        if (current !== generation) return;
         status.textContent = `${data.rows.length} stored rows${data.truncated ? " (truncated at limit)" : ""}`;
         return;
     }
@@ -56,8 +79,9 @@ async function selectSource() {
             const message = JSON.parse(event.data);
             if (message.type === "snapshot") await currentTable.replace(convert(message.rows));
             else if (message.rows.length) await currentTable.update(convert(message.rows));
-            status.textContent = `Live bridge connected · ${await currentTable.size()} buffered rows`;
-        }).catch((error) => { status.textContent = error.message; });
+            const size = await currentTable.size();
+            if (current === generation) status.textContent = `Live bridge connected · ${size} buffered rows`;
+        }).catch((error) => { if (current === generation) status.textContent = error.message; });
     };
     socket.onclose = () => {
         if (current !== generation) return;
@@ -66,7 +90,7 @@ async function selectSource() {
             if (current === generation) selectSource().catch(showError);
         }, 3000);
     };
-    socket.onerror = () => { status.textContent = "Live connection failed"; };
+    socket.onerror = () => { if (current === generation) status.textContent = "Live connection failed"; };
 }
 
 function showError(error) { status.textContent = error.message; }

@@ -3,11 +3,13 @@ import json
 import math
 import sys
 import types
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
+from services.analytics import telemetry
 from services.analytics.app import create_app
 from services.analytics.data import (
     MAX_FILE_BYTES,
@@ -51,9 +53,8 @@ def test_auth_every_data_surface(client):
     assert client.get("/", follow_redirects=False).status_code == 303
     for path in ("/api/datasets", "/api/risk?symbol=XYZ", "/static/app.js"):
         assert client.get(path).status_code == 401
-    with pytest.raises(WebSocketDisconnect):
-        with client.websocket_connect("/ws/live"):
-            pass
+    with pytest.raises(WebSocketDisconnect), client.websocket_connect("/ws/live"):
+        pass
     assert client.post("/login", data={"token": TOKEN}).status_code == 403
     assert (
         client.post(
@@ -70,9 +71,10 @@ def test_auth_every_data_surface(client):
     login(client)
     assert client.get("/").status_code == 200
     assert client.get("/api/datasets").status_code == 200
-    with pytest.raises(WebSocketDisconnect):
-        with client.websocket_connect("/ws/live", headers={"Origin": "http://attacker"}):
-            pass
+    with pytest.raises(WebSocketDisconnect), client.websocket_connect(
+        "/ws/live", headers={"Origin": "http://attacker"}
+    ):
+        pass
     with client.websocket_connect("/ws/live", headers={"Origin": "http://testserver"}) as ws:
         assert ws.receive_json() == {"type": "snapshot", "rows": []}
     assert client.post("/logout", headers={"Origin": "http://testserver"}).status_code == 200
@@ -113,21 +115,44 @@ def test_mounted_token_file(monkeypatch, tmp_path):
         create_app()
 
 
+def test_telemetry_exports_metrics_only_unless_traces_explicitly_enabled(monkeypatch):
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://collector:4318")
+    monkeypatch.delenv("OTEL_TRACES_EXPORTER", raising=False)
+    for name in (
+        "TracerProvider",
+        "MeterProvider",
+        "PeriodicExportingMetricReader",
+        "BatchSpanProcessor",
+        "OTLPMetricExporter",
+        "OTLPSpanExporter",
+    ):
+        monkeypatch.setattr(telemetry, name, Mock())
+    instance = telemetry.Telemetry()
+    telemetry.OTLPMetricExporter.assert_called_once()
+    telemetry.OTLPSpanExporter.assert_not_called()
+    instance.close()
+    monkeypatch.setenv("OTEL_TRACES_EXPORTER", "otlp")
+    instance = telemetry.Telemetry()
+    telemetry.OTLPSpanExporter.assert_called_once()
+    instance.close()
+
+
 @pytest.mark.parametrize(
     "change",
     [
         {"price": "nan"},
         {"price": float("inf")},
+        {"price": 10**500},
         {"price": -1},
         {"price": True},
         {"event_time": "2026-01-01"},
         {"event_time": "invalid"},
         {"symbol": ""},
-        {"symbol": "x" * 129},
+        {"symbol": "x" * 513},
     ],
 )
 def test_normalize_rejects_invalid_data(change):
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, TypeError)):
         normalize_record({**RECORD, **change})
 
 
@@ -137,9 +162,21 @@ def test_normalize_utc_and_numeric_csv():
     )
     assert result["price"] == 101.25
     assert result["event_time"] == "2026-01-01T10:00:00+00:00"
+    assert result["source"] == "unknown"
+    assert result["price_kind"] == "unspecified"
     assert normalize_record({**RECORD, "source": "MLink"})["source"] == "MLink"
+    assert normalize_record({**RECORD, "symbol": "x" * 256})["symbol"] == "x" * 256
     with pytest.raises(ValueError, match="source"):
         normalize_record({**RECORD, "source": ["not", "flat"]})
+    record = normalize_record(
+        {**RECORD, "source": "spiderrock:sandbox:snapshot", "price_kind": "option_midpoint"}
+    )
+    assert record["source"] == "spiderrock:sandbox:snapshot"
+    assert record["price_kind"] == "option_midpoint"
+    with pytest.raises(ValueError, match="price_kind"):
+        normalize_record({**RECORD, "price_kind": "x" * 65})
+    with pytest.raises(ValueError, match="source"):
+        normalize_record({**RECORD, "source": "x" * 129})
 
 
 def write_csv(path, count=7):
@@ -169,6 +206,25 @@ def test_dataset_identifiers_limits_and_symlinks(tmp_path):
         stream.truncate(MAX_FILE_BYTES + 1)
     with pytest.raises(ValueError, match="16 MiB"):
         store.load("large.csv")
+
+
+def test_dataset_lookup_only_uses_enumerated_candidates(monkeypatch, tmp_path):
+    listed = tmp_path / "listed.csv"
+    write_csv(listed)
+    write_csv(tmp_path / "unlisted.csv")
+    store = DatasetStore(tmp_path)
+    path_type = type(store.directory)
+    original_iterdir = path_type.iterdir
+
+    def entries(path):
+        if path == store.directory:
+            return iter([listed])
+        return original_iterdir(path)
+
+    monkeypatch.setattr(path_type, "iterdir", entries)
+    assert len(store.load("listed.csv")[0]) == 7
+    with pytest.raises(FileNotFoundError):
+        store.load("unlisted.csv")
 
 
 def test_dataset_api_and_invalid_csv(client, tmp_path):
@@ -240,9 +296,11 @@ def test_live_partial_invalid_oversized_rotation_and_bounds(tmp_path):
     assert tail.poll() == 0
     with path.open("ab") as stream:
         stream.write(encoded[20:] + b"\ninvalid\n" + b"x" * 5000 + b"\n")
+        stream.write(json.dumps({**RECORD, "price": 10**500}).encode() + b"\n")
+        stream.write(b"[" * 1100 + b"]" * 1100 + b"\n")
         stream.write(encoded + b"\n" + encoded + b"\n")
     assert tail.poll() == 3
-    assert tail.rejected == 2
+    assert tail.rejected == 4
     snapshot, cursor = tail.since(0)
     assert snapshot["type"] == "snapshot"
     assert len(snapshot["rows"]) == 2
@@ -251,6 +309,10 @@ def test_live_partial_invalid_oversized_rotation_and_bounds(tmp_path):
     path.write_bytes(encoded + b"\n")
     assert tail.poll() == 1
     assert len(tail.since(cursor)[0]["rows"]) == 1
+    path.write_bytes(b"")
+    assert tail.poll() == 0
+    path.write_bytes(encoded + b"\n")
+    assert tail.poll() == 1
 
 
 def test_risk_delegates_to_public_optimizer(monkeypatch):

@@ -263,6 +263,10 @@ workspace. It creates a private analytics VM with a persistent disk, a
 least-privilege runtime service account, an IAP-only SSH firewall rule and a
 private archival bucket. It optionally provisions the Databricks notebook/job
 against your existing cluster. It does not create a Databricks account/workspace.
+Supply a wheel built for that cluster's architecture and Python ABI. The
+analytics image's Linux wheel relies on system OpenBLAS; Databricks must have
+compatible native libraries, or receive an appropriately packaged wheel.
+This configuration does not install cluster-level native dependencies.
 
 Prepare these prerequisites before planning:
 
@@ -293,6 +297,9 @@ Publishing and applying are separate promotions: first publish, then select the
 tested digest in Terraform inputs, review the plan and authorize apply.
 The starter VM can pull a public Docker Hub image; private registry credential
 provisioning is not implemented.
+After changing the configured image digest, token version or collector settings,
+perform a controlled VM stop/start to execute the updated startup script.
+Terraform metadata updates alone do not restart the running application.
 
 The VM exposes the dashboard only on its loopback interface. Use IAP SSH
 port forwarding to access it, for example::
@@ -316,6 +323,8 @@ installed as a managed cloud Grafana service.
 This starter stores metrics, not distributed traces/logs: configuring an
 OpenTelemetry exporter does not create a Tempo/Loki backend. Add official
 backends and retention policies separately if those signals are required.
+Enable ``OTEL_TRACES_EXPORTER=otlp`` only when the configured endpoint accepts
+traces; the provided collector is metrics-only.
 
 Before calling the deployment production-ready:
 

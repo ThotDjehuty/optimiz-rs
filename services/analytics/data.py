@@ -18,17 +18,17 @@ DATASET_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}\.csv")
 
 def normalize_record(record):
     if not isinstance(record, dict):
-        raise ValueError("Expected an object")
+        raise TypeError("Expected an object")
     symbol = record.get("symbol")
-    if not isinstance(symbol, str) or not symbol.strip() or len(symbol) > 128:
-        raise ValueError("symbol must be a nonempty string of at most 128 characters")
+    if not isinstance(symbol, str) or not symbol.strip() or len(symbol) > 512:
+        raise ValueError("symbol must be a nonempty string of at most 512 characters")
     value = record.get("price")
     if isinstance(value, bool):
-        raise ValueError("price must be numeric")
+        raise TypeError("price must be numeric")
     try:
         price = float(value)
         timestamp = datetime.fromisoformat(str(record["event_time"]).replace("Z", "+00:00"))
-    except (TypeError, ValueError, KeyError) as exc:
+    except (TypeError, ValueError, KeyError, OverflowError) as exc:
         raise ValueError("Expected numeric price and ISO-8601 event_time") from exc
     if not math.isfinite(price) or price <= 0 or timestamp.tzinfo is None:
         raise ValueError("price must be finite and positive; event_time must include timezone")
@@ -41,11 +41,11 @@ def normalize_record(record):
         "symbol": symbol.strip(),
         "price": price,
     }
-    if "source" in record:
-        source = record["source"]
-        if not isinstance(source, str) or len(source) > 128:
-            raise ValueError("source must be a string of at most 128 characters")
-        normalized["source"] = source
+    for field, limit, default in (("source", 128, "unknown"), ("price_kind", 64, "unspecified")):
+        value = record.get(field, default)
+        if not isinstance(value, str) or len(value) > limit:
+            raise ValueError(f"{field} must be a string of at most {limit} characters")
+        normalized[field] = value or default
     return normalized
 
 
@@ -57,7 +57,14 @@ class DatasetStore:
     def path(self, dataset_id):
         if not DATASET_ID.fullmatch(dataset_id):
             raise ValueError("Invalid dataset identifier")
-        candidate = self.directory / dataset_id
+        for candidate in self.directory.iterdir():
+            if candidate.name == dataset_id:
+                return self._checked_path(candidate)
+        raise FileNotFoundError("Dataset not found")
+
+    def _checked_path(self, candidate):
+        if not DATASET_ID.fullmatch(candidate.name):
+            raise ValueError("Invalid dataset identifier")
         if candidate.is_symlink() or candidate.resolve().parent != self.directory:
             raise ValueError("Dataset symlinks are not permitted")
         if not candidate.is_file():
@@ -73,7 +80,7 @@ class DatasetStore:
                 if len(result) >= 100:
                     break
                 try:
-                    self.path(path.name)
+                    self._checked_path(path)
                 except (ValueError, OSError):
                     continue
                 result.append(path.name)
@@ -139,7 +146,7 @@ class LiveTail:
             if complete:
                 try:
                     row = normalize_record(json.loads(self.pending))
-                except (ValueError, UnicodeDecodeError):
+                except (ValueError, TypeError, UnicodeDecodeError, RecursionError):
                     self.rejected += 1
                 else:
                     with self.lock:
@@ -162,7 +169,7 @@ def risk_metrics(rows, symbol, periods_per_year=252.0):
     from optimizr import compute_risk_metrics_py
 
     if not callable(compute_risk_metrics_py):
-        raise RuntimeError("The compiled OptimizR risk binding is required")
+        raise TypeError("The compiled OptimizR risk binding is required")
     selected = sorted(
         (row for row in rows if row["symbol"] == symbol), key=lambda row: row["event_time"]
     )

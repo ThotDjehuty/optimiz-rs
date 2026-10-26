@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
+    "test": "node --test frontend.test.mjs",
     "check": "node --check frontend.js && node --check build.mjs"
   },
   "dependencies": {

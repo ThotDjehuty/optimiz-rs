@@ -1,4 +1,8 @@
-"""OTLP traces and metrics without exporting tokens, records, or file paths."""
+"""Metrics-first OTLP export without tokens, records, or file paths.
+
+Trace export requires OTEL_TRACES_EXPORTER=otlp. When the default collector only
+accepts metrics, set OTEL_EXPORTER_OTLP_TRACES_ENDPOINT to an external trace backend.
+"""
 
 import os
 
@@ -19,8 +23,9 @@ class Telemetry:
         self.traces = TracerProvider(resource=resource)
         readers = []
         if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
-            self.traces.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
             readers.append(PeriodicExportingMetricReader(OTLPMetricExporter()))
+            if os.getenv("OTEL_TRACES_EXPORTER", "").lower() == "otlp":
+                self.traces.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
         self.meters = MeterProvider(resource=resource, metric_readers=readers)
         self.tracer = self.traces.get_tracer(__name__)
         meter = self.meters.get_meter(__name__)

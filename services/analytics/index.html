@@ -15,7 +15,8 @@
         <form method="post" action="/logout"><button>Sign out</button></form>
     </header>
     <p id="status" role="status">Starting local FINOS Perspective engine…</p>
-    <p>CSV columns: event_time (ISO-8601 with timezone), symbol, price; optional source. Maximum 10,000 rows.
+    <p>CSV columns: event_time (ISO-8601 with timezone), symbol, price; optional source and price_kind.
+        Maximum 10,000 rows.
         Live data requires the separately configured vendor bridge; no synthetic data is generated.</p>
     <perspective-viewer id="viewer" theme="Pro Light"></perspective-viewer>
     <section>
@@ -23,7 +24,7 @@
         <p>Uses the installed compute_risk_metrics_py binding on one symbol’s consecutive price returns.
             Set periods/year to match your sampling frequency. Risk-free rate is zero.
             This dashboard exposes risk metrics, not every optimizer algorithm.</p>
-        <label>Symbol <input id="symbol" maxlength="128" placeholder="Select a symbol"></label>
+        <label>Symbol <input id="symbol" maxlength="512" placeholder="Select a symbol"></label>
         <label>Periods/year <input id="periods" type="number" min="1" max="1000000" value="252"></label>
         <button id="risk">Compute risk</button>
         <pre id="metrics" aria-live="polite"></pre>
