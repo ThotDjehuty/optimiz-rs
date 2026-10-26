@@ -113,8 +113,9 @@ python -m pytest tests/test_analytics.py tests/test_vendor_integrity.py tests/te
 Both core test and wheel jobs use `.github/actions/setup-openblas` to install
 the system backend. On macOS it also exposes GCC runtime libraries for wheel
 repair. Windows installs and links `lapack-reference` as well, because vcpkg's
-OpenBLAS omits LAPACK. Maturin 1.15 repairs wheels and bundles runtime libraries;
-wheel jobs install and test the resulting artifacts before uploading them.
+OpenBLAS omits LAPACK. The project explicitly enables Maturin 1.15 wheel repair
+to bundle runtime libraries (Windows otherwise only warns about missing DLLs).
+Wheel jobs install and test the resulting artifacts before uploading them.
 The analytics image resolves OpenBLAS from `Cargo.toml`, including its TLS
 feature, without applying an incompatible Docker-only downgrade.
 
