@@ -38,7 +38,7 @@ dev = [
     "pytest-cov>=4.0",
     "black>=23.0",
     "ruff>=0.1.0",
-    "mypy>=1.0",
+    "mypy>=1.0,<1.15",
 ]
 scipy = [
     "scipy>=1.7.0",
@@ -70,6 +70,9 @@ target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 [tool.ruff]
 line-length = 100
 target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
 
 [tool.mypy]
 python_version = "3.8"

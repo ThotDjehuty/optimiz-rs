@@ -9,6 +9,8 @@ inference algorithms with Rust acceleration and pure Python fallbacks.
 
 """
 
+from typing import Any
+
 from optimizr.hmm import HMM
 from optimizr.core import (
     mcmc_sample,
@@ -42,6 +44,7 @@ from optimizr.core import (
 # Try to import maths_toolkit and mean_field from Rust backend
 try:
     from optimizr import _core
+
     maths_toolkit = _core
     MFGConfig = _core.MFGConfigPy
     solve_mfg_1d_rust = _core.solve_mfg_1d_rust
@@ -123,9 +126,9 @@ try:
         LinearKalmanFilter,
         UnscentedKalmanFilter,
         RTSSmoother,
-        FilterResult,
-        SmootherResult,
-        KalmanState,
+        FilterResult as FilterResult,
+        SmootherResult as SmootherResult,
+        KalmanState as KalmanState,
     )
 except (ImportError, AttributeError):
     pass
@@ -216,7 +219,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Transparent fallback: forward any unresolved top-level attribute access
     to the compiled `_core` extension.  This keeps `from optimizr import X`
     working for every Rust-backed function (v1.x and v2.0 primitives) without
@@ -225,8 +228,7 @@ def __getattr__(name):
         from optimizr import _core as _ext
     except ImportError as exc:  # pragma: no cover
         raise AttributeError(
-            f"module 'optimizr' has no attribute {name!r} "
-            f"(_core extension is not built: {exc})"
+            f"module 'optimizr' has no attribute {name!r} " f"(_core extension is not built: {exc})"
         ) from exc
     if hasattr(_ext, name):
         return getattr(_ext, name)
