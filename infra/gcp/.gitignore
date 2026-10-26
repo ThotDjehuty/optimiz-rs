@@ -1,0 +1,6 @@
+.terraform/
+*.tfstate*
+*.tfplan
+runtime.auto.tfvars.json
+backend.hcl
+terraform.tfvars

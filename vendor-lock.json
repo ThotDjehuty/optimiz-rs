@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/SpiderRock/SpiderRock-Connect-SDK.git",
+  "path": "vendor/spiderrock-connect-sdk",
+  "commit": "141b9388bb09121e49d3b7ae272c056817426203",
+  "required_directories": [
+    "Env-Sandbox",
+    "FIX",
+    "HistoricalData",
+    "MLink",
+    "SRSE",
+    "SpiderStream"
+  ]
+}

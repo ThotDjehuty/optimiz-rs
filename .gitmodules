@@ -1,0 +1,3 @@
+[submodule "vendor/spiderrock-connect-sdk"]
+	path = vendor/spiderrock-connect-sdk
+	url = https://github.com/SpiderRock/SpiderRock-Connect-SDK.git

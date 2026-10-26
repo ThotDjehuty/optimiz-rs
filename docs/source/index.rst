@@ -54,6 +54,7 @@ Optimiz-rs provides blazingly fast, production-ready implementations of advanced
    installation
    quickstart
    examples
+   analytics-deployment
 
 .. toctree::
    :maxdepth: 2

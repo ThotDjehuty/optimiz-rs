@@ -1,0 +1,174 @@
+name: Analytics image and infrastructure
+
+on:
+  pull_request:
+    paths:
+      - "services/analytics/**"
+      - "python/**"
+      - "src/**"
+      - "Cargo.*"
+      - "pyproject.toml"
+      - "vendor/**"
+      - "vendor-lock.json"
+      - ".gitmodules"
+      - "scripts/verify_vendor.py"
+      - "scripts/spiderrock*"
+      - "scripts/Dockerfile.spiderrock"
+      - "tests/**"
+      - "infra/**"
+      - "deploy/**"
+      - ".github/workflows/analytics.yml"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the analytics image to Docker Hub (protected dockerhub environment)
+        type: boolean
+        default: false
+      terraform_operation:
+        description: Cloud operation (requires existing infrastructure/auth configuration)
+        type: choice
+        options: [none, plan, apply]
+        default: none
+      confirm_apply:
+        description: Type APPLY to authorize Terraform apply, in addition to environment approval
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Verify complete pinned vendor SDK
+        run: python scripts/verify_vendor.py
+      - name: Install read-only bridge test dependencies
+        run: python -m pip install -r scripts/spiderrock-requirements.txt pytest==8.4.2
+      - name: Test vendor integrity and synthetic parser roundtrip without credentials
+        run: |
+          python -m pytest -q tests/test_vendor_integrity.py tests/test_spiderrock_ingest.py
+          python scripts/verify_vendor.py
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: 1.13.5
+          terraform_wrapper: false
+      - name: Validate Terraform without credentials or remote state
+        working-directory: infra/gcp
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false -input=false -lockfile=readonly
+          terraform validate
+          terraform test
+      - name: Validate local Compose configuration
+        env:
+          ANALYTICS_IMAGE: analytics:validation
+          ANALYTICS_TOKEN_FILE: ./secrets/not-used-in-config-validation
+          GRAFANA_PASSWORD_FILE: ./secrets/not-used-in-config-validation
+        run: docker compose -f deploy/compose.yaml config --quiet
+      - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+      - name: Build without publishing or registry credentials
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .
+          file: services/analytics/Dockerfile
+          push: false
+          tags: analytics:validation
+      - name: Build generic operator-run bridge runtime without publishing
+        run: docker build --file scripts/Dockerfile.spiderrock --tag spiderrock-bridge:validation .
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    needs: validate
+    runs-on: ubuntu-24.04
+    # Configure required reviewers and default-branch-only deployment rules.
+    environment: dockerhub
+    concurrency:
+      group: analytics-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: python scripts/verify_vendor.py
+      - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Publish immutable commit tag (no latest tag)
+        id: image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .
+          file: services/analytics/Dockerfile
+          push: true
+          tags: docker.io/${{ vars.DOCKERHUB_REPOSITORY }}:${{ github.sha }}
+          provenance: mode=max
+          sbom: true
+      - name: Record digest for explicit deployment configuration
+        env:
+          IMAGE: docker.io/${{ vars.DOCKERHUB_REPOSITORY }}
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: printf 'Published `%s@%s`\n' "$IMAGE" "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+
+  terraform:
+    if: github.event_name == 'workflow_dispatch' && inputs.terraform_operation != 'none' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && (inputs.terraform_operation != 'apply' || inputs.confirm_apply == 'APPLY')
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    # Both environments require reviewers. Use distinct read-only plan and
+    # deployment identities; WIF trust must constrain repository/ref/environment.
+    environment: ${{ inputs.terraform_operation == 'apply' && 'analytics-production' || 'analytics-plan' }}
+    concurrency:
+      group: analytics-terraform
+      cancel-in-progress: false
+    env:
+      TF_IN_AUTOMATION: "true"
+      DATABRICKS_AUTH_TYPE: oauth-m2m
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+    defaults:
+      run:
+        working-directory: infra/gcp
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@b7593ed2efd1c1617e1b0254da33b86225adb2a5 # v2.1.12
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_TERRAFORM_SERVICE_ACCOUNT }}
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: 1.13.5
+          terraform_wrapper: false
+      - name: Load non-secret deployment configuration and private remote backend
+        env:
+          TFVARS_JSON: ${{ vars.ANALYTICS_TFVARS_JSON }}
+          STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          STATE_PREFIX: ${{ vars.TF_STATE_PREFIX }}
+        run: |
+          test -n "$TFVARS_JSON" && test -n "$STATE_BUCKET" && test -n "$STATE_PREFIX"
+          printf '%s\n' "$TFVARS_JSON" > runtime.auto.tfvars.json
+          terraform init -input=false -lockfile=readonly \
+            -backend-config="bucket=$STATE_BUCKET" -backend-config="prefix=$STATE_PREFIX"
+          terraform validate
+      - name: Plan (not uploaded as a public artifact)
+        run: terraform plan -input=false -lock-timeout=5m -out=deployment.tfplan
+      - name: Apply only after explicit manual authorization and environment approval
+        if: inputs.terraform_operation == 'apply' && inputs.confirm_apply == 'APPLY'
+        run: terraform apply -input=false -lock-timeout=5m deployment.tfplan
+      - name: Remove local plan and deployment configuration
+        if: always()
+        run: rm -f deployment.tfplan runtime.auto.tfvars.json

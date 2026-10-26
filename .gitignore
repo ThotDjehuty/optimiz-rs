@@ -36,3 +36,15 @@ docs/source/theory/*.pdf
 /hmm_states.png
 /mcmc_posterior.png
 examples/*.png
+
+# Local deployment configuration and state
+.env
+.env.*
+!.env.example
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+*.tfvars
+!*.tfvars.example
+/data/
