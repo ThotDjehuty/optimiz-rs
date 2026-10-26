@@ -13,7 +13,7 @@ RUN python3 -m venv /buildenv
 ENV PATH="/buildenv/bin:${PATH}"
 RUN pip install --no-cache-dir maturin==1.15.0
 WORKDIR /build
-COPY Cargo.* pyproject.toml README.md ./
+COPY Cargo.* pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY python ./python
 RUN test -f Cargo.lock || cargo generate-lockfile
@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libopenblas0-pt
     && mkdir -p /data/datasets /data/live \
     && chown -R analytics:analytics /data
 WORKDIR /app
+COPY LICENSE /usr/share/licenses/optimiz-rs/LICENSE
 COPY services/analytics/requirements.txt /app/requirements.txt
 COPY --from=optimizer /wheels /wheels
 RUN pip install --no-cache-dir -r /app/requirements.txt /wheels/*.whl \
