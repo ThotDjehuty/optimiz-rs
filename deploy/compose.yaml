@@ -1,0 +1,106 @@
+name: optimiz-analytics
+
+services:
+  analytics:
+    image: ${ANALYTICS_IMAGE:?Set ANALYTICS_IMAGE to the analytics image}
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DATA_DIR: /data
+      ANALYTICS_TOKEN_FILE: /run/secrets/analytics_token
+      # HTTP is loopback-only. Enable Secure cookies behind any HTTPS ingress.
+      COOKIE_SECURE: "false"
+      OTEL_SERVICE_NAME: optimiz-analytics
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      # This stack stores metrics only; no trace or log backend is provisioned.
+      OTEL_TRACES_SAMPLER: always_off
+    volumes:
+      - analytics_data:/data
+    secrets:
+      - analytics_token
+    depends_on:
+      - otel-collector
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 2g
+    logging: &bounded_logs
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.140.0@sha256:ffc818ee108d0b934fd14207fd87ff247c9b64f344ed349d0b66c166c18a2312
+    command: ["--config=/etc/otelcol/config.yaml"]
+    restart: unless-stopped
+    volumes:
+      - ./otel/collector.yaml:/etc/otelcol/config.yaml:ro
+    # OTLP and exporter are only on the Compose network, not host management ports.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    logging: *bounded_logs
+
+  prometheus:
+    image: prom/prometheus:v3.5.0@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus_data:/prometheus
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    logging: *bounded_logs
+
+  grafana:
+    image: grafana/grafana:12.3.0@sha256:70d9599b186ce287be0d2c5ba9a78acb2e86c1a68c9c41449454d0fc3eeb84e8
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_password
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    secrets:
+      - grafana_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    logging: *bounded_logs
+
+secrets:
+  analytics_token:
+    file: ${ANALYTICS_TOKEN_FILE:?Set ANALYTICS_TOKEN_FILE to a nonempty local secret file}
+  grafana_password:
+    file: ${GRAFANA_PASSWORD_FILE:?Set GRAFANA_PASSWORD_FILE to a nonempty local secret file}
+
+volumes:
+  analytics_data:
+  prometheus_data:
+  grafana_data:

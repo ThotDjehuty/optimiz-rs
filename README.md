@@ -153,6 +153,15 @@ All new modules are exposed via the **Rust API only** in this release; Python bi
 
 ## Features
 
+### Vendor-pinned analytics deployment
+
+The optional [analytics deployment guide](docs/source/analytics-deployment.rst)
+connects the official SpiderRock SDK, this optimizer, FINOS Perspective,
+Docker Hub, Terraform, Databricks on GCP, and OpenTelemetry/Grafana.
+It separates live/stored-data visualization from order execution.
+Deployment requires your own infrastructure configuration and vendor entitlements;
+adding the configuration does not deploy production or authorize trading.
+
 ✨ **Algorithms Included:**
 
 - **Mean Field Games**: 1D MFG solver, HJB-Fokker-Planck coupling, agent population dynamics

@@ -1,0 +1,46 @@
+{
+  "uid": "optimiz-analytics",
+  "title": "Optimiz analytics telemetry",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "15s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "title": "Collector scrape reachable (not app health)",
+      "type": "stat",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 5, "w": 8, "x": 0, "y": 0},
+      "targets": [{"refId": "A", "expr": "up{job=\"analytics-otel\"}"}]
+    },
+    {
+      "id": 2,
+      "title": "Exported metric samples",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 0},
+      "targets": [{"refId": "A", "expr": "scrape_samples_scraped{job=\"analytics-otel\"}"}]
+    },
+    {
+      "id": 3,
+      "title": "Analytics HTTP requests / second",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [{"refId": "A", "expr": "sum(rate(analytics_http_requests_total[5m]))"}]
+    },
+    {
+      "id": 4,
+      "title": "Ingested / rejected records per second",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {"refId": "A", "expr": "sum(rate(analytics_ingest_records_total[5m]))", "legendFormat": "ingested"},
+        {"refId": "B", "expr": "sum(rate(analytics_ingest_rejected_total[5m]))", "legendFormat": "rejected"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+#!/bin/bash
+set -euo pipefail
+umask 077
+
+# COS recreates its root filesystem on boot. Recreate units only after mounting
+# the stateful disk; Docker must never start against an empty fallback directory.
+systemctl stop optimiz-analytics.service optimiz-collector.service 2>/dev/null || true
+device=/dev/disk/by-id/google-analytics-data
+for _ in $(seq 1 60); do
+  [ -b "$device" ] && break
+  sleep 2
+done
+test -b "$device"
+if ! blkid "$device" >/dev/null 2>&1; then
+  mkfs.ext4 -m 0 "$device"
+fi
+mkdir -p /mnt/disks/analytics
+mountpoint -q /mnt/disks/analytics || mount -o nodev,nosuid "$device" /mnt/disks/analytics
+mkdir -p /mnt/disks/analytics/data /run/optimiz
+chown 10001:10001 /mnt/disks/analytics/data
+chmod 750 /mnt/disks/analytics/data
+
+# Fetch only at runtime. Secret bytes never enter Terraform, VM metadata or logs.
+access_token=$(curl -fsS --retry 5 -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token \
+  | sed -n 's/.*"access_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+test -n "$access_token"
+curl -fsS --retry 12 --retry-all-errors --retry-delay 5 --oauth2-bearer "$access_token" \
+  "https://secretmanager.googleapis.com/v1/projects/${project_id}/secrets/${secret_id}/versions/${secret_version}:access" \
+  | sed -n 's/.*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+  | base64 -d > /run/optimiz/analytics_token
+unset access_token
+test -s /run/optimiz/analytics_token
+chown 10001:10001 /run/optimiz/analytics_token
+chmod 400 /run/optimiz/analytics_token
+
+cat > /run/optimiz/collector.yaml <<'COLLECTOR'
+${collector}
+COLLECTOR
+chmod 444 /run/optimiz/collector.yaml
+docker network inspect optimiz >/dev/null 2>&1 || docker network create optimiz
+docker pull '${analytics_image}'
+docker pull otel/opentelemetry-collector-contrib:0.140.0@sha256:ffc818ee108d0b934fd14207fd87ff247c9b64f344ed349d0b66c166c18a2312
+
+cat > /etc/systemd/system/optimiz-collector.service <<'UNIT'
+[Unit]
+Description=Optimiz OpenTelemetry metrics collector
+Requires=docker.service
+After=docker.service network-online.target
+[Service]
+Restart=always
+RestartSec=10
+ExecStartPre=-/usr/bin/docker rm -f otel-collector
+ExecStart=/usr/bin/docker run --name otel-collector --network optimiz --read-only --cap-drop ALL --security-opt no-new-privileges --memory 256m --log-opt max-size=10m --log-opt max-file=3 -p 127.0.0.1:9464:9464 -v /run/optimiz/collector.yaml:/etc/otelcol/config.yaml:ro otel/opentelemetry-collector-contrib:0.140.0@sha256:ffc818ee108d0b934fd14207fd87ff247c9b64f344ed349d0b66c166c18a2312 --config=/etc/otelcol/config.yaml
+ExecStop=/usr/bin/docker stop otel-collector
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+cat > /etc/systemd/system/optimiz-analytics.service <<'UNIT'
+[Unit]
+Description=Optimiz authenticated persistent analytics
+Requires=docker.service optimiz-collector.service
+After=docker.service optimiz-collector.service network-online.target
+RequiresMountsFor=/mnt/disks/analytics
+[Service]
+Restart=always
+RestartSec=10
+ExecStartPre=-/usr/bin/docker rm -f analytics
+ExecStart=/usr/bin/docker run --name analytics --init --network optimiz \
+  --read-only --cap-drop ALL --security-opt no-new-privileges --memory 2g \
+  --log-opt max-size=10m --log-opt max-file=3 --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  -p 127.0.0.1:8080:8080 -v /mnt/disks/analytics/data:/data \
+  -v /run/optimiz/analytics_token:/run/secrets/analytics_token:ro \
+  -e DATA_DIR=/data -e ANALYTICS_TOKEN_FILE=/run/secrets/analytics_token \
+  -e COOKIE_SECURE=false -e OTEL_SERVICE_NAME=optimiz-analytics \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
+  -e OTEL_TRACES_SAMPLER=always_off ${analytics_image}
+ExecStop=/usr/bin/docker stop --time 30 analytics
+TimeoutStopSec=45
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl start optimiz-collector.service optimiz-analytics.service

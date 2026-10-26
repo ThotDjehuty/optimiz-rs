@@ -1,0 +1,5 @@
+# Create this bucket out of band with versioning, public access prevention,
+# restricted IAM and retention appropriate to Terraform state.
+# terraform init -backend-config=backend.hcl
+bucket = "REPLACE-existing-private-terraform-state"
+prefix = "optimiz/production"

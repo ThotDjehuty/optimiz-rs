@@ -81,7 +81,7 @@ Thank you for your interest in contributing to OptimizR! This document provides 
 
 1. **Run Python tests**
    ```bash
-   pytest tests/ -v
+   python -m pytest tests/test_optimizr.py tests/test_v2_api.py -v
    ```
 
 2. **Run Rust tests**
@@ -91,13 +91,33 @@ Thank you for your interest in contributing to OptimizR! This document provides 
 
 3. **Run with coverage**
    ```bash
-   pytest tests/ --cov=optimizr --cov-report=html
+   python -m pytest tests/test_optimizr.py tests/test_v2_api.py --cov=optimizr --cov-report=html
    ```
 
 4. **Run benchmarks**
    ```bash
    cargo bench
    ```
+
+The cross-platform CI matrix tests the core library on Python 3.8-3.12.
+Analytics, vendor integrity, and bridge tests run separately on Python 3.11
+in the analytics workflow with their pinned dependencies and complete SDK:
+
+```bash
+git submodule update --init --recursive
+python -m pip install -r scripts/spiderrock-requirements.txt -r services/analytics/requirements-dev.txt
+python scripts/verify_vendor.py
+python -m pytest tests/test_analytics.py tests/test_vendor_integrity.py tests/test_spiderrock_ingest.py -q
+```
+
+Both core test and wheel jobs use `.github/actions/setup-openblas` to install
+the system backend. On macOS it also exposes GCC runtime libraries for wheel
+repair. Windows installs and links `lapack-reference` as well, because vcpkg's
+OpenBLAS omits LAPACK. The project explicitly enables Maturin 1.15 wheel repair
+to bundle runtime libraries (Windows otherwise only warns about missing DLLs).
+Wheel jobs install and test the resulting artifacts before uploading them.
+The analytics image resolves OpenBLAS from `Cargo.toml`, including its TLS
+feature, without applying an incompatible Docker-only downgrade.
 
 ## Contribution Guidelines
 

@@ -1,0 +1,14 @@
+# Vendor code is supplied in a read-only checkout, never republished in this image.
+FROM python:3.11-slim-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 analytics \
+    && useradd --uid 10001 --gid analytics --no-create-home analytics \
+    && git config --system --add safe.directory /workspace \
+    && git config --system --add safe.directory /workspace/vendor/spiderrock-connect-sdk
+COPY scripts/spiderrock-requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER 10001:10001
+WORKDIR /workspace
+ENTRYPOINT ["python", "/workspace/scripts/spiderrock_ingest.py"]

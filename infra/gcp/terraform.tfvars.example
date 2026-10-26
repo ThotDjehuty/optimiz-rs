@@ -1,0 +1,25 @@
+# Existing network must have Private Google Access, DNS and Cloud NAT egress
+# for Docker Hub. No network, workspace, UC volume or secret values are created.
+project_id  = "replace-project-id"
+region      = "us-central1"
+zone        = "us-central1-a"
+network     = "projects/replace-project-id/global/networks/existing-private-vpc"
+subnetwork  = "projects/replace-project-id/regions/us-central1/subnetworks/existing-private-subnet"
+# Resolve a supported COS LTS image and the published image digest first.
+cos_image   = "projects/cos-cloud/global/images/cos-REPLACE-with-explicit-lts-image"
+analytics_image = "docker.io/replace/analytics@sha256:REPLACE_WITH_REAL_IMAGE_DIGEST"
+archive_bucket_name            = "replace-globally-unique-private-archive"
+analytics_token_secret_id      = "existing-analytics-token"
+analytics_token_secret_version = "1"
+databricks_host                 = "https://REPLACE.gcp.databricks.com"
+
+# Optional: existing UC-capable cluster with compatible CPython wheel ABI.
+# Supply DATABRICKS_AUTH_TYPE / DATABRICKS_CLIENT_ID / DATABRICKS_CLIENT_SECRET
+# through the environment, not this file. The job runs as its creator.
+# databricks_cluster_id    = "0000-000000-example"
+# optimizer_wheel_uri     = "/Volumes/catalog/schema/packages/optimiz_rs-2.0.0-cp311-cp311-linux_x86_64.whl"
+# databricks_input_table   = "catalog.schema.quotes"
+# databricks_output_volume = "/Volumes/catalog/schema/analytics"
+# UC output is NOT the VM filesystem: download the completed CSV, then copy it
+# into the VM /data/datasets directory through IAP/SSH or an approved pipeline.
+# Image/token/config metadata updates take effect after a controlled VM stop/start.
