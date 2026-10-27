@@ -10,6 +10,14 @@ resource "google_secret_manager_secret_iam_member" "token" {
   member    = "serviceAccount:${google_service_account.analytics.email}"
 }
 
+resource "google_secret_manager_secret_iam_member" "sync" {
+  count     = var.databricks_sync_secret_id != null ? 1 : 0
+  project   = var.project_id
+  secret_id = var.databricks_sync_secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.analytics.email}"
+}
+
 resource "google_storage_bucket" "archive" {
   name                        = var.archive_bucket_name
   location                    = var.region
@@ -89,12 +97,25 @@ resource "google_compute_instance" "analytics" {
     # Metadata updates preserve the VM/disk. Stop/start the VM after changing
     # image, token version or collector configuration to execute the new script.
     startup-script = templatefile("${path.module}/startup.sh.tftpl", {
-      analytics_image = var.analytics_image
-      project_id      = var.project_id
-      secret_id       = var.analytics_token_secret_id
-      secret_version  = var.analytics_token_secret_version
-      collector       = file("${path.module}/../../deploy/otel/collector.yaml")
+      analytics_image     = var.analytics_image
+      project_id          = var.project_id
+      secret_id           = var.analytics_token_secret_id
+      secret_version      = var.analytics_token_secret_version
+      sync_enabled        = var.databricks_sync_secret_id != null
+      sync_secret_id      = var.databricks_sync_secret_id == null ? "" : var.databricks_sync_secret_id
+      sync_secret_version = var.databricks_sync_secret_version == null ? "" : var.databricks_sync_secret_version
+      export_volume       = var.databricks_output_volume == null ? "" : var.databricks_output_volume
+      collector           = file("${path.module}/../../deploy/otel/collector.yaml")
     })
   }
-  depends_on = [google_secret_manager_secret_iam_member.token]
+  lifecycle {
+    precondition {
+      condition = var.databricks_sync_secret_id == null || (
+        var.databricks_sync_secret_version != null &&
+        can(regex("^/Volumes/[A-Za-z0-9_]+/[A-Za-z0-9_]+/[A-Za-z0-9_]+$", var.databricks_output_volume))
+      )
+      error_message = "Sync requires a pinned credential secret version and an export volume with simple catalog/schema/volume identifiers."
+    }
+  }
+  depends_on = [google_secret_manager_secret_iam_member.token, google_secret_manager_secret_iam_member.sync]
 }

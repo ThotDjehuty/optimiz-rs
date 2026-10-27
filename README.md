@@ -162,6 +162,12 @@ It separates live/stored-data visualization from order execution.
 Deployment requires your own infrastructure configuration and vendor entitlements;
 adding the configuration does not deploy production or authorize trading.
 
+The Databricks integration executes per-symbol risk metrics using the same
+compiled contract as the dashboard. Optional Compose/GCE sync verifies completed
+snapshot checksums and calculations before importing them. Metrics stay separate:
+there is no automatic strategy selection or blending of incompatible quantities.
+See the deployment guide for required annualization, OAuth and source-table inputs.
+
 ✨ **Algorithms Included:**
 
 - **Mean Field Games**: 1D MFG solver, HJB-Fokker-Planck coupling, agent population dynamics

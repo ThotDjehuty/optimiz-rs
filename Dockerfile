@@ -44,7 +44,8 @@ COPY . .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir maturin numpy scipy matplotlib pytest jupyter notebook ipykernel pandas seaborn
+    pip install --no-cache-dir maturin numpy scipy matplotlib pytest jupyter notebook ipykernel pandas seaborn && \
+    pip install --no-cache-dir -r services/analytics/requirements-dev.txt -r scripts/spiderrock-requirements.txt
 
 # Build the wheel and install it (without needing virtualenv)
 RUN maturin build --release --out dist && \

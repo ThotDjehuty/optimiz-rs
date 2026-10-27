@@ -231,11 +231,56 @@ This initial dashboard does not query arbitrary SQL, read arbitrary server
 paths, support Parquet directly, or provide a historical replay scheduler.
 
 The optional Terraform-managed Databricks job installs the supplied optimizer
-wheel on an existing Unity Catalog-capable cluster and exports bounded CSV
-from a configured table into an existing Unity Catalog volume. Run the job,
-then transfer its output to the dashboard's datasets directory using an
-authorized operator or scheduled transfer process. **Creating the job does not
-mount Databricks volumes on GCE or automatically synchronize files.**
+wheel on an existing Unity Catalog-capable cluster and executes the shared
+``optimizr.analytics.risk_report`` contract. Every eligible symbol receives its
+own metrics; there is no median, ranking, or automatic winner. Fewer than five
+prices, duplicate observation timestamps, and mixed price kinds produce explicit
+symbol-level errors. Undefined numerical metrics remain null.
+
+The job requires explicit ``periods_per_year`` and refuses to silently truncate
+a selection larger than 10,000 rows. Use a bounded research table/view with
+reviewed sampling assumptions. It writes an immutable snapshot followed by a
+SHA-256 manifest into the configured UC volume. The optional sync service
+downloads completed manifests, verifies size/hash and recomputes the results
+before publishing a CSV/report pair. Restarting sync does not duplicate a
+previously imported manifest. Changed imported files fail verification.
+
+To use the existing SR4P research schema, run the export job with notebook
+parameters ``input_format=sr4p_quotes``, the completed ``session_id``, and
+optionally ``ticker``. Set ``input_table`` to the verified
+``silver_live_implied_quote_adj`` table (the research source declares
+``sr4p_dev.sososo_pipe_v1.silver_live_implied_quote_adj``). The adapter retains
+all six option-key components, requires the vendor calculation timestamp with
+a timezone, and computes the positive two-sided option midpoint from
+``obid``/``oask``. It does not replace missing timestamps with receipt time,
+blend collectors, infer daily sampling, or claim executable P&L.
+
+The exporter is a separate manual Databricks job: run it after the selected
+research session finishes. Creating it does not attach it to an existing
+collector job or certify that your workspace contains the configured table.
+The default ``input_format=normalized`` retains the generic price-table input.
+
+For automatic local transfer, create a private Databricks configuration file
+outside Git, readable by UID 10001, containing a ``[DEFAULT]`` profile with
+``host``, ``auth_type = oauth-m2m``, ``client_id`` and ``client_secret``.
+Use an identity with only the required workspace and UC read permissions.
+Set ``DATABRICKS_CONFIG_FILE`` to that file and
+``DATABRICKS_EXPORT_VOLUME=/Volumes/catalog/schema/exports``, then run::
+
+    docker compose --env-file deploy/.env -f deploy/compose.yaml \
+      --profile databricks up -d
+
+The sync container polls every 60 seconds, sharing ``analytics_data`` with the
+dashboard. Imported datasets show their saved per-symbol reports automatically.
+Reload the page to discover new exports. The sync process exits visibly on
+verification/authentication failures and is restarted by its supervisor.
+Use one sync writer per data directory and a dedicated export volume; archive
+completed exports before its 1,000-manifest limit. Only the newest 100 local
+datasets are listed. Retention and archival deletion are operator-managed.
+
+The image uses ``/syncenv`` to isolate the Databricks SDK's protobuf dependency
+from the vendor bridge and application dependencies. Do not combine those
+environments or change the official SDK to resolve dependency conflicts.
 
 Step 4: publish to Docker Hub
 -----------------------------
@@ -278,7 +323,21 @@ Prepare these prerequisites before planning:
 * GitHub workload identity federation constrained to this repository, approved
   branch and environment; use distinct plan and deployment identities.
 * Databricks OAuth identity/permissions, and (if enabling the job) a compatible
-  cluster, immutable optimizer wheel path, input table and output UC volume.
+  cluster, immutable optimizer wheel path, input table, output UC volume and
+  explicit ``databricks_periods_per_year``.
+
+For automatic GCE transfer, additionally set ``databricks_sync_secret_id`` and
+``databricks_sync_secret_version`` to an existing Secret Manager secret/version
+containing the read-only Databricks profile described above. The optional sync
+systemd service uses the same analytics image and persistent data disk. Terraform
+grants access only to that selected secret; its value is fetched at VM startup,
+never placed in Terraform state or metadata. The sync identity is separate from
+the job/deployment identity. Without these inputs, cloud sync remains disabled.
+
+Build and install the wheel from this integration, not an older installed wheel
+with the same package version: it must contain ``optimizr.snapshot``. Publish it
+under an immutable release directory in the UC volume and verify the cluster
+imports that module before running the job.
 
 Use ``terraform.tfvars.example`` and ``backend.hcl.example`` as configuration
 references. Supply real values outside committed files. Remote-state bucket
@@ -334,7 +393,7 @@ Before calling the deployment production-ready:
   metrics end to end.
 * Exercise reconnects, file rotation, stale-feed visibility, malformed data,
   restart behavior and disk limits.
-* Establish archival transfer, Databricks export synchronization, backups,
+* Verify the configured Databricks sync identity and establish archival transfer, backups,
   alerts, identity-based access and incident ownership.
 * Test rollbacks to the previous image digest and inspect Terraform plans;
   disk/bucket protections intentionally prevent accidental data destruction.

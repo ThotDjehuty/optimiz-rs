@@ -30,8 +30,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends libopenblas0-pt
 WORKDIR /app
 COPY LICENSE /usr/share/licenses/optimiz-rs/LICENSE
 COPY services/analytics/requirements.txt /app/requirements.txt
+COPY services/analytics/requirements-sync.txt /app/requirements-sync.txt
 COPY --from=optimizer /wheels /wheels
 RUN pip install --no-cache-dir -r /app/requirements.txt /wheels/*.whl \
+    && python -m venv /syncenv \
+    && /syncenv/bin/pip install --no-cache-dir -r /app/requirements-sync.txt /wheels/*.whl \
     && rm -rf /wheels \
     && python -c "from optimizr import compute_risk_metrics_py; assert callable(compute_risk_metrics_py)"
 COPY services/analytics/*.py services/analytics/index.html /app/services/analytics/

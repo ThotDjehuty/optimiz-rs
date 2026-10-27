@@ -143,4 +143,37 @@ variable "databricks_output_volume" {
     condition     = var.databricks_output_volume == null ? true : can(regex("^/Volumes/[^/]+/[^/]+/[^/]+$", var.databricks_output_volume))
     error_message = "Use /Volumes/catalog/schema/volume without a trailing slash."
   }
+
+}
+
+variable "databricks_periods_per_year" {
+  type        = number
+  default     = null
+  description = "Explicit annualization frequency of the normalized observations; no inferred daily sampling."
+  validation {
+    condition = var.databricks_periods_per_year == null ? true : (
+      var.databricks_periods_per_year >= 1 && var.databricks_periods_per_year <= 1000000
+    )
+    error_message = "periods_per_year must be between 1 and 1000000."
+  }
+}
+
+variable "databricks_sync_secret_id" {
+  type        = string
+  default     = null
+  description = "Opt-in: existing Secret Manager secret containing a DEFAULT Databricks OAuth profile with read-only access to the export volume."
+  validation {
+    condition     = var.databricks_sync_secret_id == null ? true : can(regex("^[A-Za-z0-9_-]+$", var.databricks_sync_secret_id))
+    error_message = "Provide a Secret Manager secret ID."
+  }
+}
+
+variable "databricks_sync_secret_version" {
+  type        = string
+  default     = null
+  description = "Pinned numeric version of the sync OAuth profile secret."
+  validation {
+    condition     = var.databricks_sync_secret_version == null ? true : can(regex("^[1-9][0-9]*$", var.databricks_sync_secret_version))
+    error_message = "Pin a numeric secret version."
+  }
 }

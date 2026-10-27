@@ -4,7 +4,7 @@ umask 077
 
 # COS recreates its root filesystem on boot. Recreate units only after mounting
 # the stateful disk; Docker must never start against an empty fallback directory.
-systemctl stop optimiz-analytics.service optimiz-collector.service 2>/dev/null || true
+systemctl stop optimiz-analytics.service optimiz-collector.service optimiz-databricks-sync.service 2>/dev/null || true
 device=/dev/disk/by-id/google-analytics-data
 for _ in $(seq 1 60); do
   [ -b "$device" ] && break
@@ -29,10 +29,20 @@ curl -fsS --retry 12 --retry-all-errors --retry-delay 5 --oauth2-bearer "$access
   "https://secretmanager.googleapis.com/v1/projects/${project_id}/secrets/${secret_id}/versions/${secret_version}:access" \
   | sed -n 's/.*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
   | base64 -d > /run/optimiz/analytics_token
-unset access_token
 test -s /run/optimiz/analytics_token
 chown 10001:10001 /run/optimiz/analytics_token
 chmod 400 /run/optimiz/analytics_token
+
+%{ if sync_enabled ~}
+curl -fsS --retry 12 --retry-all-errors --retry-delay 5 --oauth2-bearer "$access_token" \
+  "https://secretmanager.googleapis.com/v1/projects/${project_id}/secrets/${sync_secret_id}/versions/${sync_secret_version}:access" \
+  | sed -n 's/.*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+  | base64 -d > /run/optimiz/databricks_config
+test -s /run/optimiz/databricks_config
+chown 10001:10001 /run/optimiz/databricks_config
+chmod 400 /run/optimiz/databricks_config
+%{ endif ~}
+unset access_token
 
 cat > /run/optimiz/collector.yaml <<'COLLECTOR'
 ${collector}
@@ -81,5 +91,32 @@ TimeoutStopSec=45
 [Install]
 WantedBy=multi-user.target
 UNIT
+%{ if sync_enabled ~}
+cat > /etc/systemd/system/optimiz-databricks-sync.service <<'UNIT'
+[Unit]
+Description=Import verified Databricks risk snapshots
+Requires=docker.service
+After=docker.service network-online.target
+RequiresMountsFor=/mnt/disks/analytics
+[Service]
+Restart=always
+RestartSec=60
+ExecStartPre=-/usr/bin/docker rm -f databricks-sync
+ExecStart=/usr/bin/docker run --name databricks-sync --init --read-only \
+  --cap-drop ALL --security-opt no-new-privileges --memory 512m \
+  --log-opt max-size=10m --log-opt max-file=3 --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  -v /mnt/disks/analytics/data:/data \
+  -v /run/optimiz/databricks_config:/run/secrets/databricks_config:ro \
+  -e DATABRICKS_CONFIG_FILE=/run/secrets/databricks_config \
+  ${analytics_image} /syncenv/bin/python -m services.analytics.sync \
+  --export-volume ${export_volume} --interval-seconds 60
+ExecStop=/usr/bin/docker stop --time 30 databricks-sync
+[Install]
+WantedBy=multi-user.target
+UNIT
+%{ endif ~}
 systemctl daemon-reload
 systemctl start optimiz-collector.service optimiz-analytics.service
+%{ if sync_enabled ~}
+systemctl start optimiz-databricks-sync.service
+%{ endif ~}

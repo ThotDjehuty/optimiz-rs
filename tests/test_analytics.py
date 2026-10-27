@@ -51,7 +51,12 @@ def login(client):
 def test_auth_every_data_surface(client):
     assert client.get("/healthz").json() == {"status": "ok"}
     assert client.get("/", follow_redirects=False).status_code == 303
-    for path in ("/api/datasets", "/api/risk?symbol=XYZ", "/static/app.js"):
+    for path in (
+        "/api/datasets",
+        "/api/risk?symbol=XYZ",
+        "/api/reports/test.csv",
+        "/static/app.js",
+    ):
         assert client.get(path).status_code == 401
     with pytest.raises(WebSocketDisconnect), client.websocket_connect("/ws/live"):
         pass
@@ -341,3 +346,25 @@ def test_risk_delegates_to_public_optimizer(monkeypatch):
     assert math.isfinite(result["metrics"]["volatility"])
     with pytest.raises(ValueError, match="five"):
         risk_metrics(rows, "OTHER")
+
+
+def test_imported_report_api(client, tmp_path):
+    from optimizr.snapshot import export_snapshot
+    from services.analytics.sync import import_snapshot
+
+    rows = [
+        {**RECORD, "event_time": f"2026-01-{i+1:02}T10:00:00Z", "price": 100 + i} for i in range(6)
+    ]
+    marker = export_snapshot(tmp_path, rows, 252, "catalog.schema.quotes")
+    manifest = json.loads(marker.read_bytes())
+    name = import_snapshot(
+        tmp_path / "datasets", manifest, (tmp_path / manifest["file"]).read_bytes()
+    )
+    login(client)
+    response = client.get(f"/api/reports/{name}")
+    assert response.status_code == 200
+    assert response.json()["report"]["aggregation"] == "none"
+    assert response.json()["report"]["results"][0]["symbol"] == "XYZ"
+    assert client.get("/api/reports/absent.csv").status_code == 404
+    (tmp_path / "datasets" / name).write_text("corrupt")
+    assert client.get(f"/api/reports/{name}").status_code == 409

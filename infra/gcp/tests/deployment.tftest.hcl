@@ -40,10 +40,11 @@ run "private_vm_without_job" {
 run "existing_cluster_job" {
   command = plan
   variables {
-    databricks_cluster_id    = "0000-000000-existing"
-    optimizer_wheel_uri      = "/Volumes/catalog/schema/packages/optimizer.whl"
-    databricks_input_table   = "catalog.schema.quotes"
-    databricks_output_volume = "/Volumes/catalog/schema/exports"
+    databricks_cluster_id       = "0000-000000-existing"
+    optimizer_wheel_uri         = "/Volumes/catalog/schema/packages/optimizer.whl"
+    databricks_input_table      = "catalog.schema.quotes"
+    databricks_output_volume    = "/Volumes/catalog/schema/exports"
+    databricks_periods_per_year = 252
   }
   assert {
     condition     = databricks_job.export[0].task[0].existing_cluster_id == "0000-000000-existing"
@@ -68,5 +69,31 @@ run "mutable_image_rejected" {
   variables {
     analytics_image = "docker.io/example/analytics:latest"
   }
+
   expect_failures = [var.analytics_image]
+}
+
+run "sync_is_explicit_and_secret_scoped" {
+  command = plan
+  variables {
+    databricks_sync_secret_id      = "databricks-reader-profile"
+    databricks_sync_secret_version = "2"
+    databricks_output_volume       = "/Volumes/catalog/schema/exports"
+  }
+  assert {
+    condition     = google_secret_manager_secret_iam_member.sync[0].secret_id == "databricks-reader-profile"
+    error_message = "Sync must have access only to the explicitly selected credential secret."
+  }
+  assert {
+    condition     = strcontains(google_compute_instance.analytics.metadata["startup-script"], "--export-volume /Volumes/catalog/schema/exports --interval-seconds 60")
+    error_message = "Sync must use the approved export volume."
+  }
+}
+
+run "incomplete_sync_rejected" {
+  command = plan
+  variables {
+    databricks_sync_secret_id = "databricks-reader-profile"
+  }
+  expect_failures = [google_compute_instance.analytics]
 }

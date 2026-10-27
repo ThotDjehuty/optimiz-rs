@@ -1,6 +1,31 @@
 name: optimiz-analytics
 
 services:
+  databricks-sync:
+    profiles: ["databricks"]
+    image: ${ANALYTICS_IMAGE:?Set ANALYTICS_IMAGE to the analytics image}
+    command: ["/syncenv/bin/python", "-m", "services.analytics.sync", "--export-volume", "${DATABRICKS_EXPORT_VOLUME:-}", "--interval-seconds", "60"]
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABRICKS_CONFIG_FILE: /run/secrets/databricks_config
+      DATA_DIR: /data
+    volumes:
+      - analytics_data:/data
+    secrets:
+      - databricks_config
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   analytics:
     image: ${ANALYTICS_IMAGE:?Set ANALYTICS_IMAGE to the analytics image}
     restart: unless-stopped
@@ -95,6 +120,8 @@ services:
     logging: *bounded_logs
 
 secrets:
+  databricks_config:
+    file: ${DATABRICKS_CONFIG_FILE:-./secrets/databricks-config}
   analytics_token:
     file: ${ANALYTICS_TOKEN_FILE:?Set ANALYTICS_TOKEN_FILE to a nonempty local secret file}
   grafana_password:

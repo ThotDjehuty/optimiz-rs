@@ -4,6 +4,7 @@ import asyncio
 import csv
 import hashlib
 import hmac
+import json
 import os
 import time
 from contextlib import asynccontextmanager, suppress
@@ -203,6 +204,15 @@ def create_app():
         with telemetry.tracer.start_as_current_span("analytics.dataset.load"):
             rows, truncated = load(dataset_id)
         return {"rows": rows, "truncated": truncated, "max_rows": MAX_ROWS}
+
+    @app.get("/api/reports/{dataset_id}")
+    def report(dataset_id: str):
+        try:
+            return datasets.report(dataset_id)
+        except FileNotFoundError:
+            raise HTTPException(404, "No imported Databricks report for this dataset") from None
+        except (ValueError, KeyError, TypeError, OSError, json.JSONDecodeError):
+            raise HTTPException(409, "Invalid or mismatched Databricks report") from None
 
     @app.get("/api/risk")
     def risk(

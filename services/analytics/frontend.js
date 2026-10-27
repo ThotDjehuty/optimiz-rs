@@ -68,6 +68,10 @@ async function loadSource(current, datasetId) {
         await currentTable.replace(convert(data.rows));
         if (current !== generation) return;
         status.textContent = `${data.rows.length} stored rows${data.truncated ? " (truncated at limit)" : ""}`;
+        if (datasetId.startsWith("databricks-")) {
+            const report = await getJson(`/api/reports/${encodeURIComponent(datasetId)}`);
+            if (current === generation) document.querySelector("#metrics").textContent = JSON.stringify(report, null, 2);
+        }
         return;
     }
     status.textContent = "Connecting to local bridge output…";
@@ -112,8 +116,9 @@ async function main() {
         option.textContent = name;
         source.append(option);
     }
+    if (data.datasets.length) source.value = data.datasets[0];
     source.onchange = () => selectSource().catch(showError);
-    document.querySelector("#reload").onclick = () => selectSource().catch(showError);
+    document.querySelector("#reload").onclick = () => location.reload();
     document.querySelector("#risk").onclick = async () => {
         const output = document.querySelector("#metrics");
         try {

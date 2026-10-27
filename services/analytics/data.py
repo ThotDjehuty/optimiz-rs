@@ -1,52 +1,19 @@
 """Bounded readers for administrator-managed datasets and bridge JSONL output."""
 
 import csv
+import hashlib
 import json
-import math
 import os
 import re
 import threading
 from collections import deque
-from datetime import datetime, timezone
 from pathlib import Path
 
-MAX_ROWS = 10_000
+from optimizr.analytics import MAX_ROWS, normalize_record, risk_metrics as risk_metrics
+
 MAX_FILE_BYTES = 16 * 1024 * 1024
 MAX_LINE_BYTES = 4096
 DATASET_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}\.csv")
-
-
-def normalize_record(record):
-    if not isinstance(record, dict):
-        raise TypeError("Expected an object")
-    symbol = record.get("symbol")
-    if not isinstance(symbol, str) or not symbol.strip() or len(symbol) > 512:
-        raise ValueError("symbol must be a nonempty string of at most 512 characters")
-    value = record.get("price")
-    if isinstance(value, bool):
-        raise TypeError("price must be numeric")
-    try:
-        price = float(value)
-        timestamp = datetime.fromisoformat(str(record["event_time"]).replace("Z", "+00:00"))
-    except (TypeError, ValueError, KeyError, OverflowError) as exc:
-        raise ValueError("Expected numeric price and ISO-8601 event_time") from exc
-    if not math.isfinite(price) or price <= 0 or timestamp.tzinfo is None:
-        raise ValueError("price must be finite and positive; event_time must include timezone")
-    try:
-        utc_time = timestamp.astimezone(timezone.utc).isoformat()
-    except OverflowError as exc:
-        raise ValueError("event_time is outside the supported range") from exc
-    normalized = {
-        "event_time": utc_time,
-        "symbol": symbol.strip(),
-        "price": price,
-    }
-    for field, limit, default in (("source", 128, "unknown"), ("price_kind", 64, "unspecified")):
-        value = record.get(field, default)
-        if not isinstance(value, str) or len(value) > limit:
-            raise ValueError(f"{field} must be a string of at most {limit} characters")
-        normalized[field] = value or default
-    return normalized
 
 
 class DatasetStore:
@@ -77,14 +44,25 @@ class DatasetStore:
         result = []
         if self.directory.exists():
             for path in self.directory.iterdir():
-                if len(result) >= 100:
-                    break
                 try:
                     self._checked_path(path)
                 except (ValueError, OSError):
                     continue
-                result.append(path.name)
-        return sorted(result)
+                result.append(path)
+        return [
+            path.name
+            for path in sorted(result, key=lambda path: path.stat().st_mtime, reverse=True)[:100]
+        ]
+
+    def report(self, dataset_id):
+        csv_path = self.path(dataset_id)
+        report_path = csv_path.with_name(csv_path.name + ".report.json")
+        if report_path.is_symlink() or report_path.stat().st_size > MAX_FILE_BYTES:
+            raise ValueError("Invalid or oversized risk report")
+        report = json.loads(report_path.read_bytes())
+        if hashlib.sha256(csv_path.read_bytes()).hexdigest() != report["csv_sha256"]:
+            raise ValueError("Risk report does not match the dataset")
+        return report
 
     def load(self, dataset_id):
         with self.path(dataset_id).open(newline="", encoding="utf-8") as source:
@@ -161,31 +139,3 @@ class LiveTail:
             snapshot = cursor is None or (self.rows and cursor < self.rows[0][0] - 1)
             rows = [row for seq, row in self.rows if snapshot or seq > cursor]
             return {"type": "snapshot" if snapshot else "update", "rows": rows}, self.sequence
-
-
-def risk_metrics(rows, symbol, periods_per_year=252.0):
-    """Price-to-return conversion only; all risk mathematics belongs to OptimizR."""
-    import numpy as np
-    from optimizr import compute_risk_metrics_py
-
-    if not callable(compute_risk_metrics_py):
-        raise TypeError("The compiled OptimizR risk binding is required")
-    selected = sorted(
-        (row for row in rows if row["symbol"] == symbol), key=lambda row: row["event_time"]
-    )
-    if len(selected) < 5:
-        raise ValueError("At least five prices for one symbol are required")
-    prices = np.asarray([row["price"] for row in selected], dtype=np.float64)
-    returns = np.diff(prices) / prices[:-1]
-    if not np.all(np.isfinite(returns)):
-        raise ValueError("Price changes exceed finite numeric limits")
-    result = compute_risk_metrics_py(returns, 0.0, periods_per_year)
-    return {
-        "symbol": symbol,
-        "observations": len(returns),
-        "periods_per_year": periods_per_year,
-        "risk_free_rate": 0.0,
-        "metrics": {
-            key: value if math.isfinite(float(value)) else None for key, value in result.items()
-        },
-    }

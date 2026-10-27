@@ -20,6 +20,10 @@ databricks_host                 = "https://REPLACE.gcp.databricks.com"
 # optimizer_wheel_uri     = "/Volumes/catalog/schema/packages/optimiz_rs-2.0.0-cp311-cp311-linux_x86_64.whl"
 # databricks_input_table   = "catalog.schema.quotes"
 # databricks_output_volume = "/Volumes/catalog/schema/analytics"
-# UC output is NOT the VM filesystem: download the completed CSV, then copy it
-# into the VM /data/datasets directory through IAP/SSH or an approved pipeline.
+# databricks_periods_per_year = 252  # Example only: must match actual sampling.
+# Optional automatic verified UC snapshot transfer, using a separate read-only identity:
+# databricks_sync_secret_id = "existing-databricks-reader-profile"
+# databricks_sync_secret_version = "1"
+# UC volumes are not mounted on the VM; the optional service downloads completed
+# manifests and verifies the data and calculations before publishing local files.
 # Image/token/config metadata updates take effect after a controlled VM stop/start.

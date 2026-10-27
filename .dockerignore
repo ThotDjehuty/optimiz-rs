@@ -47,3 +47,10 @@ docs/_build/
 
 # CI/CD
 .github/
+
+# Runtime credentials and local infrastructure state
+**/secrets/
+**/.terraform/
+**/*.tfstate*
+**/.env
+**/*.auto.tfvars.json
